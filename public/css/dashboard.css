@@ -1,0 +1,23 @@
+ /* === Estilos KPI === */
+    .kpi-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+    }
+    .kpi-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+    }
+    .text-panel{
+        color: black;
+    }

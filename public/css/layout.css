@@ -1,0 +1,8 @@
+/* Archivo base de layout para utilidades y ajustes menores */
+
+/* Asegura que las olas queden sobre el fondo pero bajo el navbar */
+.masthead-waves{ z-index: 2; }
+.bg-gue{ z-index: 4; }
+
+/* Utilidad: botón de cierre arriba-derecha del modal */
+.modal-close-top-right{ right:.5rem; top:.5rem; }

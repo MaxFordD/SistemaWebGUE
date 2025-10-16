@@ -1,0 +1,89 @@
+/* ===============================
+   LOGIN INSTITUCIONAL - AISLADO
+   =============================== */
+
+body.login-page {
+  background: linear-gradient(135deg, #7a1a0c, #f7ca19);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-container {
+  width: 100%;
+}
+
+/* Lado izquierdo (marca) */
+.login-brand {
+  background-color: #7a1a0c;
+  color: #fff;
+  flex: 1;
+}
+
+.login-brand h2 {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.login-brand p {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.login-brand .logo {
+  width: 120px;
+  height: auto;
+}
+
+/* Lado derecho (formulario) */
+.login-form {
+  background-color: #fff;
+  flex: 1;
+}
+
+.btn-login {
+  background-color: #7a1a0c;
+  color: #fff;
+  border: none;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-login:hover {
+  background-color: #9c2310;
+}
+
+.form-control:focus {
+  border-color: #f7ca19;
+  box-shadow: 0 0 0 0.25rem rgba(247,202,25,0.25);
+}
+
+/* Icono del ojo */
+#passwordToggle i {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+#passwordToggle:hover i {
+  color: #7a1a0c;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .login-brand {
+    padding: 2rem 1rem;
+  }
+
+  .login-form {
+    padding: 2rem 1rem;
+  }
+
+  .login-brand .logo {
+    width: 90px;
+  }
+}
