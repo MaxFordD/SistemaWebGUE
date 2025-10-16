@@ -1,8 +1,14 @@
-/* Archivo base de layout para utilidades y ajustes menores */
+/* ===============================
+   LAYOUT.CSS
+   Utilidades y ajustes menores de layout
+   =============================== */
 
-/* Asegura que las olas queden sobre el fondo pero bajo el navbar */
+/* Z-index utilities */
 .masthead-waves{ z-index: 2; }
 .bg-gue{ z-index: 4; }
 
-/* Utilidad: botón de cierre arriba-derecha del modal */
+/* Modal utilities */
 .modal-close-top-right{ right:.5rem; top:.5rem; }
+
+/* Margin utilities específicas del proyecto */
+/* Agregar aquí utilidades de layout adicionales según sea necesario */

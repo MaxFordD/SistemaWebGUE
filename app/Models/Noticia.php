@@ -26,6 +26,19 @@ class Noticia extends Model
         'fecha_publicacion' => 'datetime',
     ];
 
-    protected $dates = ['fecha_publicacion']; // Esto le indica a Laravel que esta columna debe ser tratada como fecha
+    // Método para obtener archivos como array
+    public function getArchivosAttribute()
+    {
+        if (empty($this->imagen)) {
+            return [];
+        }
+        
+        return array_filter(array_map('trim', explode(';', $this->imagen)));
+    }
 
+    // Método para verificar si tiene archivos
+    public function tieneArchivos()
+    {
+        return !empty($this->imagen);
+    }
 }

@@ -3,7 +3,11 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(php artisan route:list:*)",
-      "Bash(php artisan:*)"
+      "Bash(php artisan:*)",
+      "Bash(cat:*)",
+      "Bash(findstr:*)",
+      "Bash(test:*)",
+      "Bash(php -l:*)"
     ],
     "deny": [],
     "ask": []

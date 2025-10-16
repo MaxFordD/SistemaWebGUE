@@ -1,0 +1,44 @@
+/* ===============================
+   VARIABLES CSS
+   Variables globales del proyecto
+   =============================== */
+
+:root{
+  /* Colores principales */
+  --primary-color:#7a1a0c;
+  --primary-dark:#5d1409;
+  --primary-light:#9e2210;
+  --secondary-color:#f7ca19;
+  --secondary-dark:#e6b812;
+  --accent-color:#ff6b35;
+  --nav-alpha:.92;
+
+  /* Alturas */
+  --nav-h: 72px;
+  /* Altura de olas reducida para ser menos llamativas */
+  --wave-h: clamp(80px, 10vw, 280px);
+  --wave-scale: 2;
+
+  /* Sombras modernas */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.12);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.16);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,.2);
+}
+
+/* Ajustes responsive mejorados */
+@media (min-width: 992px){
+  :root{
+    --wave-scale: 1.4;
+    /* reducido en desktop */
+    --wave-h: clamp(100px, 12vw, 320px);
+  }
+}
+
+@media (min-width: 1400px){
+  :root{
+    --wave-scale: 1.5;
+    /* reducido en pantallas grandes */
+    --wave-h: clamp(120px, 14vw, 360px);
+  }
+}

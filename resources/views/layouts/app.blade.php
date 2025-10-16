@@ -10,11 +10,18 @@
   <meta name="theme-color" content="#7a1a0c">
   <meta name="description" content="Colegio José Faustino Sánchez Carrión - Trujillo. Noticias, talleres, galería e información institucional.">
 
-  <!-- Bootstrap 5.3.8 + estilos del proyecto -->
+  <!-- Bootstrap 5.3.8 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ asset('css/app.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/layout.css') }}" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Estilos del proyecto (orden importa para la cascada CSS) -->
+  <link rel="stylesheet" href="{{ asset('css/variables.css') }}" />
+  <link rel="stylesheet" href="{{ asset('css/base.css') }}" />
+  <link rel="stylesheet" href="{{ asset('css/navbar.css') }}" />
+  <link rel="stylesheet" href="{{ asset('css/waves.css') }}" />
+  <link rel="stylesheet" href="{{ asset('css/footer.css') }}" />
+  <link rel="stylesheet" href="{{ asset('css/components.css') }}" />
+  <link rel="stylesheet" href="{{ asset('css/layout.css') }}" />
 
   @stack('styles')
 </head>
@@ -149,7 +156,7 @@
                   <!-- Panel -->
                   <li>
                     <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                      Panel de Control
+                      <i class="bi bi-speedometer2 me-2"></i>Panel de Control
                     </a>
                   </li>
 
@@ -159,22 +166,12 @@
                     <hr class="dropdown-divider">
                   </li>
                   <li class="dropdown-header">Gestión de Usuarios</li>
-                  <li><a class="dropdown-item" href="{{ route('admin.personas.index') }}">Gestionar Personas</a></li>
-                  <li><a class="dropdown-item" href="{{ route('admin.usuarios.index') }}">Gestionar Usuarios</a></li>
-                  <li><a class="dropdown-item" href="{{ route('admin.usuario-rol.index') }}">Asignar Roles</a></li>
+                  <li><a class="dropdown-item" href="{{ route('admin.personas.index') }}"><i class="bi bi-person-badge me-2"></i>Gestionar Personas</a></li>
+                  <li><a class="dropdown-item" href="{{ route('admin.usuarios.index') }}"><i class="bi bi-people me-2"></i>Gestionar Usuarios</a></li>
+                  <li><a class="dropdown-item" href="{{ route('admin.usuario-rol.index') }}"><i class="bi bi-shield-check me-2"></i>Asignar Roles</a></li>
                   @endif
 
-                  <!-- Roles y permisos (solo Director/Admin/Administrador) -->
-                  @if($isAdminLike)
-                  <li>
-                    <hr class="dropdown-divider">
-                  </li>
-                  <li class="dropdown-header">Roles y permisos</li>
-                  <li><a class="dropdown-item" href="{{ route('admin.roles.index') }}">Gestionar roles</a></li>
-                  <li><a class="dropdown-item" href="{{ route('admin.roles.assign') }}">Asignar rol a usuario (antiguo)</a></li>
-                  <li><a class="dropdown-item" href="{{ route('admin.roles.users') }}">Usuarios con roles</a></li>
-                  @endif
-
+                  <!-- Mesa de Partes (solo Director/Admin/Administrador) -->
                   @if($isAdminLike)
                   <li>
                     <hr class="dropdown-divider">
@@ -182,7 +179,7 @@
                   <li class="dropdown-header">Mesa de Partes</li>
                   <li>
                     <a class="dropdown-item" href="{{ route('admin.mesa.index') }}">
-                      Ver Documentos Recibidos
+                      <i class="bi bi-inbox me-2"></i>Ver Documentos Recibidos
                     </a>
                   </li>
                   @endif
@@ -197,7 +194,7 @@
                   @if($puedePublicar)
                   <li>
                     <a class="dropdown-item" href="{{ route('noticias.create') }}">
-                      Publicar Noticia
+                      <i class="bi bi-plus-circle me-2"></i>Publicar Noticia
                     </a>
                   </li>
                   @endif
@@ -209,7 +206,7 @@
                     <form method="POST" action="{{ route('logout') }}" class="d-inline">
                       @csrf
                       <button class="dropdown-item text-danger d-flex align-items-center" type="submit">
-                        Cerrar Sesión
+                        <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
                       </button>
                     </form>
                   </li>
@@ -234,31 +231,34 @@
     </div>
   </section>
 
-  {{-- Flash messages globales --}}
-  <div class="container mt-3">
-    @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      {{ session('success') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+  <!-- Contenedor principal que crece con flexbox -->
+  <div class="main-wrapper">
+    {{-- Flash messages globales --}}
+    <div class="container mt-3">
+      @if(session('success'))
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+      @endif
+      @if(session('ok'))
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('ok') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+      @endif
+      @if(session('error'))
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+      @endif
     </div>
-    @endif
-    @if(session('ok'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      {{ session('ok') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-    </div>
-    @endif
-    @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      {{ session('error') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-    </div>
-    @endif
-  </div>
 
-  <main id="main-content" class="container mt-1 @yield('main_class')" role="main" tabindex="-1">
-    @yield('content')
-  </main>
+    <main id="main-content" class="container mt-1 @yield('main_class')" role="main" tabindex="-1">
+      @yield('content')
+    </main>
+  </div>
 
   <footer class="site-footer" role="contentinfo">
     <div class="container py-3 text-center">

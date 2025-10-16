@@ -6,12 +6,16 @@ body.login-page {
   background: linear-gradient(135deg, #7a1a0c, #f7ca19);
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
 }
 
+/* Contenedor principal centrado */
 .login-container {
-  width: 100%;
+  flex: 1; /* ocupa todo el espacio entre header y footer */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
 }
 
 /* Lado izquierdo (marca) */
@@ -19,20 +23,27 @@ body.login-page {
   background-color: #7a1a0c;
   color: #fff;
   flex: 1;
+  min-height: 300px;
 }
 
 .login-brand h2 {
   font-weight: 700;
   margin-bottom: 0.3rem;
+  font-size: 1.4rem;
+}
+
+.login-brand h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
 }
 
 .login-brand p {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   opacity: 0.9;
 }
 
 .login-brand .logo {
-  width: 120px;
+  width: 100px;
   height: auto;
 }
 
@@ -40,6 +51,14 @@ body.login-page {
 .login-form {
   background-color: #fff;
   flex: 1;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-form .card {
+  margin: auto;
 }
 
 .btn-login {
@@ -77,13 +96,47 @@ body.login-page {
 
   .login-brand {
     padding: 2rem 1rem;
+    min-height: 200px;
+  }
+
+  .login-brand h2 {
+    font-size: 1.2rem;
+  }
+
+  .login-brand h3 {
+    font-size: 1rem;
   }
 
   .login-form {
     padding: 2rem 1rem;
+    min-height: auto;
   }
 
   .login-brand .logo {
-    width: 90px;
+    width: 80px;
+  }
+}
+
+/* Ajuste para pantallas muy pequeñas */
+@media (max-height: 700px) {
+  .login-brand {
+    min-height: 200px;
+    padding: 1.5rem 1rem;
+  }
+
+  .login-form {
+    padding: 1.5rem 1rem;
+  }
+
+  .login-brand .logo {
+    width: 80px;
+  }
+
+  .login-brand h2 {
+    font-size: 1.2rem;
+  }
+
+  .login-brand h3 {
+    font-size: 1rem;
   }
 }

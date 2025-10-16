@@ -2,22 +2,23 @@
 
 @section('title', 'LOGIN')
 
+
 @section('content')
-<div class="login-container d-flex flex-column flex-md-row align-items-stretch min-vh-100">
+<div class="login-container d-flex flex-column flex-md-row align-items-stretch">
 
     <!-- Lado izquierdo -->
-    <div class="login-brand d-flex flex-column justify-content-center align-items-center text-center p-4 p-md-5">
-        <img src="{{ asset('images/INSIGNIA G.U.E..png') }}" alt="Logo Institución" class="logo mb-4">
+    <div class="login-brand d-flex flex-column justify-content-center align-items-center text-center p-3 p-md-4">
+        <img src="{{ asset('images/INSIGNIA G.U.E..png') }}" alt="Logo Institución" class="logo mb-3">
         <h2>Institución Educativa</h2>
         <H3>JOSE FAUSTINO SANCHEZ CARRION</H3>
-        <p>Plataforma Administrativa</p>
+        <p class="mb-0">Plataforma Administrativa</p>
     </div>
 
     <!-- Lado derecho -->
-    <div class="login-form d-flex flex-column justify-content-center p-4 p-md-5 flex-grow-1">
+    <div class="login-form d-flex flex-column justify-content-center p-3 p-md-4 flex-grow-1">
         <div class="card shadow border-0 mx-auto" style="max-width: 420px;">
-            <div class="card-body">
-                <h3 class="text-center mb-4">Iniciar Sesión</h3>
+            <div class="card-body p-4">
+                <h3 class="text-center mb-3">Iniciar Sesión</h3>
 
                 @if (session('error'))
                     <div class="alert alert-danger text-center">{{ session('error') }}</div>
@@ -61,7 +62,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-login w-100 py-2 mt-3" id="submitBtn">
+                    <button type="submit" class="btn btn-login w-100 py-2 mt-2" id="submitBtn">
                         <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
                         Ingresar
                     </button>
@@ -73,9 +74,6 @@
 @endsection
 
 @push('styles')
-<!-- Bootstrap & Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <!-- CSS específico del login -->
 <link rel="stylesheet" href="{{ asset('css/login.css') }}">
 @endpush
