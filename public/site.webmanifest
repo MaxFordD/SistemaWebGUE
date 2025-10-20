@@ -1,0 +1,22 @@
+{
+    "name": "I.E. José Faustino Sánchez Carrión",
+    "short_name": "I.E. JFSC",
+    "description": "Institución Educativa José Faustino Sánchez Carrión - Trujillo",
+    "icons": [
+        {
+            "src": "/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#7a1a0c",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "start_url": "/",
+    "scope": "/"
+}

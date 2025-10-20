@@ -6,9 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>@yield('title', 'I.E. GUEJFSC')</title>
 
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+  <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+
   <!-- Theming + SEO mínimo -->
   <meta name="theme-color" content="#7a1a0c">
   <meta name="description" content="Colegio José Faustino Sánchez Carrión - Trujillo. Noticias, talleres, galería e información institucional.">
+  <meta name="msapplication-TileColor" content="#7a1a0c">
+  <meta name="msapplication-config" content="{{ asset('browserconfig.xml') }}">
 
   <!-- Bootstrap 5.3.8 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -74,6 +83,11 @@
                 @if(request()->routeIs('nosotros')) aria-current="page" @endif>
                 Nosotros
               </a>
+              <a class="nav-link {{ request()->routeIs('comite-directivo') ? 'is-active' : '' }}"
+                href="{{ route('comite-directivo') }}"
+                @if(request()->routeIs('comite-directivo')) aria-current="page" @endif>
+                Comité Directivo
+              </a>
             </div>
 
             <!-- Separador visual en desktop -->
@@ -123,7 +137,7 @@
               // 4) Con uid, traer roles
               if ($uid) {
               $rolesUser = collect(DB::select('EXEC sp_UsuarioRol_ListarPorUsuario ?', [$uid]))
-              ->pluck('nombre')
+              ->pluck('nombre_rol') // ✅ CORREGIDO: nombre_rol
               ->filter()
               ->map(fn($n) => mb_strtolower(trim($n)));
               }
@@ -143,6 +157,7 @@
                   href="#"
                   role="button"
                   data-bs-toggle="dropdown"
+                  data-bs-auto-close="true"
                   aria-expanded="false">
                   <div class="user-avatar me-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
@@ -199,6 +214,15 @@
                   </li>
                   @endif
 
+                  <!-- Gestionar Comité Directivo (solo Director/Admin/Administrador) -->
+                  @if($isAdminLike)
+                  <li>
+                    <a class="dropdown-item" href="{{ route('admin.comite-directivo.index') }}">
+                      <i class="bi bi-people-fill me-2"></i>Gestionar Comité Directivo
+                    </a>
+                  </li>
+                  @endif
+
                   <li>
                     <hr class="dropdown-divider">
                   </li>
@@ -233,23 +257,50 @@
 
   <!-- Contenedor principal que crece con flexbox -->
   <div class="main-wrapper">
-    {{-- Flash messages globales --}}
+    {{-- Flash messages globales mejorados --}}
     <div class="container mt-3">
       @if(session('success'))
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
+      <div class="alert alert-success alert-dismissible fade show modern-alert shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+          <div class="flex-grow-1">{{ session('success') }}</div>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
       </div>
       @endif
       @if(session('ok'))
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('ok') }}
+      <div class="alert alert-success alert-dismissible fade show modern-alert shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+          <div class="flex-grow-1">{{ session('ok') }}</div>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
       </div>
       @endif
       @if(session('error'))
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ session('error') }}
+      <div class="alert alert-danger alert-dismissible fade show modern-alert shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-exclamation-circle-fill fs-4 me-3"></i>
+          <div class="flex-grow-1">{{ session('error') }}</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+      @endif
+      @if(session('warning'))
+      <div class="alert alert-warning alert-dismissible fade show modern-alert shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+          <div class="flex-grow-1">{{ session('warning') }}</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+      @endif
+      @if(session('info'))
+      <div class="alert alert-info alert-dismissible fade show modern-alert shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+          <div class="flex-grow-1">{{ session('info') }}</div>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
       </div>
       @endif
@@ -266,9 +317,15 @@
     </div>
   </footer>
 
+  <!-- Scroll to Top Button -->
+  <button id="scrollToTop" class="scroll-to-top" aria-label="Volver arriba" title="Volver arriba">
+    <i class="bi bi-arrow-up"></i>
+  </button>
+
   <!-- JS: Bootstrap 5 bundle (Popper incluido). Sin jQuery requerido. -->
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script defer src="{{ asset('js/navbar.js') }}"></script>
+  <script defer src="{{ asset('js/scroll-to-top.js') }}"></script>
   @stack('scripts')
 </body>
 

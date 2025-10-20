@@ -7,7 +7,16 @@
       "Bash(cat:*)",
       "Bash(findstr:*)",
       "Bash(test:*)",
-      "Bash(php -l:*)"
+      "Bash(php -l:*)",
+      "Bash(php generate-favicons.php:*)",
+      "Bash(curl:*)",
+      "Bash(tar:*)",
+      "Bash(unzip:*)",
+      "Bash(php -S:*)",
+      "Bash(php -r:*)",
+      "Bash(php verificar-roles.php:*)",
+      "Bash(php:*)",
+      "Bash(del verificar-comite.php fix-comite-directivo-column.php)"
     ],
     "deny": [],
     "ask": []

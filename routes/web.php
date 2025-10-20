@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\UserRoleController;
+use App\Http\Controllers\ComiteDirectivoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NoticiaController;
 use App\Http\Controllers\MesaPartesController;
@@ -30,6 +31,7 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/nosotros', fn() => view('nosotros'))->name('nosotros');
+Route::get('/comite-directivo', [ComiteDirectivoController::class, 'index'])->name('comite-directivo');
 
 /*
 |--------------------------------------------------------------------------
@@ -123,6 +125,20 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 	Route::get('/mesa-partes/{id}', [MesaPartesController::class, 'show'])->name('mesa.show');
 	Route::post('/mesa-partes/{id}/estado', [MesaPartesController::class, 'updateEstado'])->name('mesa.estado');
 	Route::delete('/mesa-partes/{id}', [MesaPartesController::class, 'destroy'])->name('mesa.destroy');
+
+	/*
+	|--------------------------------------------------------------------------
+	| Administración - Comité Directivo
+	|--------------------------------------------------------------------------
+	*/
+	Route::get('/comite-directivo', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'index'])->name('comite-directivo.index');
+	Route::get('/comite-directivo/inactivos', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'inactivos'])->name('comite-directivo.inactivos');
+	Route::get('/comite-directivo/create', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'create'])->name('comite-directivo.create');
+	Route::post('/comite-directivo', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'store'])->name('comite-directivo.store');
+	Route::get('/comite-directivo/{id}/edit', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'edit'])->name('comite-directivo.edit');
+	Route::put('/comite-directivo/{id}', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'update'])->name('comite-directivo.update');
+	Route::delete('/comite-directivo/{id}', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'destroy'])->name('comite-directivo.destroy');
+	Route::post('/comite-directivo/{id}/restore', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'restore'])->name('comite-directivo.restore');
 });
 
 /*
@@ -134,4 +150,7 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 Route::middleware(['auth', 'role:Editor,Administrador,Director'])->group(function () {
 	Route::get('/noticias/create', [NoticiaController::class, 'create'])->name('noticias.create');
 	Route::post('/noticias', [NoticiaController::class, 'store'])->name('noticias.store');
+	Route::get('/noticias/{id}/edit', [NoticiaController::class, 'edit'])->whereNumber('id')->name('noticias.edit');
+	Route::put('/noticias/{id}', [NoticiaController::class, 'update'])->whereNumber('id')->name('noticias.update');
+	Route::delete('/noticias/{id}', [NoticiaController::class, 'destroy'])->whereNumber('id')->name('noticias.destroy');
 });

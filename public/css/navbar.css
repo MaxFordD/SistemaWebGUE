@@ -235,6 +235,7 @@
   backdrop-filter: blur(10px);
   background: rgba(255,255,255,0.98);
   min-width: 220px;
+  z-index: 1040;
 }
 
 .dropdown-item {
@@ -269,6 +270,15 @@
 .dropdown-divider {
   margin: 0.5rem 0;
   opacity: 0.1;
+}
+
+.dropdown-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6c757d;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 1rem 0.25rem;
 }
 
 /* Avatar de usuario */
@@ -353,7 +363,52 @@
     padding: 0.75rem 1rem;
   }
 
-  .dropdown-menu {
-    background: rgba(255,255,255,0.95);
+  /* Asegurar que el navbar colapsado tenga posición relativa y se mantenga visible */
+  .navbar-collapse {
+    position: relative;
+    z-index: 1000;
+  }
+
+  /* Dropdown en móvil - estilo acordeón DENTRO del navbar */
+  .nav-item.dropdown {
+    position: static !important;
+  }
+
+  .navbar-collapse .dropdown-menu {
+    background: rgba(255,255,255,0.98);
+    position: static !important;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.1);
+    margin: 0.5rem 1rem;
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+    width: auto !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+  }
+
+  .navbar-collapse .dropdown-menu.show {
+    display: block !important;
+    animation: slideDown 0.3s ease;
+  }
+
+  /* Prevenir que el dropdown cierre el navbar */
+  .navbar-collapse.show {
+    display: block !important;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      max-height: 400px;
+    }
   }
 }

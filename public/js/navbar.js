@@ -113,11 +113,11 @@ class NavbarManager {
     this.wavesWrap.style.transform = `translateY(${y}px)`;
   }
 
-  // Cerrar navbar mobile al hacer click en un link
+  // Cerrar navbar mobile al hacer click en un link (pero NO en dropdowns)
   setupMobileNavClose() {
-    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link:not(.dropdown-toggle)');
     const navCollapse = document.querySelector('.navbar-collapse');
-    
+
     navLinks.forEach(link => {
       link.addEventListener('click', () => {
         if (window.innerWidth < 992 && navCollapse && navCollapse.classList.contains('show')) {
@@ -127,6 +127,50 @@ class NavbarManager {
           }
         }
       });
+    });
+
+    // NUEVO: Prevenir que el dropdown cierre el navbar
+    const dropdownItems = document.querySelectorAll('.navbar-collapse .dropdown-item');
+    dropdownItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        // Solo cerrar el navbar si el item NO es un header o divider
+        if (!item.classList.contains('dropdown-header') &&
+            item.tagName !== 'HR' &&
+            item.querySelector('form[action*="logout"]')) {
+          // Es el botón de logout, cerrar navbar
+          if (window.innerWidth < 992 && navCollapse) {
+            setTimeout(() => {
+              const bsCollapse = bootstrap.Collapse.getInstance(navCollapse);
+              if (bsCollapse) bsCollapse.hide();
+            }, 100);
+          }
+        }
+      });
+    });
+
+    // CRÍTICO: Mantener el navbar abierto cuando se abre/cierra el dropdown
+    document.addEventListener('show.bs.dropdown', (e) => {
+      if (window.innerWidth < 992) {
+        const dropdown = e.target;
+        if (navCollapse && navCollapse.contains(dropdown)) {
+          // Prevenir que el navbar se cierre
+          navCollapse.classList.add('show');
+        }
+      }
+    });
+
+    document.addEventListener('hide.bs.dropdown', (e) => {
+      if (window.innerWidth < 992) {
+        const dropdown = e.target;
+        if (navCollapse && navCollapse.contains(dropdown)) {
+          // Mantener el navbar abierto
+          setTimeout(() => {
+            if (!navCollapse.classList.contains('show')) {
+              navCollapse.classList.add('show');
+            }
+          }, 10);
+        }
+      }
     });
   }
 

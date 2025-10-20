@@ -42,14 +42,72 @@
   border-left: 4px solid;
 }
 
+.modern-alert {
+  animation: slideInDown 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-alert::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 4px;
+  animation: progressBar 5s linear forwards;
+}
+
+@keyframes progressBar {
+  from { height: 100%; }
+  to { height: 0; }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .alert-success {
   background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
   border-left-color: #28a745;
 }
 
+.alert-success::before {
+  background: #28a745;
+}
+
 .alert-danger {
   background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
   border-left-color: #dc3545;
+}
+
+.alert-danger::before {
+  background: #dc3545;
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-left-color: #ffc107;
+}
+
+.alert-warning::before {
+  background: #ffc107;
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  border-left-color: #17a2b8;
+}
+
+.alert-info::before {
+  background: #17a2b8;
 }
 
 /* Cards con hover mejorado */
@@ -195,7 +253,7 @@
   padding: 8px;
 }
 
-/* Tarjetas de noticias */
+/* Tarjetas de noticias V1 (legacy) */
 .news-card{
   border: none;
   border-radius: 1rem;
@@ -209,6 +267,147 @@
 }
 .news-card h3 a:hover{
   color: var(--primary-color);
+}
+
+/* Tarjetas de noticias V2 - Con imágenes */
+.news-card-v2 {
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fff;
+}
+
+.news-card-v2:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+}
+
+/* Wrapper de imagen */
+.news-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.news-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.news-card-v2:hover .news-card-image {
+  transform: scale(1.1);
+}
+
+/* Placeholder para noticias sin imagen */
+.news-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.news-card-placeholder::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 15s linear infinite;
+}
+
+/* Badge de categoría */
+.news-card-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+}
+
+.news-card-badge .badge {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Metadatos */
+.news-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.news-card-meta small {
+  font-size: 0.8rem;
+}
+
+/* Título */
+.news-card-title {
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.news-card-title a {
+  transition: color 0.3s ease;
+}
+
+.news-card-v2:hover .news-card-title a {
+  color: var(--primary-color) !important;
+}
+
+/* Excerpt/resumen */
+.news-card-excerpt {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #6c757d;
+}
+
+/* Botón leer más */
+.news-card-readmore {
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.news-card-readmore:hover {
+  transform: translateX(4px);
+}
+
+.news-card-readmore i {
+  transition: transform 0.3s ease;
+}
+
+.news-card-readmore:hover i {
+  transform: translateX(4px);
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+  .news-card-image-wrapper {
+    height: 180px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .news-card-image-wrapper {
+    height: 200px;
+  }
 }
 
 /* Artículo (noticia) */
@@ -246,8 +445,189 @@
 }
 
 /* Mesa de Partes */
-.card .form-label{ font-weight: 600; }
-.card .form-text{ color: #6c757d; }
+.mesa-form-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.card .form-label{
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.card .form-text{
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.input-group-text {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-color: #ced4da;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.25rem rgba(122, 26, 12, 0.15);
+}
+
+/* Preview de archivos */
+.file-preview-card {
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.file-preview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.file-preview-card .btn-link {
+  transition: transform 0.2s ease;
+}
+
+.file-preview-card .btn-link:hover {
+  transform: scale(1.2);
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+/* Botón de envío mejorado */
+.btn-submit {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-submit::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-submit:active::after {
+  width: 200px;
+  height: 200px;
+}
+
+/* Validación de formularios mejorada */
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+  border-color: #28a745;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  padding-right: calc(1.5em + 0.75rem);
+}
+
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+  border-color: #dc3545;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  padding-right: calc(1.5em + 0.75rem);
+}
+
+.was-validated .input-group .form-control:valid,
+.was-validated .input-group .form-select:valid {
+  border-color: #28a745;
+}
+
+.was-validated .input-group .form-control:invalid,
+.was-validated .input-group .form-select:invalid {
+  border-color: #dc3545;
+}
+
+/* Input group con validación */
+.was-validated .input-group .input-group-text {
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.was-validated .input-group:has(.form-control:valid) .input-group-text,
+.was-validated .input-group:has(.form-select:valid) .input-group-text {
+  border-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.was-validated .input-group:has(.form-control:invalid) .input-group-text,
+.was-validated .input-group:has(.form-select:invalid) .input-group-text {
+  border-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+/* Mensajes de validación */
+.invalid-feedback {
+  display: none;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  color: #dc3545;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.was-validated .form-select:invalid ~ .invalid-feedback,
+.was-validated .input-group:has(.form-control:invalid) ~ .invalid-feedback,
+.was-validated .input-group:has(.form-select:invalid) ~ .invalid-feedback {
+  display: block;
+}
+
+.valid-feedback {
+  display: none;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  color: #28a745;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.was-validated .form-control:valid ~ .valid-feedback,
+.was-validated .form-select:valid ~ .valid-feedback {
+  display: block;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Alerta de validación general */
+.validation-alert {
+  border-radius: 0.75rem;
+  border-left: 4px solid;
+  margin-bottom: 1rem;
+}
+
 #archivos-list li{ padding-left: .75rem; position: relative; }
 #archivos-list li::before{ content: '•'; position: absolute; left: 0; color: var(--primary-color); }
 
@@ -290,6 +670,97 @@
 .scroll-to-top:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-xl);
+}
+
+/* Tarjetas de talleres mejoradas */
+.taller-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.taller-card .card-img-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.taller-card .card-img-top {
+  transition: transform 0.5s ease;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.taller-card:hover .card-img-top {
+  transform: scale(1.1);
+}
+
+.taller-card .card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(122, 26, 12, 0.8), rgba(122, 26, 12, 0.6));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.taller-card:hover .card-overlay {
+  opacity: 1;
+}
+
+.taller-card .card-footer span {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.taller-card:hover .card-footer span {
+  transform: translateX(4px);
+}
+
+/* Indicadores de carrusel mejorados */
+.carousel-indicators [data-bs-target] {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.8);
+  background-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.carousel-indicators [data-bs-target].active {
+  background-color: rgba(255,255,255,0.9);
+  transform: scale(1.3);
+}
+
+/* Controles de carrusel mejorados */
+.carousel-control-prev,
+.carousel-control-next {
+  width: 50px;
+  height: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  background: rgba(0,0,0,0.3);
+  border-radius: 50%;
+  margin: 0 10px;
+}
+
+.carousel-control-prev {
+  left: 10px;
+}
+
+.carousel-control-next {
+  right: 10px;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.5);
 }
 
 /* Responsive para hero */

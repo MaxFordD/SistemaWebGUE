@@ -20,31 +20,76 @@ body.login-page {
 
 /* Lado izquierdo (marca) */
 .login-brand {
-  background-color: #7a1a0c;
+  background: linear-gradient(135deg, #7a1a0c 0%, #5d1409 100%);
   color: #fff;
   flex: 1;
   min-height: 300px;
+  position: relative;
+  overflow: hidden;
+  animation: slideInLeft 0.6s ease-out;
+}
+
+.login-brand::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(247, 202, 25, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .login-brand h2 {
   font-weight: 700;
   margin-bottom: 0.3rem;
   font-size: 1.4rem;
+  position: relative;
+  z-index: 1;
 }
 
 .login-brand h3 {
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .login-brand p {
   font-size: 0.9rem;
   opacity: 0.9;
+  position: relative;
+  z-index: 1;
 }
 
 .login-brand .logo {
   width: 100px;
   height: auto;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* Lado derecho (formulario) */
@@ -55,22 +100,68 @@ body.login-page {
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: slideInRight 0.6s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .login-form .card {
   margin: auto;
+  animation: fadeIn 0.8s ease-out 0.3s both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .btn-login {
-  background-color: #7a1a0c;
+  background: linear-gradient(135deg, #7a1a0c 0%, #5d1409 100%);
   color: #fff;
   border: none;
   transition: all 0.3s ease;
-  font-weight: 500;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-login::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-login:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .btn-login:hover {
-  background-color: #9c2310;
+  background: linear-gradient(135deg, #9c2310 0%, #7a1a0c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(122, 26, 12, 0.3);
 }
 
 .form-control:focus {

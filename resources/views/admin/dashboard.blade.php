@@ -11,11 +11,6 @@
             <i class="bi bi-speedometer2 me-2"></i>
             Panel de Administración
         </h1>
-        <div class="btn-group">
-            <a href="{{ route('noticias.create') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-1"></i> Nueva Noticia
-            </a>
-        </div>
     </div>
 
     {{-- === ALERTAS === --}}
@@ -74,9 +69,6 @@
         <div class="card-body d-flex flex-wrap gap-2">
             <a href="{{ route('noticias.create') }}" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-circle"></i> Crear Noticia
-            </a>
-            <a href="{{ route('noticias.index') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-pencil-square"></i> Gestionar Noticias
             </a>
         </div>
     </div>

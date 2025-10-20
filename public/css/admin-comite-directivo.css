@@ -1,0 +1,277 @@
+/* ============================================
+   Estilos Admin - Comité Directivo
+   ============================================ */
+
+/* Tabla de Directivos */
+.table-hover tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Botones */
+.btn-group-sm .btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Badges */
+.badge {
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+/* Formularios */
+.form-label {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 0.625rem 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--gue-primary, #7a1a0c);
+    box-shadow: 0 0 0 0.2rem rgba(122, 26, 12, 0.15);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Estados de validación */
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+}
+
+.invalid-feedback {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* Imagen de preview */
+.rounded-circle {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones de acción */
+.btn-primary {
+    background-color: var(--gue-primary, #7a1a0c);
+    border-color: var(--gue-primary, #7a1a0c);
+}
+
+.btn-primary:hover {
+    background-color: #5f1509;
+    border-color: #5f1509;
+}
+
+.btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+/* Alertas */
+.alert {
+    border-radius: 10px;
+    border: none;
+    padding: 1rem 1.25rem;
+}
+
+.alert-info {
+    background-color: #e7f3ff;
+    color: #004085;
+}
+
+/* Divider */
+.border-top {
+    border-color: #e9ecef !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .btn-group-sm {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .btn-group-sm .btn {
+        width: 100%;
+    }
+
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+
+    .card-body {
+        padding: 1rem !important;
+    }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Hover effects */
+.hover-lift {
+    transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Modal de inactivos - estilos mejorados */
+/* FIX CRÍTICO: Sin backdrop de Bootstrap, crear el nuestro */
+#modalInactivos {
+    z-index: 1060 !important;
+}
+
+/* Backdrop personalizado que NO bloquea */
+#modalInactivos::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#modalInactivos.show::before {
+    opacity: 1;
+}
+
+#modalInactivos .modal-dialog {
+    z-index: 1;
+    position: relative;
+}
+
+#modalInactivos .modal-content {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    z-index: 2 !important;
+    position: relative;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+}
+
+#modalInactivos .modal-body {
+    background-color: #f8f9fa;
+    position: relative;
+    z-index: 1;
+}
+
+#modalInactivos .list-group {
+    background-color: transparent;
+}
+
+#modalInactivos .list-group-item {
+    border: 1px solid #e9ecef;
+    margin-bottom: 0.5rem;
+    border-radius: 8px !important;
+    padding: 1rem;
+    background-color: #ffffff;
+    position: relative;
+    z-index: 1;
+}
+
+#modalInactivos .list-group-item:last-child {
+    margin-bottom: 0;
+}
+
+#modalInactivos .list-group-item:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+/* Asegurar interactividad de botones */
+#modalInactivos .btn {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+#modalInactivos .modal-header .btn-close {
+    z-index: 1070 !important;
+    pointer-events: auto !important;
+}
+
+#modalInactivos .list-group-item * {
+    pointer-events: auto !important;
+}
+
+/* Responsive para móvil en modal */
+@media (max-width: 768px) {
+    #modalInactivos .list-group-item {
+        padding: 0.75rem;
+    }
+
+    #modalInactivos .btn-sm {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    #modalInactivos .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    #modalInactivos .modal-body {
+        padding: 1rem;
+    }
+}

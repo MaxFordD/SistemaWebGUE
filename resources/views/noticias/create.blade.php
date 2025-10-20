@@ -60,7 +60,7 @@
                             <textarea name="contenido" id="contenido" class="form-control" rows="8" required
                                       placeholder="Escriba el contenido de la noticia...">{{ old('contenido') }}</textarea>
                             <div class="form-text">
-                                <i class="bi bi-info-circle me-1"></i>Escriba el contenido completo de la noticia
+                                <i class="bi bi-info-circle me-1"></i>Use el editor para dar formato al texto, agregar enlaces, listas, etc.
                             </div>
                         </div>
 
@@ -96,5 +96,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('vendor/tinymce/js/tinymce/tinymce.min.js') }}"></script>
+<script src="{{ asset('js/tinymce-init.js') }}"></script>
 <script defer src="{{ asset('js/noticia-create.js') }}"></script>
 @endpush

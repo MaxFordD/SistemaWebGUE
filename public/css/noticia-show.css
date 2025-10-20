@@ -1,0 +1,59 @@
+/* Estilos para la vista de detalle de noticias */
+
+.hover-shadow-lg {
+    transition: box-shadow 0.3s ease;
+}
+
+.hover-shadow-lg:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.transition {
+    transition: all 0.3s ease;
+}
+
+.noticia-contenido p {
+    margin-bottom: 1.5rem;
+}
+
+.noticia-contenido a {
+    color: #0d6efd;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.noticia-contenido a:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+
+.noticia-contenido ul,
+.noticia-contenido ol {
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+}
+
+.noticia-contenido img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.noticia-contenido h1,
+.noticia-contenido h2,
+.noticia-contenido h3,
+.noticia-contenido h4,
+.noticia-contenido h5,
+.noticia-contenido h6 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 20px;
+}

@@ -1,0 +1,237 @@
+/* ============================================
+   Estilos para la página "Comité Directivo"
+   ============================================ */
+
+/* Hero Section */
+.directivo-hero {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Filtros */
+.filtros {
+  position: sticky;
+  top: 60px;
+  z-index: 100;
+  background: white;
+}
+
+.filter-btn {
+  transition: all 0.3s ease;
+  border-radius: 20px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+}
+
+.filter-btn.active {
+  background-color: var(--gue-primary, #7a1a0c);
+  color: white;
+  border-color: var(--gue-primary, #7a1a0c);
+}
+
+.filter-btn:hover:not(.active) {
+  background-color: #f8f9fa;
+  border-color: var(--gue-primary, #7a1a0c);
+  color: var(--gue-primary, #7a1a0c);
+}
+
+/* Grid de Directivos */
+.directivos-grid {
+  min-height: 400px;
+}
+
+/* Tarjeta de Directivo */
+.directivo-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.directivo-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.directivo-card.is-pendiente {
+  opacity: 0.7;
+  border: 2px dashed #dee2e6;
+}
+
+.directivo-card.is-pendiente:hover {
+  transform: translateY(-3px);
+}
+
+/* Foto del Directivo */
+.directivo-foto {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  overflow: hidden;
+}
+
+.directivo-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.directivo-card:hover .directivo-foto img {
+  transform: scale(1.1);
+}
+
+/* Avatar genérico */
+.directivo-avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  color: #adb5bd;
+  background: linear-gradient(135deg, #f1f3f5 0%, #e9ecef 100%);
+}
+
+.directivo-avatar.avatar-pendiente {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #856404;
+}
+
+/* Información del Directivo */
+.directivo-info {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.directivo-nombre {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #212529;
+  line-height: 1.3;
+  min-height: 2.6em;
+}
+
+.directivo-cargo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gue-primary, #7a1a0c);
+  margin-bottom: 0.5rem;
+}
+
+.directivo-grado {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.directivo-grado i {
+  flex-shrink: 0;
+}
+
+.ver-bio-btn {
+  margin-top: auto;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.ver-bio-btn:hover {
+  background-color: var(--gue-primary, #7a1a0c);
+  color: white;
+  border-color: var(--gue-primary, #7a1a0c);
+}
+
+/* Modal de Biografía */
+.biografia-content {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #495057;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, var(--gue-primary, #7a1a0c) 0%, #a02515 100%);
+  color: white;
+}
+
+.modal-header .btn-close {
+  filter: brightness(0) invert(1);
+}
+
+/* Animación de filtrado */
+.directivo-item {
+  transition: all 0.3s ease;
+}
+
+.directivo-item[style*="display: none"] {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .directivo-hero h1 {
+    font-size: 2rem;
+  }
+
+  .directivo-foto {
+    height: 200px;
+  }
+
+  .directivo-info {
+    padding: 1.25rem;
+  }
+
+  .directivo-nombre {
+    font-size: 1rem;
+  }
+
+  .filtros {
+    position: static;
+  }
+
+  .filter-btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .directivo-foto {
+    height: 180px;
+  }
+
+  .directivo-avatar {
+    font-size: 4rem;
+  }
+}
+
+/* Animación de entrada */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.directivo-card {
+  animation: fadeInScale 0.4s ease-out;
+}
+
+/* Mejora visual para tarjetas vacías */
+.alert {
+  border-radius: 12px;
+  padding: 1.5rem;
+}

@@ -4,6 +4,14 @@
 
 @section('body_class', 'waves-compact')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/noticia-show.css') }}">
+@endpush
+
+@push('scripts')
+<script src="{{ asset('js/confirm-delete.js') }}"></script>
+@endpush
+
 @section('content')
 @php
 $tz = config('app.timezone', 'America/Lima');
@@ -104,15 +112,15 @@ $tz = config('app.timezone', 'America/Lima');
         <div class="mb-4">
             @if(count($imagenes) === 1)
             {{-- Imagen única destacada --}}
-            <div class="position-relative rounded-4 overflow-hidden shadow-lg" style="max-height: 500px;">
+            <div class="position-relative rounded-4 overflow-hidden shadow-lg" style="max-height: 600px; background-color: #f8f9fa;">
                 <img src="{{ asset('storage/' . ltrim($imagenes[array_key_first($imagenes)], '/')) }}"
                      alt="{{ $noticia->titulo }}"
-                     class="w-100 h-100"
-                     style="object-fit: cover;">
+                     class="w-100"
+                     style="object-fit: contain; max-height: 600px;">
             </div>
             @else
             {{-- Galería de múltiples imágenes --}}
-            <div id="galeriaNoticia" class="carousel slide shadow-lg rounded-4 overflow-hidden" data-bs-ride="carousel">
+            <div id="galeriaNoticia" class="carousel slide shadow-lg rounded-4 overflow-hidden" data-bs-ride="carousel" style="background-color: #f8f9fa;">
                 <div class="carousel-indicators">
                     @foreach($imagenes as $index => $imagen)
                     <button type="button" data-bs-target="#galeriaNoticia" data-bs-slide-to="{{ $index }}"
@@ -126,7 +134,7 @@ $tz = config('app.timezone', 'America/Lima');
                         <img src="{{ asset('storage/' . ltrim($imagen, '/')) }}"
                              class="d-block w-100"
                              alt="Imagen {{ $index + 1 }}"
-                             style="max-height: 500px; object-fit: cover;">
+                             style="max-height: 600px; object-fit: contain;">
                     </div>
                     @endforeach
                 </div>
@@ -150,7 +158,7 @@ $tz = config('app.timezone', 'America/Lima');
         {{-- Contenido del artículo --}}
         <section class="bg-white p-4 p-md-5 rounded-4 shadow-sm mb-4">
             <div class="noticia-contenido" style="line-height: 1.9; font-size: 1.1rem; color: #333;">
-                {!! nl2br(e($noticia->contenido)) !!}
+                {!! $noticia->contenido !!}
             </div>
         </section>
 
@@ -228,36 +236,48 @@ $tz = config('app.timezone', 'America/Lima');
         </section>
         @endif
 
-        {{-- Navegación --}}
-        <footer class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
-            <a href="{{ route('noticias.index') }}" class="btn btn-outline-primary">
-                <i class="bi bi-arrow-left me-2"></i>Volver a noticias
-            </a>
-            <div class="text-end text-muted small">
-                <i class="bi bi-eye me-1"></i>Noticia #{{ $noticia->noticia_id }}
+        {{-- Navegación y Acciones --}}
+        <footer class="mt-5 pt-4 border-top">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <a href="{{ route('noticias.index') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-2"></i>Volver a noticias
+                </a>
+
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="text-muted small me-3">
+                        <i class="bi bi-eye me-1"></i>Noticia #{{ $noticia->noticia_id }}
+                    </div>
+
+                    @auth
+                    @php
+                        $user = auth()->user();
+                        $rolesUsuario = [];
+                        try {
+                            $rolesUsuario = collect(DB::select('EXEC sp_UsuarioRol_ListarPorUsuario ?', [$user->usuario_id ?? $user->id]))
+                                ->pluck('nombre_rol')
+                                ->map(fn($r) => strtolower(trim($r)))
+                                ->toArray();
+                        } catch (\Exception $e) {}
+
+                        $tienePermiso = !empty(array_intersect($rolesUsuario, ['editor', 'administrador', 'director']));
+                    @endphp
+
+                    @if($tienePermiso)
+                    <a href="{{ route('noticias.edit', $noticia->noticia_id) }}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil-square me-1"></i>Editar
+                    </a>
+                    <form action="{{ route('noticias.destroy', $noticia->noticia_id) }}" method="POST" class="d-inline delete-form">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Eliminar
+                        </button>
+                    </form>
+                    @endif
+                    @endauth
+                </div>
             </div>
         </footer>
     </article>
 </div>
-
-<style>
-.hover-shadow-lg {
-    transition: box-shadow 0.3s ease;
-}
-.hover-shadow-lg:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-.transition {
-    transition: all 0.3s ease;
-}
-.noticia-contenido p {
-    margin-bottom: 1.5rem;
-}
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 50%;
-    padding: 20px;
-}
-</style>
 @endsection

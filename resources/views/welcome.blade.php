@@ -35,13 +35,23 @@
             @endforeach
           </div>
 
-          {{-- Controles (opcionales) --}}
+          {{-- Controles mejorados --}}
           <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" aria-label="Anterior">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
           </button>
           <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next" aria-label="Siguiente">
             <span class="carousel-control-next-icon" aria-hidden="true"></span>
           </button>
+
+          {{-- Indicadores mejorados --}}
+          <div class="carousel-indicators">
+            @foreach($slides as $i => $s)
+              <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $i }}"
+                      class="{{ $i === 0 ? 'active' : '' }}"
+                      aria-current="{{ $i === 0 ? 'true' : 'false' }}"
+                      aria-label="Diapositiva {{ $i + 1 }}"></button>
+            @endforeach
+          </div>
         </div>
       </div>
 
@@ -74,32 +84,33 @@
     <div class="container">
       <div class="d-flex align-items-center justify-content-between mb-4">
         <h2 class="h1 fw-bold mb-0">Talleres y Actividades</h2>
-        <a href="#" class="btn btn-sm btn-outline-dark d-none d-md-inline-block">Ver todos</a>
       </div>
 
       <div class="row">
         @php
           $talleres = [
-            ['img'=>'images/talleres/musica.jpg','titulo'=>'Música','desc'=>'Práctica instrumental, ensambles y teoría musical.'],
-            ['img'=>'images/talleres/deporte.jpg','titulo'=>'Deporte','desc'=>'Fútbol, vóley y atletismo para todas las categorías.'],
-            ['img'=>'images/talleres/pintura.jpg','titulo'=>'Artes Plásticas','desc'=>'Dibujo, pintura y técnicas mixtas.'],
-            ['img'=>'images/talleres/danza.jpg','titulo'=>'Danza','desc'=>'Danza moderna y folclore peruano.'],
+            ['img'=>'images/talleres/musica.jpg','titulo'=>'Música','desc'=>'Práctica instrumental, ensambles y teoría musical.','icon'=>'music-note-beamed'],
+            ['img'=>'images/talleres/deporte.jpg','titulo'=>'Deporte','desc'=>'Fútbol, vóley y atletismo para todas las categorías.','icon'=>'trophy'],
+            ['img'=>'images/talleres/pintura.jpg','titulo'=>'Artes Plásticas','desc'=>'Dibujo, pintura y técnicas mixtas.','icon'=>'palette'],
+            ['img'=>'images/talleres/danza.jpg','titulo'=>'Danza','desc'=>'Danza moderna y folclore peruano.','icon'=>'person-arms-up'],
           ];
         @endphp
 
         @foreach($talleres as $t)
-          <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm border-0 hover-lift">
-              <img class="card-img-top"
-                   src="{{ asset($t['img']) }}"
-                   alt="Taller de {{ $t['titulo'] }}"
-                   loading="lazy" decoding="async">
+          <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 shadow-sm border-0 hover-lift taller-card">
+              <div class="card-img-wrapper">
+                <img class="card-img-top"
+                     src="{{ asset($t['img']) }}"
+                     alt="Taller de {{ $t['titulo'] }}"
+                     loading="lazy" decoding="async">
+                <div class="card-overlay">
+                  <i class="bi bi-{{ $t['icon'] ?? 'star-fill' }} display-4 text-white"></i>
+                </div>
+              </div>
               <div class="card-body">
                 <h5 class="card-title fw-bold">{{ $t['titulo'] }}</h5>
                 <p class="card-text text-muted">{{ $t['desc'] }}</p>
-              </div>
-              <div class="card-footer bg-transparent border-0 pt-0">
-                <a href="#" class="btn btn-outline-primary btn-sm">Más información</a>
               </div>
             </div>
           </div>
