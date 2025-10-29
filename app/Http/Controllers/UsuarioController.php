@@ -143,14 +143,26 @@ class UsuarioController extends Controller
             'contrasena_nueva.confirmed'  => 'Las contraseñas no coinciden',
         ]);
 
-        $hashedActual = Hash::make($data['contrasena_actual']);
+        // Obtener el usuario actual para verificar la contraseña
+        $usuario = collect(DB::select('EXEC sp_Usuario_ObtenerPorId ?', [(int)$id]))->first();
+
+        if (!$usuario) {
+            return back()->with('error', 'Usuario no encontrado');
+        }
+
+        // Verificar que la contraseña actual sea correcta
+        if (!Hash::check($data['contrasena_actual'], $usuario->contrasena)) {
+            return back()->with('error', 'La contraseña actual es incorrecta');
+        }
+
+        // Hashear la nueva contraseña
         $hashedNueva = Hash::make($data['contrasena_nueva']);
 
+        // Ejecutar SP para actualizar (Laravel ya validó la contraseña actual)
         $sql = "
             DECLARE @resultado BIT, @mensaje VARCHAR(200);
             EXEC sp_Usuario_CambiarContrasena
                 @usuario_id = ?,
-                @contrasena_actual = ?,
                 @contrasena_nueva = ?,
                 @resultado = @resultado OUTPUT,
                 @mensaje = @mensaje OUTPUT;
@@ -159,7 +171,6 @@ class UsuarioController extends Controller
 
         $out = DB::select($sql, [
             (int)$id,
-            $hashedActual,
             $hashedNueva
         ]);
 

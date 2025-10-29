@@ -16,7 +16,9 @@
       "Bash(php -r:*)",
       "Bash(php verificar-roles.php:*)",
       "Bash(php:*)",
-      "Bash(del verificar-comite.php fix-comite-directivo-column.php)"
+      "Bash(del verificar-comite.php fix-comite-directivo-column.php)",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nCorregir validación de contraseñas (seguridad crítica)\n\nCambios de seguridad:\n- Fix: Validación de contraseña actual en UsuarioController\n- Simplificar sp_Usuario_CambiarContrasena (eliminar validación redundante)\n- Agregar script de migración SQL\n\nDetalles técnicos:\n- Usar Hash::check() para validar contraseña actual (antes usaba Hash::make incorrectamente)\n- Eliminar parámetro @contrasena_actual del SP\n- Laravel valida, SQL Server actualiza (separación de responsabilidades)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

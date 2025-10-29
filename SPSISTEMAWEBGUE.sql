@@ -476,9 +476,10 @@ END
 GO
 
 -- EXTRA - Cambiar Contraseña
+-- NOTA: La validación de la contraseña actual se realiza en Laravel usando Hash::check()
+-- Este SP solo actualiza la contraseña después de que Laravel validó la autenticidad
 CREATE OR ALTER PROCEDURE sp_Usuario_CambiarContrasena
     @usuario_id INT,
-    @contrasena_actual NVARCHAR(200),
     @contrasena_nueva NVARCHAR(200),
     @resultado BIT OUTPUT,
     @mensaje VARCHAR(200) OUTPUT
@@ -488,12 +489,14 @@ BEGIN
     SET @resultado = 0;
 
     BEGIN TRY
-        IF NOT EXISTS(SELECT 1 FROM Usuario WHERE usuario_id = @usuario_id AND contrasena = @contrasena_actual)
+        -- Verificar que el usuario existe
+        IF NOT EXISTS(SELECT 1 FROM Usuario WHERE usuario_id = @usuario_id)
         BEGIN
-            SET @mensaje = 'Contraseña actual incorrecta';
+            SET @mensaje = 'Usuario no encontrado';
             RETURN;
         END
 
+        -- Actualizar la contraseña (Laravel ya validó la actual)
         UPDATE Usuario
         SET contrasena = @contrasena_nueva
         WHERE usuario_id = @usuario_id;
