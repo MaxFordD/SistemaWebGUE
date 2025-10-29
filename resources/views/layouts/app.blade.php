@@ -26,6 +26,7 @@
   <!-- Estilos del proyecto (orden importa para la cascada CSS) -->
   <link rel="stylesheet" href="{{ asset('css/variables.css') }}" />
   <link rel="stylesheet" href="{{ asset('css/base.css') }}" />
+  <link rel="stylesheet" href="{{ asset('css/ui-components.css') }}" />
   <link rel="stylesheet" href="{{ asset('css/navbar.css') }}" />
   <link rel="stylesheet" href="{{ asset('css/waves.css') }}" />
   <link rel="stylesheet" href="{{ asset('css/footer.css') }}" />

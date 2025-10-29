@@ -1,24 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir:*)",
-      "Bash(php artisan route:list:*)",
-      "Bash(php artisan:*)",
-      "Bash(cat:*)",
-      "Bash(findstr:*)",
-      "Bash(test:*)",
-      "Bash(php -l:*)",
-      "Bash(php generate-favicons.php:*)",
-      "Bash(curl:*)",
-      "Bash(tar:*)",
-      "Bash(unzip:*)",
-      "Bash(php -S:*)",
-      "Bash(php -r:*)",
-      "Bash(php verificar-roles.php:*)",
-      "Bash(php:*)",
-      "Bash(del verificar-comite.php fix-comite-directivo-column.php)",
-      "Bash(git add -A)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nCorregir validación de contraseñas (seguridad crítica)\n\nCambios de seguridad:\n- Fix: Validación de contraseña actual en UsuarioController\n- Simplificar sp_Usuario_CambiarContrasena (eliminar validación redundante)\n- Agregar script de migración SQL\n\nDetalles técnicos:\n- Usar Hash::check() para validar contraseña actual (antes usaba Hash::make incorrectamente)\n- Eliminar parámetro @contrasena_actual del SP\n- Laravel valida, SQL Server actualiza (separación de responsabilidades)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nMejoras UI completas manteniendo identidad institucional\n\n🎨 Sistema de Diseño:\n- Expandir variables.css con 145+ tokens de diseño\n- Agregar sistema de espaciado 8pt\n- Colores institucionales preservados (#7a1a0c, #f7ca19)\n- Sombras mejoradas con variante institucional\n- Tipografía estandarizada\n\n🎴 Componentes Modernos (ui-components.css):\n- Cards mejoradas con hover states\n- Botones con efecto ripple\n- Formularios con validación visual\n- Tablas responsivas modernas\n- Badges y pills institucionales\n- Alertas animadas\n- Spinners de carga\n\n📊 Panel Admin Mejorado (admin-enhanced.css):\n- Dashboard con cards de estadísticas\n- Tablas admin con gradiente institucional\n- Formularios optimizados\n- Búsqueda y filtros con chips\n- Estados visuales (activo/inactivo/pendiente)\n- Paginación mejorada\n- Empty states\n\n✨ Mejoras de UX:\n- Transiciones suaves (250ms ease)\n- Micro-interacciones en hover\n- Animaciones de entrada (fadeIn, slideIn)\n- Focus states accesibles\n- Reduced motion support\n\n📱 Responsive Optimizado:\n- Mobile-first approach\n- Breakpoints mejorados\n- Dashboard grid adaptativo\n- Tablas con scroll horizontal\n\n♿ Accesibilidad:\n- Contraste WCAG AA\n- Focus visible (outline 3px)\n- ARIA labels completos\n- Skip links mejorados\n\n📝 Documentación:\n- MEJORAS_UI_2025.md (guía completa)\n- Instrucciones de reversión\n- Ejemplos de uso\n- Comparativa antes/después\n\n🔄 Compatibilidad:\n- 100% compatible con código existente\n- Sin dependencias nuevas\n- Solo CSS puro\n- Reversible con Git\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
