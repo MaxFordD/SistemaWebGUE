@@ -39,7 +39,7 @@
                         @forelse($rolesUsuario as $r)
                             <tr>
                                 <td>{{ $r->rol_id }}</td>
-                                <td>{{ $r->nombre }}</td>
+                                <td>{{ $r->nombre_rol }}</td>
                                 <td>{{ $r->descripcion }}</td>
                             </tr>
                         @empty

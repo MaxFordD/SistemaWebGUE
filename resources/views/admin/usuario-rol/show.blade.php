@@ -40,7 +40,7 @@
                             @foreach($rolesAsignados as $rol)
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong>{{ $rol->nombre }}</strong>
+                                        <strong>{{ $rol->nombre_rol }}</strong>
                                         @if($rol->descripcion)
                                             <br><small class="text-muted">{{ $rol->descripcion }}</small>
                                         @endif
