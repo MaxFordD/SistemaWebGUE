@@ -16,13 +16,12 @@ class Usuario extends Authenticatable
     protected $fillable = ['persona_id', 'nombre_usuario', 'contrasena', 'estado'];
     protected $hidden = ['contrasena'];
 
-    // Especificar el campo de password para autenticación
+    // Autenticación personalizada: usa campo 'contrasena' en lugar de 'password'
     public function getAuthPassword()
     {
         return $this->contrasena;
     }
 
-    // Especificar el campo usado para el username (para Laravel)
     public function getAuthIdentifierName()
     {
         return 'nombre_usuario';
@@ -33,25 +32,23 @@ class Usuario extends Authenticatable
         return $this->nombre_usuario;
     }
 
-    // COMENTAR ESTE MUTATOR SI INSERTAMOS HASHES MANUALMENTE EN LA BD
+    // IMPORTANTE: Este mutator está comentado porque los hashes se insertan
+    // manualmente desde SQL. Si se descomenta, hasheará el hash (doble hash).
     // public function setContrasenaAttribute($value)
     // {
     //     $this->attributes['contrasena'] = Hash::make($value);
     // }
 
-    // Relación con Persona
     public function persona()
     {
         return $this->belongsTo(Persona::class, 'persona_id', 'persona_id');
     }
 
-    // Relación con Rol
     public function roles()
     {
         return $this->belongsToMany(Rol::class, 'UsuarioRol', 'usuario_id', 'rol_id');
     }
 
-    // Verifica si el usuario tiene un rol específico
     public function hasRole($role)
     {
         return $this->roles()->where('nombre', $role)->exists();
