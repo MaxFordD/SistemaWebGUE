@@ -6,7 +6,9 @@
 <div class="py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0">Gestionar Roles del Usuario</h1>
-        <a href="{{ route('admin.usuario-rol.index') }}" class="btn btn-secondary">Volver</a>
+        <a href="{{ route('admin.usuario-rol.index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+        </a>
     </div>
 
     @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
@@ -45,11 +47,13 @@
                                             <br><small class="text-muted">{{ $rol->descripcion }}</small>
                                         @endif
                                     </div>
-                                    <form action="{{ route('admin.usuario-rol.remover') }}" method="POST" onsubmit="return confirm('¿Remover este rol?');">
+                                    <form action="{{ route('admin.usuario-rol.remover') }}" method="POST" onsubmit="return confirm('¿Está seguro de remover el rol {{ $rol->nombre_rol }}?');">
                                         @csrf
                                         <input type="hidden" name="usuario_id" value="{{ $usuario->usuario_id }}">
                                         <input type="hidden" name="rol_id" value="{{ $rol->rol_id }}">
-                                        <button class="btn btn-sm btn-outline-danger">Remover</button>
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Remover rol">
+                                            <i class="bi bi-x-circle-fill me-1"></i>Remover
+                                        </button>
                                     </form>
                                 </div>
                             @endforeach
@@ -79,7 +83,9 @@
                                         @csrf
                                         <input type="hidden" name="usuario_id" value="{{ $usuario->usuario_id }}">
                                         <input type="hidden" name="rol_id" value="{{ $rol->rol_id }}">
-                                        <button class="btn btn-sm btn-outline-success">Asignar</button>
+                                        <button type="submit" class="btn btn-sm btn-success" title="Asignar rol">
+                                            <i class="bi bi-plus-circle-fill me-1"></i>Asignar
+                                        </button>
                                     </form>
                                 </div>
                             @endforeach

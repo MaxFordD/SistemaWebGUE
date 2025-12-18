@@ -76,11 +76,8 @@ textarea.form-control {
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
 }
 
-.invalid-feedback {
-    display: block;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-}
+/* Nota: Los estilos de .invalid-feedback ya están definidos correctamente en components.css
+   con el comportamiento de Bootstrap (solo se muestran con .was-validated) */
 
 /* Imagen de preview */
 .rounded-circle {

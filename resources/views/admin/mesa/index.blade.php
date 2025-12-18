@@ -40,12 +40,18 @@
                     </form>
                 </td>
                 <td>
-                    <a href="{{ route('admin.mesa.show', $d->documento_id) }}" class="btn btn-sm btn-info">Ver</a>
-                    <form action="{{ route('admin.mesa.destroy', $d->documento_id) }}" method="post" class="d-inline js-confirmable" data-confirm="¿Eliminar este documento?">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-sm btn-danger">Eliminar</button>
-                    </form>
+                    <div class="d-flex gap-1">
+                        <a href="{{ route('admin.mesa.show', $d->documento_id) }}" class="btn btn-sm btn-info text-white" title="Ver detalles del documento">
+                            <i class="bi bi-eye-fill"></i>
+                        </a>
+                        <form action="{{ route('admin.mesa.destroy', $d->documento_id) }}" method="post" class="d-inline js-confirmable" data-confirm="¿Está seguro de eliminar el documento de {{ $d->remitente }}?">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-danger" title="Eliminar documento">
+                                <i class="bi bi-trash-fill"></i>
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         @endforeach

@@ -26,14 +26,53 @@ class Noticia extends Model
         'fecha_publicacion' => 'datetime',
     ];
 
+    // Agregar accessors automáticos
+    protected $appends = ['primera_imagen', 'imagenes', 'fecha_formateada', 'archivos'];
+
     // Método para obtener archivos como array
     public function getArchivosAttribute()
     {
         if (empty($this->imagen)) {
             return [];
         }
-        
+
         return array_filter(array_map('trim', explode(';', $this->imagen)));
+    }
+
+    // Método para obtener solo imágenes (filtra por extensión)
+    public function getImagenesAttribute()
+    {
+        if (empty($this->imagen)) {
+            return [];
+        }
+
+        $archivos = array_filter(array_map('trim', explode(';', $this->imagen)));
+        return array_filter($archivos, function($archivo) {
+            $ext = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
+            return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
+        });
+    }
+
+    // Método para obtener la primera imagen disponible
+    public function getPrimeraImagenAttribute()
+    {
+        $imagenes = $this->imagenes;
+        return count($imagenes) > 0 ? reset($imagenes) : null;
+    }
+
+    // Método para obtener fecha formateada en español
+    public function getFechaFormateadaAttribute()
+    {
+        if (!$this->fecha_publicacion) {
+            return null;
+        }
+
+        // Parsear si viene como string desde stored procedure
+        $fecha = is_string($this->fecha_publicacion)
+            ? \Carbon\Carbon::parse($this->fecha_publicacion)
+            : $this->fecha_publicacion;
+
+        return $fecha->format('d/m/Y');
     }
 
     // Método para verificar si tiene archivos

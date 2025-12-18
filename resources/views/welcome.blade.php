@@ -122,7 +122,7 @@
       </div>
     </div>
   </section>
-
+ <!--
   {{-- ====== GALERÍA DE INSTALACIONES ====== --}}
   <section class="galeria py-5">
     <div class="container">
@@ -158,8 +158,7 @@
       </div>
     </div>
   </section>
-
-  <!-- Modal Galería -->
+ Modal Galería 
   <div class="modal fade" id="galeriaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content bg-dark text-white position-relative">
@@ -168,7 +167,7 @@
       </div>
     </div>
   </div>
-</div>
+</div>-->
 @endsection
 
 @push('scripts')

@@ -29,35 +29,19 @@
     @else
         <div class="row g-3 g-md-4">
             @foreach($noticias as $n)
-                @php
-                    $fechaPublicacion = is_string($n->fecha_publicacion ?? null)
-                        ? \Carbon\Carbon::parse($n->fecha_publicacion)
-                        : ($n->fecha_publicacion ?? null);
-                    $tz = config('app.timezone', 'America/Lima');
-                    $autor = $n->autor ?? $n->nombre_usuario ?? null;
-
-                    // Extraer primera imagen si existe
-                    $primeraImagen = null;
-                    if (!empty($n->imagen)) {
-                        $archivos = array_filter(array_map('trim', explode(';', $n->imagen)));
-                        foreach ($archivos as $archivo) {
-                            $ext = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
-                            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                                $primeraImagen = $archivo;
-                                break;
-                            }
-                        }
-                    }
-                @endphp
                 <div class="col-12 col-md-6 col-lg-4">
                     <article class="card news-card-v2 h-100 hover-lift border-0 shadow-sm">
                         {{-- Imagen destacada o placeholder --}}
                         <div class="news-card-image-wrapper">
-                            @if($primeraImagen)
-                                <img src="{{ asset('storage/' . ltrim($primeraImagen, '/')) }}"
+                            @if($n->primera_imagen && file_exists(public_path('storage/' . ltrim($n->primera_imagen, '/'))))
+                                <img src="{{ asset('storage/' . ltrim($n->primera_imagen, '/')) }}"
                                      class="news-card-image"
                                      alt="{{ $n->titulo }}"
-                                     loading="lazy">
+                                     loading="lazy"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="news-card-placeholder" style="display: none;">
+                                    <i class="bi bi-newspaper display-1 text-white opacity-75"></i>
+                                </div>
                             @else
                                 <div class="news-card-placeholder">
                                     <i class="bi bi-newspaper display-1 text-white opacity-75"></i>
@@ -74,18 +58,18 @@
 
                         <div class="card-body d-flex flex-column">
                             {{-- Fecha y autor --}}
-                            @if($fechaPublicacion instanceof \Carbon\Carbon)
+                            @if($n->fecha_formateada)
                                 <div class="news-card-meta mb-2">
                                     <small class="text-muted d-flex align-items-center flex-wrap gap-2">
                                         <span>
                                             <i class="bi bi-calendar3 me-1"></i>
-                                            {{ $fechaPublicacion->setTimezone($tz)->format('d/m/Y') }}
+                                            {{ $n->fecha_formateada }}
                                         </span>
-                                        @if($autor)
+                                        @if($n->autor ?? $n->nombre_usuario ?? null)
                                             <span class="text-muted">•</span>
                                             <span>
                                                 <i class="bi bi-person me-1"></i>
-                                                {{ $autor }}
+                                                {{ $n->autor ?? $n->nombre_usuario }}
                                             </span>
                                         @endif
                                     </small>

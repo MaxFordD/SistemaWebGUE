@@ -1,0 +1,36 @@
+/*
+ * SistemaWebGUE - Hoja de estilos principal
+ * Este archivo importa todos los estilos en el orden correcto
+ */
+
+/* 1. Variables y sistema de diseño */
+@import '../../public/css/variables.css';
+
+/* 2. Estilos base y reset */
+@import '../../public/css/base.css';
+
+/* 3. Componentes reutilizables */
+@import '../../public/css/ui-components.css';
+@import '../../public/css/components.css';
+
+/* 4. Layout principal */
+@import '../../public/css/navbar.css';
+@import '../../public/css/footer.css';
+@import '../../public/css/waves.css';
+@import '../../public/css/layout.css';
+
+/* 5. Páginas específicas */
+@import '../../public/css/login.css';
+@import '../../public/css/nosotros.css';
+@import '../../public/css/noticia-show.css';
+@import '../../public/css/comite-directivo.css';
+
+/* 6. Panel de administración */
+@import '../../public/css/admin-enhanced.css';
+@import '../../public/css/admin-comite-directivo.css';
+
+/*
+ * NOTA: Este archivo actualmente importa CSS desde public/css/
+ * En el futuro, se recomienda migrar todos los archivos CSS a resources/css/
+ * para aprovechar mejor las capacidades de Vite (minificación, autoprefixer, etc.)
+ */

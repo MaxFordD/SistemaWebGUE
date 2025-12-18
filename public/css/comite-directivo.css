@@ -157,13 +157,71 @@
   color: #495057;
 }
 
-.modal-header {
-  background: linear-gradient(135deg, var(--gue-primary, #7a1a0c) 0%, #a02515 100%);
-  color: white;
+/* Asegurar que los modales de biografía estén sobre TODO */
+.bio-modal-custom {
+  z-index: 1060 !important;
 }
 
-.modal-header .btn-close {
+/* Backdrop muy sutil para que el modal se vea nítido */
+.modal-backdrop.show {
+  z-index: 1055 !important;
+  opacity: 0.2 !important;  /* Reducido de 0.5 a 0.2 para mayor nitidez */
+  pointer-events: none !important;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Cuando hay un modal bio abierto, asegurar que el backdrop esté detrás */
+body.modal-open .modal-backdrop {
+  z-index: 1055 !important;
+  opacity: 0.2 !important;
+}
+
+/* Asegurar que el contenido del modal sea interactivo */
+.bio-modal-custom .modal-dialog {
+  position: relative;
+  z-index: 1061;
+  pointer-events: auto;
+}
+
+.bio-modal-custom .modal-content {
+  position: relative;
+  z-index: 1062;
+  pointer-events: auto;
+  background-color: #ffffff !important;
+  border: none;
+  box-shadow: 0 15px 60px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 12px;
+}
+
+.bio-modal-custom .modal-header {
+  background: linear-gradient(135deg, var(--gue-primary, #7a1a0c) 0%, #a02515 100%) !important;
+  color: white;
+  position: relative;
+  z-index: 1063;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.bio-modal-custom .modal-body {
+  position: relative;
+  z-index: 1063;
+  background-color: #ffffff !important;
+  color: #212529;
+}
+
+.bio-modal-custom .modal-footer {
+  position: relative;
+  z-index: 1063;
+  background-color: #ffffff !important;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.bio-modal-custom .modal-header .btn-close {
   filter: brightness(0) invert(1);
+  opacity: 1;
+  z-index: 1064;
+  position: relative;
 }
 
 /* Animación de filtrado */

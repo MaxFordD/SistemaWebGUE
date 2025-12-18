@@ -3,13 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\MesaParte;
+use App\Services\ArchivoService;
+use App\Jobs\EnviarNotificacionMesaPartes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
 class MesaPartesController extends Controller
 {
+    protected $archivoService;
+
+    public function __construct(ArchivoService $archivoService)
+    {
+        $this->archivoService = $archivoService;
+    }
     /**
      * Mostrar el formulario de registro de documentos
      */
@@ -34,17 +41,15 @@ class MesaPartesController extends Controller
             'correo' => 'nullable|email'
         ]);
 
+        // Usar servicio para guardar archivos
         $storedPaths = [];
         $originalNames = [];
 
         if ($request->hasFile('archivos')) {
-            foreach ($request->file('archivos') as $archivo) {
-                if (!$archivo) { continue; }
-                $nombreOriginal = $archivo->getClientOriginalName();
-                $path = $archivo->storeAs('mesa_partes', $nombreOriginal, 'public');
-                $storedPaths[] = $path; // relativo dentro de storage/app/public
-                $originalNames[] = $nombreOriginal;
-            }
+            [$storedPaths, $originalNames] = $this->archivoService->guardarMultiples(
+                $request->file('archivos'),
+                'mesa_partes'
+            );
         }
 
         // Guardar en la base de datos
@@ -54,43 +59,26 @@ class MesaPartesController extends Controller
             'correo' => $request->correo,
             'asunto' => $request->asunto,
             'detalle' => $request->detalle,
-            // Si existe una sola columna 'archivo', concatenamos rutas separadas por ';'
-            'archivo' => count($storedPaths) ? ('/storage/' . implode('; /storage/', $storedPaths)) : null,
+            'archivo' => $this->archivoService->concatenarRutas($storedPaths),
             'tipo_documento_id' => $request->tipo_documento_id,
             'estado' => 'Pendiente',
         ]);
 
-        try {
-            // ✅ 1. Correo al remitente
-            if ($request->filled('correo')) {
-                Mail::html("\n                <p>Estimado/a <b>{$request->remitente}</b>,</p>\n                <p>Su documento con asunto <b>'{$request->asunto}'</b> fue recibido correctamente en la Mesa de Partes.</p>\n                <p>Gracias por su envío.<br><br>IE JFSC</p>\n            ", function ($msg) use ($request, $storedPaths, $originalNames) {
-                    $msg->to($request->correo)
-                        ->subject('Confirmación de recepción - Mesa de Partes IE JFSC');
+        // Obtener nombre del tipo de documento
+        $tipoDocumento = DB::table('Tipos_Documento')
+            ->where('tipo_id', $request->tipo_documento_id)
+            ->value('nombre');
 
-                    foreach ($storedPaths as $i => $path) {
-                        $msg->attach(storage_path('app/public/' . $path), [
-                            'as' => $originalNames[$i] ?? basename($path),
-                        ]);
-                    }
-                });
-            }
+        // Enviar correos de forma asíncrona
+        EnviarNotificacionMesaPartes::dispatch(
+            $mesa,
+            $storedPaths,
+            $originalNames,
+            $request->correo,
+            $tipoDocumento
+        );
 
-            // ✅ 2. Correo al administrador
-            Mail::html("\n            <p><b>Nuevo documento recibido en Mesa de Partes:</b></p>\n            <p>\n                <b>Remitente:</b> {$request->remitente}<br>\n                <b>Asunto:</b> {$request->asunto}<br>\n                <b>Detalle:</b> {$request->detalle}<br>\n                <b>Tipo de documento:</b> {$request->nombre}<br>\n                <b>Fecha:</b> " . now()->format('d/m/Y H:i:s') . "\n            </p>\n        ", function ($msg) use ($request, $storedPaths, $originalNames) {
-                $msg->to('oscarrojas24200@gmail.com')
-                    ->subject('📬 Nuevo documento recibido - Mesa de Partes');
-
-                foreach ($storedPaths as $i => $path) {
-                    $msg->attach(storage_path('app/public/' . $path), [
-                        'as' => $originalNames[$i] ?? basename($path),
-                    ]);
-                }
-            });
-        } catch (\Exception $e) {
-            Log::error('Error al enviar correos de Mesa de Partes: ' . $e->getMessage());
-        }
-
-        return redirect()->route('mesa.create')->with('success', 'Documento enviado y correos notificados correctamente.');
+        return redirect()->route('mesa.create')->with('success', 'Documento enviado correctamente. Las notificaciones serán enviadas por correo.');
     }
 
     // Mostrar lista de documentos (para el administrador)
@@ -130,6 +118,55 @@ class MesaPartesController extends Controller
 
         return redirect()->route('admin.mesa.index')
             ->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada.');
+    }
+
+    /**
+     * Eliminar un documento de Mesa de Partes
+     */
+    public function destroy($id)
+    {
+        try {
+            // Intentar obtener el documento para eliminar archivos físicos
+            $documento = DB::select('EXEC sp_MesaPartes_ObtenerPorId ?', [$id]);
+
+            if (!empty($documento) && !empty($documento[0]->archivo)) {
+                // Usar servicio para eliminar archivos físicos
+                $this->archivoService->eliminarArchivos($documento[0]->archivo);
+            }
+
+            // Intentar usar stored procedure si existe, sino usar Eloquent
+            try {
+                $sql = "
+                    DECLARE @resultado INT, @mensaje VARCHAR(200);
+                    EXEC sp_MesaPartes_Eliminar
+                        @documento_id = ?,
+                        @resultado = @resultado OUTPUT,
+                        @mensaje = @mensaje OUTPUT;
+                    SELECT resultado=@resultado, mensaje=@mensaje;
+                ";
+                $out = DB::select($sql, [$id]);
+                $resultado = (int)($out[0]->resultado ?? 0);
+                $mensaje = $out[0]->mensaje ?? 'Documento eliminado correctamente';
+
+                if ($resultado === 1) {
+                    return redirect()->route('admin.mesa.index')->with('success', $mensaje);
+                } else {
+                    return redirect()->route('admin.mesa.index')->with('error', $mensaje);
+                }
+            } catch (\Exception $e) {
+                // Si no existe el SP, usar Eloquent
+                $mesaParte = MesaParte::find($id);
+                if ($mesaParte) {
+                    $mesaParte->delete();
+                    return redirect()->route('admin.mesa.index')->with('success', 'Documento eliminado correctamente');
+                } else {
+                    return redirect()->route('admin.mesa.index')->with('error', 'Documento no encontrado');
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar documento de Mesa de Partes: ' . $e->getMessage());
+            return redirect()->route('admin.mesa.index')->with('error', 'Error al eliminar el documento');
+        }
     }
 }
 

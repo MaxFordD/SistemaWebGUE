@@ -39,8 +39,8 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{{ route('admin.usuario-rol.show', $u->usuario_id) }}" class="btn btn-sm btn-primary">
-                                    Gestionar Roles
+                                <a href="{{ route('admin.usuario-rol.show', $u->usuario_id) }}" class="btn btn-sm btn-primary" title="Gestionar roles del usuario">
+                                    <i class="bi bi-shield-check me-1"></i>Gestionar Roles
                                 </a>
                             </td>
                         </tr>

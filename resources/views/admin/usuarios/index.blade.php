@@ -6,7 +6,9 @@
 <div class="py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0">Gestión de Usuarios</h1>
-        <a href="{{ route('admin.usuarios.create') }}" class="btn btn-primary">Crear Usuario</a>
+        <a href="{{ route('admin.usuarios.create') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill me-2"></i>Crear Usuario
+        </a>
     </div>
 
     @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
@@ -47,16 +49,18 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ route('admin.usuarios.edit', $u->usuario_id) }}" class="btn btn-outline-primary">
-                                        Editar
+                                <div class="d-flex gap-1">
+                                    <a href="{{ route('admin.usuarios.edit', $u->usuario_id) }}" class="btn btn-warning btn-sm" title="Editar usuario">
+                                        <i class="bi bi-pencil-square"></i>
                                     </a>
-                                    <a href="{{ route('admin.usuarios.change-password', $u->usuario_id) }}" class="btn btn-outline-warning">
-                                        Contraseña
+                                    <a href="{{ route('admin.usuarios.change-password', $u->usuario_id) }}" class="btn btn-info btn-sm text-white" title="Cambiar contraseña">
+                                        <i class="bi bi-key-fill"></i>
                                     </a>
-                                    <form action="{{ route('admin.usuarios.destroy', $u->usuario_id) }}" method="POST" onsubmit="return confirm('¿Eliminar este usuario?');" style="display: inline;">
+                                    <form action="{{ route('admin.usuarios.destroy', $u->usuario_id) }}" method="POST" onsubmit="return confirm('¿Está seguro de eliminar el usuario {{ $u->nombre_usuario }}?');" style="display: inline;">
                                         @csrf @method('DELETE')
-                                        <button class="btn btn-outline-danger">Eliminar</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar usuario">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>

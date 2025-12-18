@@ -55,14 +55,21 @@ Route::get('/noticias/{id}', [NoticiaController::class, 'show'])
 
 /*
 |--------------------------------------------------------------------------
-| Administración (requiere autenticación y rol Director/Administrador)
+| Administración - Dashboard (todos los usuarios autenticados)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+	Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Administración - Solo Director y Administrador (control total)
 |--------------------------------------------------------------------------
 */
 
 Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->name('admin.')->group(function () {
-	// Dashboard
-	Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
-
 	/*
 	|--------------------------------------------------------------------------
 	| Roles (CRUD basado en SP)
@@ -118,16 +125,6 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 
 	/*
 	|--------------------------------------------------------------------------
-	| Administración - Mesa de Partes
-	|--------------------------------------------------------------------------
-	*/
-	Route::get('/mesa-partes', [MesaPartesController::class, 'index'])->name('mesa.index');
-	Route::get('/mesa-partes/{id}', [MesaPartesController::class, 'show'])->name('mesa.show');
-	Route::post('/mesa-partes/{id}/estado', [MesaPartesController::class, 'updateEstado'])->name('mesa.estado');
-	Route::delete('/mesa-partes/{id}', [MesaPartesController::class, 'destroy'])->name('mesa.destroy');
-
-	/*
-	|--------------------------------------------------------------------------
 	| Administración - Comité Directivo
 	|--------------------------------------------------------------------------
 	*/
@@ -143,11 +140,24 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 
 /*
 |--------------------------------------------------------------------------
-| Noticias (crear/publicar) - Editor, Administrador y Director
+| Mesa de Partes - Director, Administrador y MesaPartes
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:Editor,Administrador,Director'])->group(function () {
+Route::middleware(['auth', 'role:Director,Administrador,MesaPartes'])->prefix('admin')->name('admin.')->group(function () {
+	Route::get('/mesa-partes', [MesaPartesController::class, 'index'])->name('mesa.index');
+	Route::get('/mesa-partes/{id}', [MesaPartesController::class, 'show'])->name('mesa.show');
+	Route::post('/mesa-partes/{id}/estado', [MesaPartesController::class, 'updateEstado'])->name('mesa.estado');
+	Route::delete('/mesa-partes/{id}', [MesaPartesController::class, 'destroy'])->name('mesa.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Noticias (crear/publicar) - Secretaria, Editor, Administrador y Director
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:Secretaria,Editor,Administrador,Director'])->group(function () {
 	Route::get('/noticias/create', [NoticiaController::class, 'create'])->name('noticias.create');
 	Route::post('/noticias', [NoticiaController::class, 'store'])->name('noticias.store');
 	Route::get('/noticias/{id}/edit', [NoticiaController::class, 'edit'])->whereNumber('id')->name('noticias.edit');

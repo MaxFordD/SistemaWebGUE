@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Noticia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -18,6 +19,16 @@ class NoticiaController extends Controller
         try {
             // Trae solo noticias activas ordenadas desc por fecha
             $rows = collect(DB::select('EXEC sp_Noticia_ListarActivas'));
+
+            // Convertir stdClass a instancias del modelo Noticia para usar accessors
+            $rows = $rows->map(function($row) {
+                $noticia = new Noticia();
+                foreach (get_object_vars($row) as $key => $value) {
+                    $noticia->$key = $value;
+                }
+                $noticia->exists = true; // Marcar como existente en BD
+                return $noticia;
+            });
 
             // Paginación en memoria
             $perPage = 10;
@@ -49,16 +60,17 @@ class NoticiaController extends Controller
                 return redirect()->route('noticias.index')->with('error', 'Noticia no encontrada.');
             }
 
-            // Convertir el resultado a objeto stdClass
-            $noticia = (object)$resultado[0];
-            
+            // Convertir stdClass a instancia del modelo Noticia para usar accessors
+            $noticia = new Noticia();
+            foreach (get_object_vars($resultado[0]) as $key => $value) {
+                $noticia->$key = $value;
+            }
+            $noticia->exists = true; // Marcar como existente en BD
+
             // Asegurar que el autor esté disponible
             if (empty($noticia->autor) && !empty($noticia->nombre_usuario)) {
                 $noticia->autor = $noticia->nombre_usuario;
             }
-
-            // Log para debugging
-            Log::info('Noticia cargada:', (array)$noticia);
 
             return response()
                 ->view('noticias.show', compact('noticia'))
@@ -103,12 +115,20 @@ class NoticiaController extends Controller
             foreach ($request->file('archivos') as $archivo) {
                 try {
                     $ruta = $archivo->store('noticias', 'public');
+
+                    // Verificar que el archivo realmente se guardó
+                    if (!Storage::disk('public')->exists($ruta)) {
+                        throw new \Exception("El archivo no se guardó correctamente: $ruta");
+                    }
+
                     $rutasArchivos[] = $ruta;
+                    Log::info("Archivo guardado exitosamente: $ruta");
                 } catch (\Exception $e) {
                     // Si falla la subida, eliminar archivos ya subidos
                     foreach ($rutasArchivos as $rutaEliminar) {
                         Storage::disk('public')->delete($rutaEliminar);
                     }
+                    Log::error('Error al subir archivo: ' . $e->getMessage());
                     return back()->withInput()->with('error', 'Error al subir archivo: ' . $e->getMessage());
                 }
             }
@@ -225,11 +245,19 @@ class NoticiaController extends Controller
             foreach ($request->file('archivos') as $archivo) {
                 try {
                     $ruta = $archivo->store('noticias', 'public');
+
+                    // Verificar que el archivo realmente se guardó
+                    if (!Storage::disk('public')->exists($ruta)) {
+                        throw new \Exception("El archivo no se guardó correctamente: $ruta");
+                    }
+
                     $rutasArchivos[] = $ruta;
+                    Log::info("Archivo actualizado exitosamente: $ruta");
                 } catch (\Exception $e) {
                     foreach ($rutasArchivos as $rutaEliminar) {
                         Storage::disk('public')->delete($rutaEliminar);
                     }
+                    Log::error('Error al subir archivo en update: ' . $e->getMessage());
                     return back()->withInput()->with('error', 'Error al subir archivo: ' . $e->getMessage());
                 }
             }

@@ -124,41 +124,50 @@
               </div>
             </div>
           </div>
-
-          <!-- Modal de Biografía -->
-          @if($directivo->biografia && !$isPendiente)
-          <div class="modal fade" id="bioModal{{ $directivo->directivo_id }}" tabindex="-1"
-               aria-labelledby="bioModalLabel{{ $directivo->directivo_id }}" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title" id="bioModalLabel{{ $directivo->directivo_id }}">
-                    {{ $directivo->nombre_completo }}
-                  </h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                  <p class="mb-2"><strong>Cargo:</strong> {{ $directivo->cargo }}</p>
-                  @if($directivo->grado_cargo)
-                    <p class="mb-3"><strong>Grado:</strong> {{ $directivo->grado_cargo }}</p>
-                  @endif
-                  <hr>
-                  <div class="biografia-content">
-                    {{ $directivo->biografia }}
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          @endif
         @endforeach
       </div>
     @endif
   </div>
 </section>
+
+<!-- Modales de Biografía (fuera del grid para evitar problemas de z-index) -->
+@foreach($directivos as $directivo)
+  @php
+    $isPendiente = stripos($directivo->nombre_completo, 'pendiente') !== false;
+  @endphp
+  @if($directivo->biografia && !$isPendiente)
+  <div class="modal fade bio-modal-custom" id="bioModal{{ $directivo->directivo_id }}" tabindex="-1"
+       aria-labelledby="bioModalLabel{{ $directivo->directivo_id }}" aria-hidden="true"
+       data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="bioModalLabel{{ $directivo->directivo_id }}">
+            <i class="bi bi-person-badge me-2"></i>{{ $directivo->nombre_completo }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2"><strong><i class="bi bi-briefcase me-2 text-primary"></i>Cargo:</strong> {{ $directivo->cargo }}</p>
+          @if($directivo->grado_cargo)
+            <p class="mb-3"><strong><i class="bi bi-mortarboard-fill me-2 text-primary"></i>Grado:</strong> {{ $directivo->grado_cargo }}</p>
+          @endif
+          <hr>
+          <div class="biografia-content">
+            <h6 class="fw-bold mb-2"><i class="bi bi-file-text me-2 text-primary"></i>Biografía</h6>
+            <p style="text-align: justify; line-height: 1.6;">{{ $directivo->biografia }}</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+@endforeach
 @endsection
 
 @push('scripts')
@@ -199,6 +208,38 @@
             }
           }
         });
+      });
+    });
+
+    // Fix para modales de biografía con backdrop sutil
+    const bioModals = document.querySelectorAll('.bio-modal-custom');
+
+    bioModals.forEach(modal => {
+      // Cuando se muestra el modal
+      modal.addEventListener('shown.bs.modal', function (e) {
+        // Asegurar que el backdrop esté debajo del modal con opacidad reducida
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+          backdrop.style.zIndex = '1055';
+          backdrop.style.opacity = '0.2';  // Backdrop muy sutil
+          backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        }
+        // El modal ya tiene z-index 1060 en CSS
+        this.style.zIndex = '1060';
+      });
+
+      // Limpieza al cerrar
+      modal.addEventListener('hidden.bs.modal', function (e) {
+        setTimeout(() => {
+          // Limpiar cualquier backdrop residual
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          backdrops.forEach(backdrop => backdrop.remove());
+
+          // Restaurar body
+          document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
+        }, 100);
       });
     });
   });

@@ -53,7 +53,9 @@
                     <input type="email" name="correo" class="form-control" maxlength="100">
                 </div>
                 <div class="col-12 col-md-2 d-flex align-items-end">
-                    <button class="btn btn-primary w-100">Registrar</button>
+                    <button class="btn btn-primary w-100">
+                        <i class="bi bi-person-plus-fill me-2"></i>Registrar
+                    </button>
                 </div>
             </form>
         </div>
@@ -91,13 +93,15 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $p->persona_id }}">
-                                        Editar
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $p->persona_id }}" title="Editar persona">
+                                        <i class="bi bi-pencil-square"></i>
                                     </button>
-                                    <form action="{{ route('admin.personas.destroy', $p->persona_id) }}" method="POST" onsubmit="return confirm('¿Eliminar esta persona?');" style="display: inline;">
+                                    <form action="{{ route('admin.personas.destroy', $p->persona_id) }}" method="POST" onsubmit="return confirm('¿Está seguro de eliminar a {{ $p->nombres }} {{ $p->apellidos }}?');" style="display: inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Eliminar persona">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>

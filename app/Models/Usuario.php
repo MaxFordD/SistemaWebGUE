@@ -16,15 +16,28 @@ class Usuario extends Authenticatable
     protected $fillable = ['persona_id', 'nombre_usuario', 'contrasena', 'estado'];
     protected $hidden = ['contrasena'];
 
+    // Especificar el campo de password para autenticación
     public function getAuthPassword()
     {
         return $this->contrasena;
     }
 
-    public function setContrasenaAttribute($value)
+    // Especificar el campo usado para el username (para Laravel)
+    public function getAuthIdentifierName()
     {
-        $this->attributes['contrasena'] = Hash::make($value);
+        return 'nombre_usuario';
     }
+
+    public function getAuthIdentifier()
+    {
+        return $this->nombre_usuario;
+    }
+
+    // COMENTAR ESTE MUTATOR SI INSERTAMOS HASHES MANUALMENTE EN LA BD
+    // public function setContrasenaAttribute($value)
+    // {
+    //     $this->attributes['contrasena'] = Hash::make($value);
+    // }
 
     // Relación con Persona
     public function persona()

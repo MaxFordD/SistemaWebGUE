@@ -13,10 +13,6 @@
 @endpush
 
 @section('content')
-@php
-$tz = config('app.timezone', 'America/Lima');
-@endphp
-
 <div class="container py-4">
     {{-- Breadcrumb --}}
     <nav aria-label="breadcrumb" class="mb-4">
@@ -45,20 +41,23 @@ $tz = config('app.timezone', 'America/Lima');
                     </div>
                 </div>
 
-                @if(!empty($noticia->fecha_publicacion))
+                @if($noticia->fecha_publicacion)
                 <div class="vr d-none d-md-block"></div>
                 <div class="d-flex align-items-center">
                     <i class="bi bi-calendar-event fs-5 me-2"></i>
                     <div>
                         <small class="text-muted d-block" style="font-size: 0.75rem;">Publicado</small>
-                        <strong class="text-dark">{{ \Carbon\Carbon::parse($noticia->fecha_publicacion)->setTimezone($tz)->translatedFormat('d \d\e F Y') }}</strong>
+                        @php
+                        $fecha = is_string($noticia->fecha_publicacion) ? \Carbon\Carbon::parse($noticia->fecha_publicacion) : $noticia->fecha_publicacion;
+                        @endphp
+                        <strong class="text-dark">{{ $fecha->translatedFormat('d \d\e F Y') }}</strong>
                     </div>
                 </div>
                 <div class="d-flex align-items-center">
                     <i class="bi bi-clock fs-5 me-2"></i>
                     <div>
                         <small class="text-muted d-block" style="font-size: 0.75rem;">Hora</small>
-                        <strong class="text-dark">{{ \Carbon\Carbon::parse($noticia->fecha_publicacion)->setTimezone($tz)->format('H:i') }}</strong>
+                        <strong class="text-dark">{{ $fecha->format('H:i') }}</strong>
                     </div>
                 </div>
                 @endif
@@ -74,13 +73,7 @@ $tz = config('app.timezone', 'America/Lima');
                    aria-label="Compartir en Facebook">
                     <i class="bi bi-facebook me-1"></i>Facebook
                 </a>
-                <a class="btn btn-sm btn-outline-info rounded-pill"
-                   href="https://twitter.com/intent/tweet?url={{ urlencode(request()->fullUrl()) }}&text={{ urlencode($noticia->titulo) }}"
-                   target="_blank"
-                   rel="noopener"
-                   aria-label="Compartir en Twitter">
-                    <i class="bi bi-twitter-x me-1"></i>Twitter
-                </a>
+
                 <a class="btn btn-sm btn-outline-success rounded-pill"
                    href="https://api.whatsapp.com/send?text={{ urlencode($noticia->titulo.' '.request()->fullUrl()) }}"
                    target="_blank"
@@ -91,50 +84,55 @@ $tz = config('app.timezone', 'America/Lima');
             </div>
         </header>
 
-        @php
-        $archivos = [];
-        if (!empty($noticia->imagen)) {
-            $archivos = array_filter(array_map('trim', explode(';', $noticia->imagen)));
-        }
-        @endphp
-
         {{-- Galería de imágenes principal --}}
-        @if(count($archivos) > 0)
+        @if(count($noticia->imagenes) > 0)
         @php
-        $imagenes = array_filter($archivos, function($archivo) {
-            $ext = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
-            return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-        });
-        $documentos = array_diff($archivos, $imagenes);
+        $documentos = array_diff($noticia->archivos, $noticia->imagenes);
         @endphp
-
-        @if(count($imagenes) > 0)
         <div class="mb-4">
-            @if(count($imagenes) === 1)
+            @if(count($noticia->imagenes) === 1)
             {{-- Imagen única destacada --}}
+            @php
+            $rutaImagen = 'storage/' . ltrim($noticia->primera_imagen, '/');
+            $existeImagen = file_exists(public_path($rutaImagen));
+            @endphp
+            @if($existeImagen)
             <div class="position-relative rounded-4 overflow-hidden shadow-lg" style="max-height: 600px; background-color: #f8f9fa;">
-                <img src="{{ asset('storage/' . ltrim($imagenes[array_key_first($imagenes)], '/')) }}"
+                <img src="{{ asset($rutaImagen) }}"
                      alt="{{ $noticia->titulo }}"
                      class="w-100"
-                     style="object-fit: contain; max-height: 600px;">
+                     style="object-fit: contain; max-height: 600px;"
+                     onerror="this.parentElement.style.display='none'">
             </div>
             @else
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>La imagen de esta noticia no está disponible.
+            </div>
+            @endif
+            @else
             {{-- Galería de múltiples imágenes --}}
+            @php
+            $imagenesExistentes = array_filter($noticia->imagenes, function($img) {
+                return file_exists(public_path('storage/' . ltrim($img, '/')));
+            });
+            @endphp
+            @if(count($imagenesExistentes) > 0)
             <div id="galeriaNoticia" class="carousel slide shadow-lg rounded-4 overflow-hidden" data-bs-ride="carousel" style="background-color: #f8f9fa;">
                 <div class="carousel-indicators">
-                    @foreach($imagenes as $index => $imagen)
+                    @foreach($imagenesExistentes as $index => $imagen)
                     <button type="button" data-bs-target="#galeriaNoticia" data-bs-slide-to="{{ $index }}"
                             class="{{ $index === 0 ? 'active' : '' }}" aria-current="{{ $index === 0 ? 'true' : 'false' }}"
                             aria-label="Imagen {{ $index + 1 }}"></button>
                     @endforeach
                 </div>
                 <div class="carousel-inner">
-                    @foreach($imagenes as $index => $imagen)
+                    @foreach($imagenesExistentes as $index => $imagen)
                     <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
                         <img src="{{ asset('storage/' . ltrim($imagen, '/')) }}"
                              class="d-block w-100"
                              alt="Imagen {{ $index + 1 }}"
-                             style="max-height: 600px; object-fit: contain;">
+                             style="max-height: 600px; object-fit: contain;"
+                             onerror="this.parentElement.style.display='none'">
                     </div>
                     @endforeach
                 </div>
@@ -147,12 +145,16 @@ $tz = config('app.timezone', 'America/Lima');
                     <span class="visually-hidden">Siguiente</span>
                 </button>
             </div>
+            @else
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>Las imágenes de esta noticia no están disponibles.
+            </div>
+            @endif
             <p class="text-center text-muted mt-2 small">
-                <i class="bi bi-images me-1"></i>{{ count($imagenes) }} {{ count($imagenes) === 1 ? 'imagen' : 'imágenes' }}
+                <i class="bi bi-images me-1"></i>{{ count($noticia->imagenes) }} {{ count($noticia->imagenes) === 1 ? 'imagen' : 'imágenes' }}
             </p>
             @endif
         </div>
-        @endif
         @endif
 
         {{-- Contenido del artículo --}}
@@ -208,34 +210,7 @@ $tz = config('app.timezone', 'America/Lima');
         </section>
         @endif
 
-        {{-- Miniaturas de galería (si hay múltiples imágenes) --}}
-        @if(isset($imagenes) && count($imagenes) > 1)
-        <section class="mb-4">
-            <h5 class="fw-bold mb-3">
-                <i class="bi bi-images me-2"></i>Galería de Imágenes
-            </h5>
-            <div class="row g-3">
-                @foreach($imagenes as $index => $imagen)
-                <div class="col-6 col-md-3">
-                    <a href="{{ asset('storage/' . ltrim($imagen, '/')) }}" target="_blank" class="d-block">
-                        <div class="position-relative rounded-3 overflow-hidden shadow-sm hover-shadow-lg transition" style="aspect-ratio: 1/1;">
-                            <img src="{{ asset('storage/' . ltrim($imagen, '/')) }}"
-                                 alt="Miniatura {{ $index + 1 }}"
-                                 class="w-100 h-100"
-                                 style="object-fit: cover;">
-                            <div class="position-absolute top-0 end-0 m-2">
-                                <span class="badge bg-dark bg-opacity-75">
-                                    <i class="bi bi-zoom-in"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </a>
-                </div>
-                @endforeach
-            </div>
-        </section>
-        @endif
-
+        
         {{-- Navegación y Acciones --}}
         <footer class="mt-5 pt-4 border-top">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">

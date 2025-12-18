@@ -23,15 +23,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-  <!-- Estilos del proyecto (orden importa para la cascada CSS) -->
-  <link rel="stylesheet" href="{{ asset('css/variables.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/base.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/ui-components.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/navbar.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/waves.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/footer.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/components.css') }}" />
-  <link rel="stylesheet" href="{{ asset('css/layout.css') }}" />
+  <!-- Vite: Compilación de assets (CSS y JS) -->
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
 
   @stack('styles')
 </head>
@@ -143,12 +136,14 @@
               ->map(fn($n) => mb_strtolower(trim($n)));
               }
 
-              // 5) Flags: Director es admin-like
+              // 5) Flags de permisos
               $isAdminLike = $rolesUser->contains(fn($r) => in_array($r, ['director','admin','administrador']));
-              $puedePublicar = $isAdminLike || $rolesUser->contains('editor');
+              $puedeMesaPartes = $isAdminLike || $rolesUser->contains('mesapartes');
+              $puedePublicar = $isAdminLike || $rolesUser->contains(fn($r) => in_array($r, ['editor','secretaria']));
               } catch (\Throwable $e) {
               $rolesUser = collect();
               $isAdminLike = false;
+              $puedeMesaPartes = false;
               $puedePublicar = false;
               }
               @endphp
@@ -187,8 +182,8 @@
                   <li><a class="dropdown-item" href="{{ route('admin.usuario-rol.index') }}"><i class="bi bi-shield-check me-2"></i>Asignar Roles</a></li>
                   @endif
 
-                  <!-- Mesa de Partes (solo Director/Admin/Administrador) -->
-                  @if($isAdminLike)
+                  <!-- Mesa de Partes (Director/Admin/Administrador/MesaPartes) -->
+                  @if($puedeMesaPartes)
                   <li>
                     <hr class="dropdown-divider">
                   </li>
@@ -206,7 +201,7 @@
                   <li class="dropdown-header">Contenidos</li>
 
 
-                  <!-- Publicar Noticia (Director/Admin/Administrador o Editor) -->
+                  <!-- Publicar Noticia (Director/Admin/Administrador/Editor/Secretaria) -->
                   @if($puedePublicar)
                   <li>
                     <a class="dropdown-item" href="{{ route('noticias.create') }}">
@@ -313,8 +308,80 @@
   </div>
 
   <footer class="site-footer" role="contentinfo">
-    <div class="container py-3 text-center">
-      <p class="mb-0">&copy; {{ date('Y') }} JOSE FAUSTINO SANCHEZ CARRION</p>
+    <div class="container py-5">
+      <div class="row g-4">
+        <!-- Columna 1: Información institucional + Enlaces -->
+        <div class="col-lg-3 col-md-6 col-12">
+          <h5 class="fw-bold mb-3 text-white">I.E. José Faustino Sánchez Carrión</h5>
+          <h6 class="fw-bold mb-3 text-white small">Enlaces Rápidos</h6>
+          <ul class="list-unstyled mb-0">
+            <li class="mb-2"><a href="{{ route('home') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Inicio</a></li>
+            <li class="mb-2"><a href="{{ route('nosotros') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Nosotros</a></li>
+            <li class="mb-2"><a href="{{ route('noticias.index') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Noticias</a></li>
+            <li class="mb-2"><a href="{{ route('comite-directivo') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Comité Directivo</a></li>
+            <li class="mb-2"><a href="{{ route('mesa.create') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Mesa de Partes</a></li>
+          </ul>
+        </div>
+
+        <!-- Columna 2: Información de contacto -->
+        <div class="col-lg-3 col-md-6 col-12">
+          <h6 class="fw-bold mb-3 text-white">Contacto</h6>
+          <ul class="list-unstyled footer-text small mb-0">
+            <li class="mb-2 d-flex align-items-start">
+              <i class="bi bi-geo-alt-fill text-warning me-2 mt-1 flex-shrink-0"></i>
+              <span>Av. Moche 990<br>Trujillo, La Libertad</span>
+            </li>
+            <li class="mb-2 d-flex align-items-center">
+              <i class="bi bi-telephone-fill text-warning me-2 flex-shrink-0"></i>
+              <span>927 803 520</span>
+            </li>
+            <li class="mb-2 d-flex align-items-center">
+              <i class="bi bi-envelope-fill text-warning me-2 flex-shrink-0"></i>
+              <a href="mailto:contacto@iejfsc.edu.pe" class="footer-link">contacto@iejfsc.edu.pe</a>
+            </li>
+            <li class="mb-2 d-flex align-items-center">
+              <i class="bi bi-clock-fill text-warning me-2 flex-shrink-0"></i>
+              <span>Lun - Vie: 8:00 AM - 3:00 PM</span>
+            </li>
+          </ul>
+
+          <!-- Redes Sociales -->
+          <div class="mt-3">
+            <h6 class="fw-bold mb-2 text-white small">Síguenos en Redes</h6>
+            <a href="https://www.facebook.com/share/17mn3mct7J/" target="_blank" rel="noopener noreferrer" class="btn btn-facebook d-inline-flex align-items-center gap-2" aria-label="Visítanos en Facebook">
+              <i class="bi bi-facebook fs-5"></i>
+              <span class="fw-semibold">Facebook</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Columna 3: Mapa -->
+        <div class="col-lg-6 col-md-12 col-12">
+          <h6 class="fw-bold mb-3 text-white">Nuestra Ubicación</h6>
+          <div class="footer-map">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.989019787752!2d-79.0267859!3d-8.122970199999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91ad3d7c75297dad%3A0x7dfdf768dab093b4!2sInstituci%C3%B3n%20Educativa%20Jos%C3%A9%20Faustino%20S%C3%A1nchez%20Carri%C3%B3n!5e0!3m2!1ses-419!2spe!4v1732636610000"
+              width="100%"
+              height="200"
+              style="border:0; border-radius: 8px;"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              title="Mapa de ubicación de I.E. José Faustino Sánchez Carrión">
+            </iframe>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4 border-light opacity-25">
+
+      <div class="row">
+        <div class="col-12 text-center">
+          <p class="footer-text small mb-0">
+            &copy; {{ date('Y') }} I.E. Emblemática José Faustino Sánchez Carrión - Todos los derechos reservados
+          </p>
+        </div>
+      </div>
     </div>
   </footer>
 
