@@ -2,12 +2,12 @@
 
 ## Configuracion Completada
 
-Este proyecto esta configurado para usar PHP 8.1 en Railway.
+Este proyecto esta configurado para usar PHP 8.2 en Railway.
 
 ### Archivos Creados
 
 1. **Procfile** - Define como Railway inicia la aplicacion
-2. **nixpacks.toml** - Especifica PHP 8.1 y comandos de build
+2. **nixpacks.toml** - Especifica PHP 8.2 y comandos de build
 3. **railway.sh** - Script de deployment (opcional)
 4. **.railwayignore** - Archivos excluidos del deployment
 
@@ -144,7 +144,7 @@ Solucion: Verifica que APP_URL este correctamente configurado con tu dominio de 
 
 ## Notas Importantes
 
-- **PHP Version**: El proyecto usara PHP 8.1 como se especifica en `nixpacks.toml`
+- **PHP Version**: El proyecto usara PHP 8.2 como se especifica en `nixpacks.toml`
 - **Composer**: Las dependencias se instalan automaticamente durante el build
 - **Cache**: Laravel cachea configuracion, rutas y vistas durante el build
 - **Logs**: Los logs se pueden ver en Railway Dashboard > Deploy Logs
