@@ -17,7 +17,7 @@ class ComiteDirectivoController extends Controller
     {
         try {
             // Listar solo directivos activos
-            $directivos = collect(DB::select('EXEC sp_ComiteDirectivo_Listar @solo_activos = 1'));
+            $directivos = collect(DB::select('CALL sp_ComiteDirectivo_Listar(?)', [1]));
 
             return view('admin.comite-directivo.index', compact('directivos'));
         } catch (\Exception $e) {
@@ -68,22 +68,11 @@ class ComiteDirectivoController extends Controller
         }
 
         try {
-            $sql = "
-                DECLARE @resultado INT, @mensaje VARCHAR(200);
-                EXEC sp_ComiteDirectivo_Insertar
-                    @nombre_completo = ?,
-                    @cargo = ?,
-                    @grado_cargo = ?,
-                    @foto = ?,
-                    @biografia = ?,
-                    @orden = ?,
-                    @estado = ?,
-                    @resultado = @resultado OUTPUT,
-                    @mensaje = @mensaje OUTPUT;
-                SELECT resultado = @resultado, mensaje = @mensaje;
-            ";
+            // Inicializar variables de salida
+            DB::statement('SET @resultado = 0, @mensaje = ""');
 
-            $out = DB::select($sql, [
+            // Llamar al procedimiento
+            DB::statement('CALL sp_ComiteDirectivo_Insertar(?, ?, ?, ?, ?, ?, ?, @resultado, @mensaje)', [
                 $request->input('nombre_completo'),
                 $request->input('cargo'),
                 $request->input('grado_cargo'),
@@ -93,6 +82,8 @@ class ComiteDirectivoController extends Controller
                 $request->input('estado'),
             ]);
 
+            // Obtener resultados
+            $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $resultado = (int)($out[0]->resultado ?? 0);
             $mensaje   = (string)($out[0]->mensaje ?? 'Sin mensaje');
 
@@ -124,7 +115,7 @@ class ComiteDirectivoController extends Controller
     public function edit($id)
     {
         try {
-            $resultado = DB::select('EXEC sp_ComiteDirectivo_ObtenerPorId ?', [(int)$id]);
+            $resultado = DB::select('CALL sp_ComiteDirectivo_ObtenerPorId(?)', [(int)$id]);
 
             if (empty($resultado)) {
                 return redirect()->route('admin.comite-directivo.index')->with('error', 'Directivo no encontrado.');
@@ -162,7 +153,7 @@ class ComiteDirectivoController extends Controller
         ]);
 
         // Obtener directivo actual para manejar foto
-        $directivoActual = DB::select('EXEC sp_ComiteDirectivo_ObtenerPorId ?', [(int)$id]);
+        $directivoActual = DB::select('CALL sp_ComiteDirectivo_ObtenerPorId(?)', [(int)$id]);
         if (empty($directivoActual)) {
             return redirect()->route('admin.comite-directivo.index')->with('error', 'Directivo no encontrado.');
         }
@@ -184,23 +175,11 @@ class ComiteDirectivoController extends Controller
         }
 
         try {
-            $sql = "
-                DECLARE @resultado INT, @mensaje VARCHAR(200);
-                EXEC sp_ComiteDirectivo_Actualizar
-                    @directivo_id = ?,
-                    @nombre_completo = ?,
-                    @cargo = ?,
-                    @grado_cargo = ?,
-                    @foto = ?,
-                    @biografia = ?,
-                    @orden = ?,
-                    @estado = ?,
-                    @resultado = @resultado OUTPUT,
-                    @mensaje = @mensaje OUTPUT;
-                SELECT resultado = @resultado, mensaje = @mensaje;
-            ";
+            // Inicializar variables de salida
+            DB::statement('SET @resultado = 0, @mensaje = ""');
 
-            $out = DB::select($sql, [
+            // Llamar al procedimiento
+            DB::statement('CALL sp_ComiteDirectivo_Actualizar(?, ?, ?, ?, ?, ?, ?, ?, @resultado, @mensaje)', [
                 (int)$id,
                 $request->input('nombre_completo'),
                 $request->input('cargo'),
@@ -211,6 +190,8 @@ class ComiteDirectivoController extends Controller
                 $request->input('estado'),
             ]);
 
+            // Obtener resultados
+            $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $resultado = (int)($out[0]->resultado ?? 0);
             $mensaje   = (string)($out[0]->mensaje ?? 'Sin mensaje');
 
@@ -242,16 +223,14 @@ class ComiteDirectivoController extends Controller
     public function destroy($id)
     {
         try {
-            $sql = "
-                DECLARE @resultado INT, @mensaje VARCHAR(200);
-                EXEC sp_ComiteDirectivo_Eliminar
-                    @directivo_id = ?,
-                    @resultado = @resultado OUTPUT,
-                    @mensaje = @mensaje OUTPUT;
-                SELECT resultado = @resultado, mensaje = @mensaje;
-            ";
+            // Inicializar variables de salida
+            DB::statement('SET @resultado = 0, @mensaje = ""');
 
-            $out = DB::select($sql, [(int)$id]);
+            // Llamar al procedimiento
+            DB::statement('CALL sp_ComiteDirectivo_Eliminar(?, @resultado, @mensaje)', [(int)$id]);
+
+            // Obtener resultados
+            $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $resultado = (int)($out[0]->resultado ?? 0);
             $mensaje   = (string)($out[0]->mensaje ?? 'Sin mensaje');
 
@@ -274,7 +253,7 @@ class ComiteDirectivoController extends Controller
     {
         try {
             // Listar solo directivos inactivos
-            $inactivos = collect(DB::select('EXEC sp_ComiteDirectivo_Listar @solo_activos = 0'))
+            $inactivos = collect(DB::select('CALL sp_ComiteDirectivo_Listar(?)', [0]))
                 ->filter(function ($directivo) {
                     return $directivo->estado === 'I';
                 });
@@ -299,18 +278,17 @@ class ComiteDirectivoController extends Controller
     {
         try {
             // Actualizar el estado a 'A' (Activo)
-            $sql = "
+            DB::statement("
                 UPDATE Comite_Directivo
                 SET estado = 'A'
-                WHERE directivo_id = ? AND estado = 'I';
+                WHERE directivo_id = ? AND estado = 'I'
+            ", [(int)$id]);
 
-                SELECT @@ROWCOUNT as affected;
-            ";
+            // Obtener el número de filas afectadas
+            $affected = DB::select('SELECT ROW_COUNT() as affected');
+            $rowCount = (int)($affected[0]->affected ?? 0);
 
-            $result = DB::select($sql, [(int)$id]);
-            $affected = (int)($result[0]->affected ?? 0);
-
-            if ($affected === 0) {
+            if ($rowCount === 0) {
                 return redirect()->route('admin.comite-directivo.index')->with('error', 'El directivo no existe o ya está activo.');
             }
 

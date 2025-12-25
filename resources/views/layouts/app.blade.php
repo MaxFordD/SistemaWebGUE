@@ -114,24 +114,25 @@
 
               // 2) Si no hay uid, intentar mapear por nombre_usuario
               if (!$uid && !empty($u->nombre_usuario)) {
-              $row = DB::select('SELECT TOP 1 usuario_id FROM Usuario WHERE nombre_usuario = ?', [$u->nombre_usuario]);
+              $row = DB::select('SELECT usuario_id FROM Usuario WHERE nombre_usuario = ? LIMIT 1', [$u->nombre_usuario]);
               if (!empty($row)) $uid = (int) $row[0]->usuario_id;
               }
               // 3) O por email contra Persona.correo
               if (!$uid && !empty($u->email)) {
               $row = DB::select('
-              SELECT TOP 1 u.usuario_id
+              SELECT u.usuario_id
               FROM Usuario u
               INNER JOIN Persona p ON u.persona_id = p.persona_id
               WHERE p.correo = ?
+              LIMIT 1
               ', [$u->email]);
               if (!empty($row)) $uid = (int) $row[0]->usuario_id;
               }
 
               // 4) Con uid, traer roles
               if ($uid) {
-              $rolesUser = collect(DB::select('EXEC sp_UsuarioRol_ListarPorUsuario ?', [$uid]))
-              ->pluck('nombre_rol') // ✅ CORREGIDO: nombre_rol
+              $rolesUser = collect(DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [$uid]))
+              ->pluck('nombre')
               ->filter()
               ->map(fn($n) => mb_strtolower(trim($n)));
               }

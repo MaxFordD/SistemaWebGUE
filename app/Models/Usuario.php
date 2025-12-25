@@ -24,12 +24,18 @@ class Usuario extends Authenticatable
 
     public function getAuthIdentifierName()
     {
-        return 'nombre_usuario';
+        return 'usuario_id';
     }
 
     public function getAuthIdentifier()
     {
-        return $this->nombre_usuario;
+        return $this->usuario_id;
+    }
+
+    // Override para permitir login con nombre_usuario en lugar de email
+    public function getAuthPasswordName()
+    {
+        return 'contrasena';
     }
 
     // IMPORTANTE: Este mutator está comentado porque los hashes se insertan
@@ -52,5 +58,11 @@ class Usuario extends Authenticatable
     public function hasRole($role)
     {
         return $this->roles()->where('nombre', $role)->exists();
+    }
+
+    // Para que Auth::attempt funcione con nombre_usuario
+    public function getRememberTokenName()
+    {
+        return 'remember_token';
     }
 }

@@ -106,8 +106,8 @@
                                     $user = auth()->user();
                                     $rolesUsuario = [];
                                     try {
-                                        $rolesUsuario = collect(DB::select('EXEC sp_UsuarioRol_ListarPorUsuario ?', [$user->usuario_id ?? $user->id]))
-                                            ->pluck('nombre_rol')
+                                        $rolesUsuario = collect(DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [$user->usuario_id ?? $user->id]))
+                                            ->pluck('nombre')
                                             ->map(fn($r) => strtolower(trim($r)))
                                             ->toArray();
                                     } catch (\Exception $e) {

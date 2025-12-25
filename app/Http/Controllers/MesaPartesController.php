@@ -84,14 +84,14 @@ class MesaPartesController extends Controller
     // Mostrar lista de documentos (para el administrador)
     public function index()
     {
-        $documentos = DB::select('EXEC sp_MesaPartes_Listar');
+        $documentos = DB::select('CALL sp_MesaPartes_Listar()');
         return view('admin.mesa.index', compact('documentos'));
     }
 
     // Mostrar detalle de un documento
     public function show($id)
     {
-        $documento = DB::select('EXEC sp_MesaPartes_ObtenerPorId ?', [$id]);
+        $documento = DB::select('CALL sp_MesaPartes_ObtenerPorId(?)', [$id]);
         if (empty($documento)) {
             abort(404);
         }
@@ -103,17 +103,16 @@ class MesaPartesController extends Controller
     {
         $request->validate(['estado' => 'required|string|max:50']);
 
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_MesaPartes_ActualizarEstado
-                @documento_id = ?,
-                @estado = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [$id, $request->estado]);
+        // Llamar al procedimiento
+        DB::statement('CALL sp_MesaPartes_ActualizarEstado(?, ?, @resultado, @mensaje)', [
+            $id, $request->estado
+        ]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
         $ok = (int)($out[0]->resultado ?? 0) === 1;
 
         return redirect()->route('admin.mesa.index')
@@ -127,7 +126,7 @@ class MesaPartesController extends Controller
     {
         try {
             // Intentar obtener el documento para eliminar archivos físicos
-            $documento = DB::select('EXEC sp_MesaPartes_ObtenerPorId ?', [$id]);
+            $documento = DB::select('CALL sp_MesaPartes_ObtenerPorId(?)', [$id]);
 
             if (!empty($documento) && !empty($documento[0]->archivo)) {
                 // Usar servicio para eliminar archivos físicos
@@ -136,15 +135,14 @@ class MesaPartesController extends Controller
 
             // Intentar usar stored procedure si existe, sino usar Eloquent
             try {
-                $sql = "
-                    DECLARE @resultado INT, @mensaje VARCHAR(200);
-                    EXEC sp_MesaPartes_Eliminar
-                        @documento_id = ?,
-                        @resultado = @resultado OUTPUT,
-                        @mensaje = @mensaje OUTPUT;
-                    SELECT resultado=@resultado, mensaje=@mensaje;
-                ";
-                $out = DB::select($sql, [$id]);
+                // Inicializar variables de salida
+                DB::statement('SET @resultado = 0, @mensaje = ""');
+
+                // Llamar al procedimiento
+                DB::statement('CALL sp_MesaPartes_Eliminar(?, @resultado, @mensaje)', [$id]);
+
+                // Obtener resultados
+                $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
                 $resultado = (int)($out[0]->resultado ?? 0);
                 $mensaje = $out[0]->mensaje ?? 'Documento eliminado correctamente';
 

@@ -17,7 +17,7 @@
         <h1 class="display-4 fw-bold mb-4">Nuestra Historia</h1>
         <p class="lead text-muted">
           La Institución Educativa Emblemática José Faustino Sánchez Carrión es una institución con más de
-          <strong>190 años de trayectoria</strong> formando ciudadanos íntegros en la ciudad de Trujillo.
+          <strong>73 años de trayectoria</strong> formando ciudadanos íntegros en la ciudad de Trujillo.
         </p>
         <p class="text-muted">
           Fundada en 1831, nuestra institución ha sido pionera en la educación de calidad en La Libertad,

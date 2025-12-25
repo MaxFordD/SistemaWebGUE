@@ -18,7 +18,7 @@ class NoticiaController extends Controller
     {
         try {
             // Trae solo noticias activas ordenadas desc por fecha
-            $rows = collect(DB::select('EXEC sp_Noticia_ListarActivas'));
+            $rows = collect(DB::select('CALL sp_Noticia_ListarActivas()'));
 
             // Convertir stdClass a instancias del modelo Noticia para usar accessors
             $rows = $rows->map(function($row) {
@@ -54,7 +54,7 @@ class NoticiaController extends Controller
     public function show($id)
     {
         try {
-            $resultado = DB::select('EXEC sp_Noticia_ObtenerPorId ?', [(int)$id]);
+            $resultado = DB::select('CALL sp_Noticia_ObtenerPorId(?)', [(int)$id]);
 
             if (empty($resultado)) {
                 return redirect()->route('noticias.index')->with('error', 'Noticia no encontrada.');
@@ -142,19 +142,16 @@ class NoticiaController extends Controller
         $contenido = $request->input('contenido');
 
         try {
-            $sql = "
-                DECLARE @resultado INT, @mensaje VARCHAR(200);
-                EXEC sp_Noticia_Insertar
-                    @titulo = ?,
-                    @contenido = ?,
-                    @imagen = ?,
-                    @usuario_id = ?,
-                    @resultado = @resultado OUTPUT,
-                    @mensaje = @mensaje OUTPUT;
-                SELECT resultado = @resultado, mensaje = @mensaje;
-            ";
+            // Inicializar variables de salida
+            DB::statement('SET @resultado = 0, @mensaje = ""');
 
-            $out = DB::select($sql, [$titulo, $contenido, $rutaImagenConcatenada, $usuarioId]);
+            // Llamar al procedimiento
+            DB::statement('CALL sp_Noticia_Insertar(?, ?, ?, ?, @resultado, @mensaje)', [
+                $titulo, $contenido, $rutaImagenConcatenada, $usuarioId
+            ]);
+
+            // Obtener resultados
+            $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $resultado = (int)($out[0]->resultado ?? 0);
             $mensaje   = (string)($out[0]->mensaje ?? 'Sin mensaje');
 
@@ -170,18 +167,11 @@ class NoticiaController extends Controller
 
             // Registrar en Bitácora
             try {
-                $sqlBit = "
-                    DECLARE @res INT, @msg VARCHAR(200);
-                    EXEC sp_Bitacora_Insertar
-                        @usuario_id = ?,
-                        @accion = ?,
-                        @resultado = @res OUTPUT,
-                        @mensaje   = @msg OUTPUT;
-                    SELECT res = @res, msg = @msg;
-                ";
                 $cantidadArchivos = count($rutasArchivos);
                 $accion = "Creó la noticia ID {$noticiaId}" . ($cantidadArchivos > 0 ? " con {$cantidadArchivos} archivo(s)" : "");
-                DB::select($sqlBit, [$usuarioId, $accion]);
+
+                DB::statement('SET @res = 0, @msg = ""');
+                DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [$usuarioId, $accion]);
             } catch (\Exception $e) {
                 // Si falla la bitácora, solo loguear pero continuar
                 Log::warning('Error al registrar en bitácora: ' . $e->getMessage());
@@ -205,7 +195,7 @@ class NoticiaController extends Controller
     public function edit($id)
     {
         try {
-            $resultado = DB::select('EXEC sp_Noticia_ObtenerPorId ?', [(int)$id]);
+            $resultado = DB::select('CALL sp_Noticia_ObtenerPorId(?)', [(int)$id]);
 
             if (empty($resultado)) {
                 return redirect()->route('noticias.index')->with('error', 'Noticia no encontrada.');
@@ -232,7 +222,7 @@ class NoticiaController extends Controller
         ]);
 
         // Obtener noticia actual para manejar archivos existentes
-        $noticiaActual = DB::select('EXEC sp_Noticia_ObtenerPorId ?', [(int)$id]);
+        $noticiaActual = DB::select('CALL sp_Noticia_ObtenerPorId(?)', [(int)$id]);
         if (empty($noticiaActual)) {
             return redirect()->route('noticias.index')->with('error', 'Noticia no encontrada.');
         }
@@ -272,27 +262,20 @@ class NoticiaController extends Controller
         }
 
         try {
-            $sql = "
-                DECLARE @resultado BIT, @mensaje VARCHAR(200);
-                EXEC sp_Noticia_Actualizar
-                    @noticia_id = ?,
-                    @titulo = ?,
-                    @contenido = ?,
-                    @imagen = ?,
-                    @estado = ?,
-                    @resultado = @resultado OUTPUT,
-                    @mensaje = @mensaje OUTPUT;
-                SELECT resultado = @resultado, mensaje = @mensaje;
-            ";
+            // Inicializar variables de salida
+            DB::statement('SET @resultado = 0, @mensaje = ""');
 
-            $out = DB::select($sql, [
+            // Llamar al procedimiento
+            DB::statement('CALL sp_Noticia_Actualizar(?, ?, ?, ?, ?, @resultado, @mensaje)', [
                 (int)$id,
                 $request->input('titulo'),
                 $request->input('contenido'),
                 $todasLasRutas,
-                $request->input('estado')
+                $request->input('estado', 'A')
             ]);
 
+            // Obtener resultados
+            $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $resultado = (int)($out[0]->resultado ?? 0);
             $mensaje = (string)($out[0]->mensaje ?? 'Sin mensaje');
 
@@ -310,8 +293,8 @@ class NoticiaController extends Controller
             if ($usuarioId) {
                 try {
                     $accion = "Actualizó la noticia ID {$id}";
-                    DB::statement('EXEC sp_Bitacora_Insertar ?, ?, @resultado OUTPUT, @mensaje OUTPUT', 
-                        [$usuarioId, $accion]);
+                    DB::statement('SET @res = 0, @msg = ""');
+                    DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [$usuarioId, $accion]);
                 } catch (\Exception $e) {
                     Log::warning('Error al registrar en bitácora: ' . $e->getMessage());
                 }
@@ -334,16 +317,14 @@ class NoticiaController extends Controller
     public function destroy($id)
     {
         try {
-            $sql = "
-                DECLARE @resultado BIT, @mensaje VARCHAR(200);
-                EXEC sp_Noticia_Eliminar
-                    @noticia_id = ?,
-                    @resultado = @resultado OUTPUT,
-                    @mensaje = @mensaje OUTPUT;
-                SELECT resultado = @resultado, mensaje = @mensaje;
-            ";
+            // Inicializar variables de salida
+            DB::statement('SET @resultado = 0, @mensaje = ""');
 
-            $out = DB::select($sql, [(int)$id]);
+            // Llamar al procedimiento
+            DB::statement('CALL sp_Noticia_Eliminar(?, @resultado, @mensaje)', [(int)$id]);
+
+            // Obtener resultados
+            $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $resultado = (int)($out[0]->resultado ?? 0);
             $mensaje = (string)($out[0]->mensaje ?? 'Sin mensaje');
 
@@ -357,8 +338,8 @@ class NoticiaController extends Controller
             if ($usuarioId) {
                 try {
                     $accion = "Eliminó la noticia ID {$id}";
-                    DB::statement('EXEC sp_Bitacora_Insertar ?, ?, @resultado OUTPUT, @mensaje OUTPUT', 
-                        [$usuarioId, $accion]);
+                    DB::statement('SET @res = 0, @msg = ""');
+                    DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [$usuarioId, $accion]);
                 } catch (\Exception $e) {
                     Log::warning('Error al registrar en bitácora: ' . $e->getMessage());
                 }

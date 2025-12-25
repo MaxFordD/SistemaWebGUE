@@ -37,8 +37,8 @@ class AppServiceProvider extends ServiceProvider
                 return false;
             }
 
-            $rolesUsuario = collect(DB::select('EXEC sp_UsuarioRol_ListarPorUsuario ?', [(int)$usuarioId]))
-                ->pluck('nombre_rol') // ✅ CORREGIDO: nombre_rol
+            $rolesUsuario = collect(DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [(int)$usuarioId]))
+                ->pluck('nombre')
                 ->map(fn($n) => mb_strtolower(trim($n)));
 
             $requeridos = collect($roles)->map(fn($n) => mb_strtolower(trim($n)));

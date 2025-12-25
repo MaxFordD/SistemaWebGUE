@@ -38,11 +38,11 @@ class AsignarRolUsuario extends Command
             $this->info('✅ Rol asignado correctamente!');
 
             // Mostrar roles actuales
-            $roles = DB::select('EXEC sp_UsuarioRol_ListarPorUsuario ?', [$usuarioId]);
+            $roles = DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [$usuarioId]);
 
             $this->info("\nRoles actuales del usuario {$usuarioId}:");
             foreach ($roles as $rol) {
-                $this->line("  - {$rol->nombre_rol}");
+                $this->line("  - {$rol->nombre}");
             }
 
             return 0;

@@ -9,7 +9,7 @@
 @endpush
 
 @section('content')
-<!-- Hero Section -->
+
 <section class="directivo-hero py-5 bg-light">
   <div class="container">
     <div class="text-center" data-aos="fade-up">
@@ -21,28 +21,11 @@
   </div>
 </section>
 
-<!-- Filtros por Grado (opcional - se puede implementar con JavaScript) -->
+
 <section class="filtros py-3 bg-white border-bottom">
   <div class="container">
     <div class="d-flex flex-wrap justify-content-center gap-2" data-aos="fade-up">
-      <button class="btn btn-sm btn-outline-primary active filter-btn" data-filter="all">
-        Todos
-      </button>
-      <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="1">
-        1° Grado
-      </button>
-      <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="2">
-        2° Grado
-      </button>
-      <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="3">
-        3° Grado
-      </button>
-      <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="4">
-        4° Grado
-      </button>
-      <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="5">
-        5° Grado
-      </button>
+
       <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="general">
         Gestión General
       </button>
@@ -50,7 +33,7 @@
   </div>
 </section>
 
-<!-- Grid de Directivos -->
+
 <section class="directivos-grid py-5">
   <div class="container">
     @if($directivos->isEmpty())
@@ -130,7 +113,7 @@
   </div>
 </section>
 
-<!-- Modales de Biografía (fuera del grid para evitar problemas de z-index) -->
+
 @foreach($directivos as $directivo)
   @php
     $isPendiente = stripos($directivo->nombre_completo, 'pendiente') !== false;
@@ -171,11 +154,11 @@
 @endsection
 
 @push('scripts')
-<!-- AOS (Animate On Scroll) -->
+
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar AOS
+
     AOS.init({
       duration: 600,
       easing: 'ease-in-out',
@@ -183,15 +166,15 @@
       offset: 50
     });
 
-    // Filtrado por grado
+
     const filterButtons = document.querySelectorAll('.filter-btn');
     const directivoItems = document.querySelectorAll('.directivo-item');
 
     filterButtons.forEach(button => {
       button.addEventListener('click', function() {
-        // Remover clase active de todos los botones
+
         filterButtons.forEach(btn => btn.classList.remove('active'));
-        // Agregar clase active al botón clickeado
+
         this.classList.add('active');
 
         const filter = this.getAttribute('data-filter');
@@ -211,31 +194,31 @@
       });
     });
 
-    // Fix para modales de biografía con backdrop sutil
+
     const bioModals = document.querySelectorAll('.bio-modal-custom');
 
     bioModals.forEach(modal => {
-      // Cuando se muestra el modal
+
       modal.addEventListener('shown.bs.modal', function (e) {
-        // Asegurar que el backdrop esté debajo del modal con opacidad reducida
+
         const backdrop = document.querySelector('.modal-backdrop');
         if (backdrop) {
           backdrop.style.zIndex = '1055';
-          backdrop.style.opacity = '0.2';  // Backdrop muy sutil
+          backdrop.style.opacity = '0.2';  
           backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
         }
-        // El modal ya tiene z-index 1060 en CSS
+       
         this.style.zIndex = '1060';
       });
 
-      // Limpieza al cerrar
+ 
       modal.addEventListener('hidden.bs.modal', function (e) {
         setTimeout(() => {
-          // Limpiar cualquier backdrop residual
+
           const backdrops = document.querySelectorAll('.modal-backdrop');
           backdrops.forEach(backdrop => backdrop.remove());
 
-          // Restaurar body
+
           document.body.classList.remove('modal-open');
           document.body.style.overflow = '';
           document.body.style.paddingRight = '';

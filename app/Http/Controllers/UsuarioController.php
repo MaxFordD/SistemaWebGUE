@@ -10,13 +10,13 @@ class UsuarioController extends Controller
 {
     public function index()
     {
-        $usuarios = collect(DB::select('EXEC sp_Usuario_Listar'));
+        $usuarios = collect(DB::select('CALL sp_Usuario_Listar()'));
         return view('admin.usuarios.index', compact('usuarios'));
     }
 
     public function create()
     {
-        $personas = collect(DB::select('EXEC sp_Persona_Listar'))->where('estado', 'A');
+        $personas = collect(DB::select('CALL sp_Persona_Listar()'))->where('estado', 'A');
         return view('admin.usuarios.create', compact('personas'));
     }
 
@@ -37,22 +37,18 @@ class UsuarioController extends Controller
         // Hash de la contraseña
         $hashedPassword = Hash::make($data['contrasena']);
 
-        $sql = "
-            DECLARE @resultado INT, @mensaje VARCHAR(200);
-            EXEC sp_Usuario_Insertar
-                @persona_id = ?,
-                @nombre_usuario = ?,
-                @contrasena = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [
+        // Llamar al procedimiento
+        DB::statement('CALL sp_Usuario_Insertar(?, ?, ?, @resultado, @mensaje)', [
             $data['persona_id'],
             $data['nombre_usuario'],
             $hashedPassword
         ]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
 
         $ok = (int)($out[0]->resultado ?? 0) > 0;
 
@@ -65,7 +61,7 @@ class UsuarioController extends Controller
 
     public function edit($id)
     {
-        $usuario = collect(DB::select('EXEC sp_Usuario_ObtenerPorId ?', [(int)$id]))->first();
+        $usuario = collect(DB::select('CALL sp_Usuario_ObtenerPorId(?)', [(int)$id]))->first();
 
         if (!$usuario) {
             return redirect()->route('admin.usuarios.index')->with('error', 'Usuario no encontrado');
@@ -83,22 +79,18 @@ class UsuarioController extends Controller
             'nombre_usuario.required' => 'El nombre de usuario es obligatorio',
         ]);
 
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_Usuario_Actualizar
-                @usuario_id = ?,
-                @nombre_usuario = ?,
-                @estado = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [
+        // Llamar al procedimiento
+        DB::statement('CALL sp_Usuario_Actualizar(?, ?, ?, @resultado, @mensaje)', [
             (int)$id,
             $data['nombre_usuario'],
             $data['estado']
         ]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
 
         $ok = (int)($out[0]->resultado ?? 0) === 1;
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
@@ -106,23 +98,22 @@ class UsuarioController extends Controller
 
     public function destroy($id)
     {
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_Usuario_Eliminar
-                @usuario_id = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [(int)$id]);
+        // Llamar al procedimiento
+        DB::statement('CALL sp_Usuario_Eliminar(?, @resultado, @mensaje)', [(int)$id]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
+
         $ok = (int)($out[0]->resultado ?? 0) === 1;
         return redirect()->route('admin.usuarios.index')->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
 
     public function changePassword($id)
     {
-        $usuario = collect(DB::select('EXEC sp_Usuario_ObtenerPorId ?', [(int)$id]))->first();
+        $usuario = collect(DB::select('CALL sp_Usuario_ObtenerPorId(?)', [(int)$id]))->first();
 
         if (!$usuario) {
             return redirect()->route('admin.usuarios.index')->with('error', 'Usuario no encontrado');
@@ -144,7 +135,7 @@ class UsuarioController extends Controller
         ]);
 
         // Obtener el usuario actual para verificar la contraseña
-        $usuario = collect(DB::select('EXEC sp_Usuario_ObtenerPorId ?', [(int)$id]))->first();
+        $usuario = collect(DB::select('CALL sp_Usuario_ObtenerPorId(?)', [(int)$id]))->first();
 
         if (!$usuario) {
             return back()->with('error', 'Usuario no encontrado');
@@ -158,21 +149,10 @@ class UsuarioController extends Controller
         // Hashear la nueva contraseña
         $hashedNueva = Hash::make($data['contrasena_nueva']);
 
-        // Ejecutar SP para actualizar (Laravel ya validó la contraseña actual)
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_Usuario_CambiarContrasena
-                @usuario_id = ?,
-                @contrasena_nueva = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Actualizar contraseña directamente (ya validamos la contraseña actual en Laravel)
+        DB::table('Usuario')->where('usuario_id', (int)$id)->update(['contrasena' => $hashedNueva]);
 
-        $out = DB::select($sql, [
-            (int)$id,
-            $hashedNueva
-        ]);
+        $out = [(object)['resultado' => 1, 'mensaje' => 'Contraseña actualizada exitosamente']];
 
         $ok = (int)($out[0]->resultado ?? 0) === 1;
 

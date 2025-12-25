@@ -14,7 +14,7 @@ class ComiteDirectivoController extends Controller
     {
         try {
             // Usar el SP para listar solo directivos activos
-            $directivos = collect(DB::select('EXEC sp_ComiteDirectivo_Listar @solo_activos = 1'));
+            $directivos = collect(DB::select('CALL sp_ComiteDirectivo_Listar(?)', [1]));
 
             return view('comite-directivo.index', compact('directivos'));
         } catch (\Exception $e) {

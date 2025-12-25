@@ -9,7 +9,7 @@ class PersonaController extends Controller
 {
     public function index()
     {
-        $personas = collect(DB::select('EXEC sp_Persona_Listar'));
+        $personas = collect(DB::select('CALL sp_Persona_Listar()'));
         return view('admin.personas.index', compact('personas'));
     }
 
@@ -29,26 +29,20 @@ class PersonaController extends Controller
             'correo.email'        => 'El correo debe ser válido',
         ]);
 
-        $sql = "
-            DECLARE @resultado INT, @mensaje VARCHAR(200);
-            EXEC sp_Persona_Insertar
-                @nombres = ?,
-                @apellidos = ?,
-                @dni = ?,
-                @telefono = ?,
-                @correo = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [
+        // Llamar al procedimiento
+        DB::statement('CALL sp_Persona_Insertar(?, ?, ?, ?, ?, @resultado, @mensaje)', [
             $data['nombres'],
             $data['apellidos'],
             $data['dni'] ?? null,
             $data['telefono'] ?? null,
             $data['correo'] ?? null
         ]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
 
         $ok = (int)($out[0]->resultado ?? 0) > 0;
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
@@ -71,48 +65,26 @@ class PersonaController extends Controller
             'correo.email'        => 'El correo debe ser válido',
         ]);
 
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_Persona_Actualizar
-                @persona_id = ?,
-                @nombres = ?,
-                @apellidos = ?,
-                @dni = ?,
-                @telefono = ?,
-                @correo = ?,
-                @estado = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
-
-        $out = DB::select($sql, [
-            (int)$id,
-            $data['nombres'],
-            $data['apellidos'],
-            $data['dni'] ?? null,
-            $data['telefono'] ?? null,
-            $data['correo'] ?? null,
-            $data['estado']
+        // Actualizar directamente (el SP aún no está creado)
+        $affected = DB::table('Persona')->where('persona_id', (int)$id)->update([
+            'nombres' => $data['nombres'],
+            'apellidos' => $data['apellidos'],
+            'dni' => $data['dni'] ?? null,
+            'telefono' => $data['telefono'] ?? null,
+            'correo' => $data['correo'] ?? null,
+            'estado' => $data['estado']
         ]);
 
-        $ok = (int)($out[0]->resultado ?? 0) === 1;
-        return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
+        $ok = $affected > 0;
+        return back()->with($ok ? 'success' : 'error', $ok ? 'Persona actualizada exitosamente' : 'Error al actualizar persona');
     }
 
     public function destroy($id)
     {
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_Persona_Eliminar
-                @persona_id = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Eliminar lógicamente (el SP aún no está creado)
+        $affected = DB::table('Persona')->where('persona_id', (int)$id)->update(['estado' => 'I']);
 
-        $out = DB::select($sql, [(int)$id]);
-        $ok = (int)($out[0]->resultado ?? 0) === 1;
-        return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
+        $ok = $affected > 0;
+        return back()->with($ok ? 'success' : 'error', $ok ? 'Persona eliminada exitosamente' : 'Error al eliminar persona');
     }
 }

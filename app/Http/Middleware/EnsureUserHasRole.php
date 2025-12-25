@@ -20,8 +20,8 @@ class EnsureUserHasRole
             abort(403);
         }
 
-        $roles = collect(DB::select('EXEC sp_UsuarioRol_ListarPorUsuario ?', [(int)$usuarioId]))
-            ->pluck('nombre_rol') // ✅ CORREGIDO: nombre_rol
+        $roles = collect(DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [(int)$usuarioId]))
+            ->pluck('nombre')
             ->map(fn($n) => mb_strtolower(trim($n)));
 
         $rolesRequeridos = collect($rolesRequeridos)->map(fn($n) => mb_strtolower(trim($n)));

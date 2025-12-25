@@ -9,7 +9,7 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = collect(DB::select('EXEC sp_Rol_Listar'));
+        $roles = collect(DB::select('CALL sp_Rol_Listar()'));
         return view('admin.roles.index', compact('roles'));
     }
 
@@ -20,17 +20,18 @@ class RoleController extends Controller
             'descripcion' => 'nullable|string|max:200',
         ]);
 
-        $sql = "
-            DECLARE @resultado INT, @mensaje VARCHAR(200);
-            EXEC sp_Rol_Insertar
-                @nombre = ?,
-                @descripcion = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [$data['nombre'], $data['descripcion'] ?? null]);
+        // Llamar al procedimiento
+        DB::statement('CALL sp_Rol_Insertar(?, ?, @resultado, @mensaje)', [
+            $data['nombre'],
+            $data['descripcion'] ?? null
+        ]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
+
         $ok  = (int)($out[0]->resultado ?? 0) > 0;
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
@@ -43,35 +44,35 @@ class RoleController extends Controller
             'estado'      => 'required|in:A,I',
         ]);
 
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_Rol_Actualizar
-                @rol_id = ?,
-                @nombre = ?,
-                @descripcion = ?,
-                @estado = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [(int)$id, $data['nombre'], $data['descripcion'] ?? null, $data['estado']]);
+        // Llamar al procedimiento
+        DB::statement('CALL sp_Rol_Actualizar(?, ?, ?, ?, @resultado, @mensaje)', [
+            (int)$id,
+            $data['nombre'],
+            $data['descripcion'] ?? null,
+            $data['estado']
+        ]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
+
         $ok  = (int)($out[0]->resultado ?? 0) === 1;
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
 
     public function destroy($id)
     {
-        $sql = "
-            DECLARE @resultado BIT, @mensaje VARCHAR(200);
-            EXEC sp_Rol_Eliminar
-                @rol_id = ?,
-                @resultado = @resultado OUTPUT,
-                @mensaje = @mensaje OUTPUT;
-            SELECT resultado=@resultado, mensaje=@mensaje;
-        ";
+        // Inicializar variables de salida
+        DB::statement('SET @resultado = 0, @mensaje = ""');
 
-        $out = DB::select($sql, [(int)$id]);
+        // Llamar al procedimiento
+        DB::statement('CALL sp_Rol_Eliminar(?, @resultado, @mensaje)', [(int)$id]);
+
+        // Obtener resultados
+        $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
+
         $ok  = (int)($out[0]->resultado ?? 0) === 1;
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
