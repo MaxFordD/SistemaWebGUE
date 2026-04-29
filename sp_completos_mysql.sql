@@ -116,6 +116,7 @@ BEGIN
     END IF;
 END$$
 
+
 -- =========================
 -- PERSONAS
 -- =========================
@@ -160,6 +161,75 @@ BEGIN
     SELECT persona_id, nombres, apellidos, dni, telefono, correo, estado
     FROM Persona
     ORDER BY apellidos, nombres;
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_Persona_Actualizar $$
+CREATE PROCEDURE sp_Persona_Actualizar(
+    IN p_persona_id INT,
+    IN p_nombres VARCHAR(100),
+    IN p_apellidos VARCHAR(100),
+    IN p_dni CHAR(8),
+    IN p_telefono CHAR(9),
+    IN p_correo VARCHAR(100),
+    IN p_estado CHAR(1),
+    OUT p_resultado TINYINT,
+    OUT p_mensaje VARCHAR(200)
+)
+BEGIN
+    DECLARE v_count INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = 0;
+        SET p_mensaje = 'Error al actualizar persona';
+    END;
+
+    SELECT COUNT(*) INTO v_count FROM Persona WHERE persona_id = p_persona_id;
+
+    IF v_count = 0 THEN
+        SET p_resultado = 0;
+        SET p_mensaje = 'La persona no existe';
+    ELSE
+        UPDATE Persona
+        SET nombres = p_nombres,
+            apellidos = p_apellidos,
+            dni = p_dni,
+            telefono = p_telefono,
+            correo = p_correo,
+            estado = p_estado
+        WHERE persona_id = p_persona_id;
+
+        SET p_resultado = 1;
+        SET p_mensaje = 'Persona actualizada exitosamente';
+    END IF;
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_Persona_Eliminar $$
+CREATE PROCEDURE sp_Persona_Eliminar(
+    IN p_persona_id INT,
+    OUT p_resultado TINYINT,
+    OUT p_mensaje VARCHAR(200)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = 0;
+        SET p_mensaje = 'Error al eliminar persona';
+    END;
+
+    UPDATE Persona
+    SET estado = 'I'
+    WHERE persona_id = p_persona_id;
+
+    IF ROW_COUNT() = 0 THEN
+        SET p_resultado = 0;
+        SET p_mensaje = 'La persona no existe';
+    ELSE
+        SET p_resultado = 1;
+        SET p_mensaje = 'Persona eliminada exitosamente';
+    END IF;
 END$$
 
 
@@ -466,21 +536,8 @@ BEGIN
         SET p_mensaje = 'Error al registrar la noticia';
     END;
 
-    INSERT INTO Noticia(
-        titulo,
-        contenido,
-        imagen,
-        usuario_id,
-        fecha_publicacion,
-        estado
-    ) VALUES (
-        p_titulo,
-        p_contenido,
-        p_imagen,
-        p_usuario_id,
-        UTC_TIMESTAMP(),
-        'A'
-    );
+    INSERT INTO Noticia(titulo, contenido, imagen, usuario_id, fecha_publicacion, estado)
+    VALUES(p_titulo, p_contenido, p_imagen, p_usuario_id, UTC_TIMESTAMP(), 'A');
 
     SET p_resultado = LAST_INSERT_ID();
     SET p_mensaje = 'Noticia registrada correctamente';
@@ -494,6 +551,25 @@ BEGIN
         n.noticia_id,
         n.titulo,
         LEFT(n.contenido, 300) AS resumen,
+        n.imagen,
+        n.fecha_publicacion,
+        CONCAT(p.nombres, ' ', p.apellidos) AS autor
+    FROM Noticia n
+    INNER JOIN Usuario u ON n.usuario_id = u.usuario_id
+    INNER JOIN Persona p ON u.persona_id = p.persona_id
+    WHERE n.estado = 'A'
+    ORDER BY n.fecha_publicacion DESC;
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_Noticia_ListarActivas $$
+CREATE PROCEDURE sp_Noticia_ListarActivas()
+BEGIN
+    SELECT
+        n.noticia_id,
+        n.titulo,
+        LEFT(n.contenido, 300) AS resumen,
+        n.contenido,
         n.imagen,
         n.fecha_publicacion,
         CONCAT(p.nombres, ' ', p.apellidos) AS autor
@@ -565,8 +641,7 @@ BEGIN
     END;
 
     UPDATE Noticia
-    SET
-        titulo = p_titulo,
+    SET titulo = p_titulo,
         contenido = p_contenido,
         imagen = p_imagen
     WHERE noticia_id = p_noticia_id;
@@ -601,6 +676,7 @@ BEGIN
     END IF;
 END$$
 
+
 -- =========================
 -- TIPOS DE DOCUMENTO
 -- =========================
@@ -620,16 +696,13 @@ BEGIN
         SET p_mensaje = 'Error al registrar tipo de documento';
     END;
 
-    SELECT COUNT(*) INTO v_count
-    FROM Tipos_Documento
-    WHERE nombre = p_nombre;
+    SELECT COUNT(*) INTO v_count FROM Tipos_Documento WHERE nombre = p_nombre;
 
     IF v_count > 0 THEN
         SET p_resultado = 0;
         SET p_mensaje = 'El tipo de documento ya existe';
     ELSE
-        INSERT INTO Tipos_Documento(nombre)
-        VALUES(p_nombre);
+        INSERT INTO Tipos_Documento(nombre) VALUES(p_nombre);
 
         SET p_resultado = LAST_INSERT_ID();
         SET p_mensaje = 'Tipo de documento registrado correctamente';
@@ -669,27 +742,8 @@ BEGIN
         SET p_mensaje = 'Error al registrar documento';
     END;
 
-    INSERT INTO Mesa_Partes(
-        remitente,
-        dni,
-        correo,
-        asunto,
-        detalle,
-        archivo,
-        tipo_documento_id,
-        fecha_envio,
-        estado
-    ) VALUES (
-        p_remitente,
-        p_dni,
-        p_correo,
-        p_asunto,
-        p_detalle,
-        p_archivo,
-        p_tipo_documento_id,
-        UTC_TIMESTAMP(),
-        'Pendiente'
-    );
+    INSERT INTO Mesa_Partes(remitente, dni, correo, asunto, detalle, archivo, tipo_documento_id, fecha_envio, estado)
+    VALUES(p_remitente, p_dni, p_correo, p_asunto, p_detalle, p_archivo, p_tipo_documento_id, UTC_TIMESTAMP(), 'Pendiente');
 
     SET p_resultado = LAST_INSERT_ID();
     SET p_mensaje = 'Documento enviado correctamente';
@@ -709,8 +763,7 @@ BEGIN
         mp.fecha_envio,
         mp.estado
     FROM Mesa_Partes mp
-    INNER JOIN Tipos_Documento td
-        ON mp.tipo_documento_id = td.tipo_id
+    INNER JOIN Tipos_Documento td ON mp.tipo_documento_id = td.tipo_id
     ORDER BY mp.fecha_envio DESC;
 END$$
 
@@ -754,5 +807,165 @@ BEGIN
         SET p_mensaje = 'Estado actualizado correctamente';
     END IF;
 END$$
+
+
+-- =========================
+-- COMITÉ DIRECTIVO
+-- =========================
+
+DROP PROCEDURE IF EXISTS sp_ComiteDirectivo_Listar $$
+CREATE PROCEDURE sp_ComiteDirectivo_Listar(IN p_solo_activos TINYINT)
+BEGIN
+    IF p_solo_activos = 1 THEN
+        SELECT directivo_id, nombre_completo, cargo, grado_cargo, foto, biografia, orden, estado
+        FROM Comite_Directivo
+        WHERE estado = 'A'
+        ORDER BY orden ASC, nombre_completo ASC;
+    ELSE
+        SELECT directivo_id, nombre_completo, cargo, grado_cargo, foto, biografia, orden, estado
+        FROM Comite_Directivo
+        ORDER BY orden ASC, nombre_completo ASC;
+    END IF;
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_ComiteDirectivo_ObtenerPorId $$
+CREATE PROCEDURE sp_ComiteDirectivo_ObtenerPorId(IN p_directivo_id INT)
+BEGIN
+    SELECT directivo_id, nombre_completo, cargo, grado_cargo, foto, biografia, orden, estado
+    FROM Comite_Directivo
+    WHERE directivo_id = p_directivo_id;
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_ComiteDirectivo_Insertar $$
+CREATE PROCEDURE sp_ComiteDirectivo_Insertar(
+    IN p_nombre_completo VARCHAR(200),
+    IN p_cargo VARCHAR(100),
+    IN p_grado_cargo VARCHAR(100),
+    IN p_foto VARCHAR(500),
+    IN p_biografia TEXT,
+    IN p_orden INT,
+    OUT p_resultado INT,
+    OUT p_mensaje VARCHAR(200)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = 0;
+        SET p_mensaje = 'Error al registrar miembro del comité';
+    END;
+
+    INSERT INTO Comite_Directivo(nombre_completo, cargo, grado_cargo, foto, biografia, orden, estado)
+    VALUES(p_nombre_completo, p_cargo, p_grado_cargo, p_foto, p_biografia, p_orden, 'A');
+
+    SET p_resultado = LAST_INSERT_ID();
+    SET p_mensaje = 'Miembro del comité registrado exitosamente';
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_ComiteDirectivo_Actualizar $$
+CREATE PROCEDURE sp_ComiteDirectivo_Actualizar(
+    IN p_directivo_id INT,
+    IN p_nombre_completo VARCHAR(200),
+    IN p_cargo VARCHAR(100),
+    IN p_grado_cargo VARCHAR(100),
+    IN p_foto VARCHAR(500),
+    IN p_biografia TEXT,
+    IN p_orden INT,
+    IN p_estado CHAR(1),
+    OUT p_resultado TINYINT,
+    OUT p_mensaje VARCHAR(200)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = 0;
+        SET p_mensaje = 'Error al actualizar miembro del comité';
+    END;
+
+    UPDATE Comite_Directivo
+    SET nombre_completo = p_nombre_completo,
+        cargo = p_cargo,
+        grado_cargo = p_grado_cargo,
+        foto = p_foto,
+        biografia = p_biografia,
+        orden = p_orden,
+        estado = p_estado
+    WHERE directivo_id = p_directivo_id;
+
+    IF ROW_COUNT() = 0 THEN
+        SET p_resultado = 0;
+        SET p_mensaje = 'El miembro del comité no existe';
+    ELSE
+        SET p_resultado = 1;
+        SET p_mensaje = 'Miembro del comité actualizado exitosamente';
+    END IF;
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_ComiteDirectivo_Eliminar $$
+CREATE PROCEDURE sp_ComiteDirectivo_Eliminar(
+    IN p_directivo_id INT,
+    OUT p_resultado TINYINT,
+    OUT p_mensaje VARCHAR(200)
+)
+BEGIN
+    UPDATE Comite_Directivo
+    SET estado = 'I'
+    WHERE directivo_id = p_directivo_id;
+
+    IF ROW_COUNT() = 0 THEN
+        SET p_resultado = 0;
+        SET p_mensaje = 'El miembro del comité no existe';
+    ELSE
+        SET p_resultado = 1;
+        SET p_mensaje = 'Miembro del comité eliminado exitosamente';
+    END IF;
+END$$
+
+
+-- =========================
+-- BITÁCORA
+-- =========================
+
+DROP PROCEDURE IF EXISTS sp_Bitacora_Insertar $$
+CREATE PROCEDURE sp_Bitacora_Insertar(
+    IN p_usuario_id INT,
+    IN p_accion LONGTEXT,
+    OUT p_resultado INT,
+    OUT p_mensaje VARCHAR(200)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = 0;
+        SET p_mensaje = 'Error al registrar en bitácora';
+    END;
+
+    INSERT INTO Bitacora(usuario_id, accion, fecha)
+    VALUES(p_usuario_id, p_accion, UTC_TIMESTAMP());
+
+    SET p_resultado = LAST_INSERT_ID();
+    SET p_mensaje = 'Registro exitoso en bitácora';
+END$$
+
+
+-- =========================
+-- ESTADÍSTICAS DEL SISTEMA
+-- =========================
+
+DROP PROCEDURE IF EXISTS sp_Sistema_ObtenerEstadisticas $$
+CREATE PROCEDURE sp_Sistema_ObtenerEstadisticas()
+BEGIN
+    SELECT
+        (SELECT COUNT(*) FROM Usuario WHERE estado = 'A')             AS total_usuarios,
+        (SELECT COUNT(*) FROM Persona WHERE estado = 'A')             AS total_personas,
+        (SELECT COUNT(*) FROM Rol WHERE estado = 'A')                 AS total_roles,
+        (SELECT COUNT(*) FROM Noticia WHERE estado = 'A')             AS total_noticias,
+        (SELECT COUNT(*) FROM Mesa_Partes WHERE estado = 'Pendiente') AS mesa_pendientes,
+        (SELECT COUNT(*) FROM Mesa_Partes WHERE estado = 'Revisado')  AS mesa_revisados;
+END$$
+
 
 DELIMITER ;

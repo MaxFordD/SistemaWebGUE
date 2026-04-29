@@ -16,9 +16,8 @@ INSERT INTO Persona (nombres, apellidos, dni, telefono, correo, estado) VALUES
 
 -- 3. USUARIO ADMINISTRADOR
 -- Contraseña: admin123
--- Hash generado con bcrypt
 INSERT INTO Usuario (persona_id, nombre_usuario, contrasena, estado) VALUES
-(1, 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'A');
+(1, 'admin', '$2y$10$goOXn.NqdF4ORC9uLtpNl.Rm1aTS.AFxjg3t8af/7f3SlRQCCxdfq', 'A');
 
 -- 4. ASIGNAR ROL ADMINISTRADOR AL USUARIO
 INSERT INTO UsuarioRol (usuario_id, rol_id) VALUES
