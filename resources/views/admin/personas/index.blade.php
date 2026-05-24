@@ -117,7 +117,7 @@
 </div>
 @endsection
 
-<!-- Modales de Edición (al final, fuera del content) -->
+@push('modals')
 @foreach($personas as $p)
 <div class="modal fade" id="editModal{{ $p->persona_id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $p->persona_id }}" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
@@ -166,3 +166,4 @@
     </div>
 </div>
 @endforeach
+@endpush

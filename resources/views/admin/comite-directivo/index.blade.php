@@ -125,42 +125,45 @@
         </div>
     @endif
 
-    {{-- Modal de Directivos Inactivos --}}
-    <div class="modal fade" id="modalInactivos" tabindex="-1" aria-labelledby="modalInactivosLabel" aria-hidden="true" data-bs-backdrop="false">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalInactivosLabel">
-                        <i class="bi bi-archive me-2"></i>Directivos Inactivos
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="loadingInactivos" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
-                    </div>
-                    <div id="contenidoInactivos" style="display: none;">
-                        <div class="alert alert-info mb-3">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Estos directivos están desactivados. Puedes restaurarlos para que vuelvan a aparecer en la lista principal.
-                        </div>
-                        <div id="listaInactivos"></div>
-                        <div id="sinInactivos" style="display: none;" class="text-center text-muted py-4">
-                            <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
-                            No hay directivos inactivos
-                        </div>
+</div>
+@endsection
+
+@push('modals')
+{{-- Modal de Directivos Inactivos --}}
+<div class="modal fade" id="modalInactivos" tabindex="-1" aria-labelledby="modalInactivosLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalInactivosLabel">
+                    <i class="bi bi-archive me-2"></i>Directivos Inactivos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="loadingInactivos" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div id="contenidoInactivos" style="display: none;">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Estos directivos están desactivados. Puedes restaurarlos para que vuelvan a aparecer en la lista principal.
+                    </div>
+                    <div id="listaInactivos"></div>
+                    <div id="sinInactivos" style="display: none;" class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
+                        No hay directivos inactivos
+                    </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
 </div>
-@endsection
+@endpush
 
 @push('scripts')
 <script>

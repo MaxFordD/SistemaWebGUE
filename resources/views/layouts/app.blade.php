@@ -141,11 +141,13 @@
               $isAdminLike = $rolesUser->contains(fn($r) => in_array($r, ['director','admin','administrador']));
               $puedeMesaPartes = $isAdminLike || $rolesUser->contains('mesapartes');
               $puedePublicar = $isAdminLike || $rolesUser->contains(fn($r) => in_array($r, ['editor','secretaria']));
+              $puedeAsistencia = $isAdminLike || $rolesUser->contains('auxiliar');
               } catch (\Throwable $e) {
               $rolesUser = collect();
               $isAdminLike = false;
               $puedeMesaPartes = false;
               $puedePublicar = false;
+              $puedeAsistencia = false;
               }
               @endphp
 
@@ -216,6 +218,39 @@
                   <li>
                     <a class="dropdown-item" href="{{ route('admin.comite-directivo.index') }}">
                       <i class="bi bi-people-fill me-2"></i>Gestionar Comité Directivo
+                    </a>
+                  </li>
+                  @endif
+
+                  <!-- Módulo Asistencia -->
+                  @if($puedeAsistencia)
+                  <li><hr class="dropdown-divider"></li>
+                  <li class="dropdown-header">Asistencia</li>
+                  @if($isAdminLike)
+                  <li>
+                    <a class="dropdown-item" href="{{ route('admin.grados.index') }}">
+                      <i class="bi bi-journal-text me-2"></i>Gestionar Grados
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ route('admin.secciones.index') }}">
+                      <i class="bi bi-diagram-3 me-2"></i>Gestionar Secciones
+                    </a>
+                  </li>
+                  @endif
+                  <li>
+                    <a class="dropdown-item" href="{{ route('admin.alumnos.index') }}">
+                      <i class="bi bi-people me-2"></i>Gestionar Alumnos
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ route('admin.asistencia.index') }}">
+                      <i class="bi bi-calendar-check me-2"></i>Registrar Asistencia
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ route('admin.asistencia.historial-seccion') }}">
+                      <i class="bi bi-bar-chart-line me-2"></i>Historial por Sección
                     </a>
                   </li>
                   @endif
@@ -390,6 +425,8 @@
   <button id="scrollToTop" class="scroll-to-top" aria-label="Volver arriba" title="Volver arriba">
     <i class="bi bi-arrow-up"></i>
   </button>
+
+  @stack('modals')
 
   <!-- JS: Bootstrap 5 bundle (Popper incluido). Sin jQuery requerido. -->
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

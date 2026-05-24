@@ -20,8 +20,13 @@
 .waves-wrap{
   position: absolute;
   inset: 0;
-  /* reducido */
+  pointer-events: none;
   animation: wave-flow 10s ease-in-out infinite alternate;
+}
+
+.masthead-waves svg,
+.masthead-waves path {
+  pointer-events: none;
 }
 
 @keyframes wave-flow {

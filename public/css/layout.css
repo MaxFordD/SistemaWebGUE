@@ -4,7 +4,7 @@
    =============================== */
 
 /* Z-index utilities */
-.masthead-waves{ z-index: 2; }
+.masthead-waves{ z-index: 1; pointer-events: none; }
 .bg-gue{ z-index: 4; }
 
 /* Modal utilities */

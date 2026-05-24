@@ -12,6 +12,10 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\UsuarioRolController;
+use App\Http\Controllers\Admin\GradoController;
+use App\Http\Controllers\Admin\SeccionController;
+use App\Http\Controllers\Admin\AlumnoController;
+use App\Http\Controllers\Admin\AsistenciaController;
 
 // === Autenticación ===
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -83,6 +87,40 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 	Route::put('/comite-directivo/{id}', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'update'])->name('comite-directivo.update');
 	Route::delete('/comite-directivo/{id}', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'destroy'])->name('comite-directivo.destroy');
 	Route::post('/comite-directivo/{id}/restore', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'restore'])->name('comite-directivo.restore');
+});
+
+// === Módulo Asistencia - Grados y Secciones (Director / Administrador) ===
+Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->name('admin.')->group(function () {
+
+    // Grados
+    Route::get('/grados', [GradoController::class, 'index'])->name('grados.index');
+    Route::post('/grados', [GradoController::class, 'store'])->name('grados.store');
+    Route::put('/grados/{id}', [GradoController::class, 'update'])->name('grados.update');
+    Route::delete('/grados/{id}', [GradoController::class, 'destroy'])->name('grados.destroy');
+
+    // Secciones
+    Route::get('/secciones', [SeccionController::class, 'index'])->name('secciones.index');
+    Route::post('/secciones', [SeccionController::class, 'store'])->name('secciones.store');
+    Route::put('/secciones/{id}', [SeccionController::class, 'update'])->name('secciones.update');
+    Route::delete('/secciones/{id}', [SeccionController::class, 'destroy'])->name('secciones.destroy');
+});
+
+// === Módulo Asistencia - Registro y Historial (Director, Administrador, Auxiliar) ===
+Route::middleware(['auth', 'role:Director,Administrador,Auxiliar'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/asistencia', [AsistenciaController::class, 'index'])->name('asistencia.index');
+    Route::post('/asistencia/guardar', [AsistenciaController::class, 'guardar'])->name('asistencia.guardar');
+    Route::get('/asistencia/historial', [AsistenciaController::class, 'historialSeccion'])->name('asistencia.historial-seccion');
+    Route::get('/asistencia/alumno/{alumnoId}', [AsistenciaController::class, 'historialAlumno'])->name('asistencia.historial-alumno');
+    Route::get('/asistencia/reporte/pdf', [AsistenciaController::class, 'reportePdf'])->name('asistencia.reporte-pdf');
+    Route::get('/asistencia/reporte/excel', [AsistenciaController::class, 'reporteExcel'])->name('asistencia.reporte-excel');
+});
+
+// === Módulo Asistencia - Alumnos (Director, Administrador, Auxiliar) ===
+Route::middleware(['auth', 'role:Director,Administrador,Auxiliar'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/alumnos', [AlumnoController::class, 'index'])->name('alumnos.index');
+    Route::post('/alumnos', [AlumnoController::class, 'store'])->name('alumnos.store');
+    Route::put('/alumnos/{id}', [AlumnoController::class, 'update'])->name('alumnos.update');
+    Route::delete('/alumnos/{id}', [AlumnoController::class, 'destroy'])->name('alumnos.destroy');
 });
 
 // === Mesa de Partes - Gestión ===
