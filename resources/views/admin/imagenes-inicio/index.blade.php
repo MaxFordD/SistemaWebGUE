@@ -34,20 +34,6 @@
 @section('content')
 <div class="container-fluid py-4">
 
-  {{-- Alertas --}}
-  @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <i class="bi bi-check-circle me-2"></i>{{ session('success') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  @endif
-  @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="bi bi-exclamation-triangle me-2"></i>{{ session('error') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  @endif
-
   <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
       <h1 class="h3 fw-bold mb-0">Imágenes del Inicio</h1>
