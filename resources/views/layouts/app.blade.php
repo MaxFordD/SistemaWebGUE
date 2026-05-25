@@ -166,111 +166,99 @@
                   </div>
                   <span class="user-name">{{ auth()->user()->nombre_usuario ?? 'Usuario' }}</span>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg">
-                  <!-- Panel -->
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg mega-user-menu">
+
+                  {{-- ===== COLUMNAS HORIZONTALES ===== --}}
                   <li>
-                    <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                      <i class="bi bi-speedometer2 me-2"></i>Panel de Control
-                    </a>
+                    <div class="mega-cols">
+
+                      {{-- Columna 1: Panel + Usuarios --}}
+                      <div class="mega-col">
+                        <span class="dropdown-header">Mi cuenta</span>
+                        <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                          <i class="bi bi-speedometer2 me-2"></i>Panel de Control
+                        </a>
+                        @if($isAdminLike)
+                        <span class="dropdown-header mt-2">Usuarios</span>
+                        <a class="dropdown-item" href="{{ route('admin.personas.index') }}">
+                          <i class="bi bi-person-badge me-2"></i>Personas
+                        </a>
+                        <a class="dropdown-item" href="{{ route('admin.usuarios.index') }}">
+                          <i class="bi bi-people me-2"></i>Usuarios
+                        </a>
+                        <a class="dropdown-item" href="{{ route('admin.usuario-rol.index') }}">
+                          <i class="bi bi-shield-check me-2"></i>Asignar Roles
+                        </a>
+                        @endif
+                      </div>
+
+                      {{-- Columna 2: Contenidos + Mesa de Partes --}}
+                      @if($puedePublicar || $isAdminLike || $puedeMesaPartes)
+                      <div class="mega-col">
+                        @if($puedePublicar || $isAdminLike)
+                        <span class="dropdown-header">Contenidos</span>
+                        @if($puedePublicar)
+                        <a class="dropdown-item" href="{{ route('noticias.create') }}">
+                          <i class="bi bi-plus-circle me-2"></i>Publicar Noticia
+                        </a>
+                        @endif
+                        @if($isAdminLike)
+                        <a class="dropdown-item" href="{{ route('admin.comite-directivo.index') }}">
+                          <i class="bi bi-people-fill me-2"></i>Comité Directivo
+                        </a>
+                        <a class="dropdown-item" href="{{ route('admin.imagenes-inicio.index') }}">
+                          <i class="bi bi-images me-2"></i>Imágenes del Inicio
+                        </a>
+                        @endif
+                        @endif
+                        @if($puedeMesaPartes)
+                        <span class="dropdown-header mt-2">Mesa de Partes</span>
+                        <a class="dropdown-item" href="{{ route('admin.mesa.index') }}">
+                          <i class="bi bi-inbox me-2"></i>Ver Documentos
+                        </a>
+                        @endif
+                      </div>
+                      @endif
+
+                      {{-- Columna 3: Asistencia --}}
+                      @if($puedeAsistencia)
+                      <div class="mega-col">
+                        <span class="dropdown-header">Asistencia</span>
+                        @if($isAdminLike)
+                        <a class="dropdown-item" href="{{ route('admin.grados.index') }}">
+                          <i class="bi bi-journal-text me-2"></i>Grados
+                        </a>
+                        <a class="dropdown-item" href="{{ route('admin.secciones.index') }}">
+                          <i class="bi bi-diagram-3 me-2"></i>Secciones
+                        </a>
+                        @endif
+                        <a class="dropdown-item" href="{{ route('admin.alumnos.index') }}">
+                          <i class="bi bi-people me-2"></i>Alumnos
+                        </a>
+                        <a class="dropdown-item" href="{{ route('admin.asistencia.index') }}">
+                          <i class="bi bi-calendar-check me-2"></i>Registrar
+                        </a>
+                        <a class="dropdown-item" href="{{ route('admin.asistencia.historial-seccion') }}">
+                          <i class="bi bi-bar-chart-line me-2"></i>Historial
+                        </a>
+                      </div>
+                      @endif
+
+                    </div>
                   </li>
 
-                  <!-- Gestión de Usuarios (solo Director/Admin/Administrador) -->
-                  @if($isAdminLike)
+                  {{-- ===== PIE: Cerrar Sesión ===== --}}
                   <li>
-                    <hr class="dropdown-divider">
+                    <div class="mega-footer">
+                      <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                        @csrf
+                        <button class="dropdown-item text-danger d-flex align-items-center" type="submit">
+                          <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                        </button>
+                      </form>
+                    </div>
                   </li>
-                  <li class="dropdown-header">Gestión de Usuarios</li>
-                  <li><a class="dropdown-item" href="{{ route('admin.personas.index') }}"><i class="bi bi-person-badge me-2"></i>Gestionar Personas</a></li>
-                  <li><a class="dropdown-item" href="{{ route('admin.usuarios.index') }}"><i class="bi bi-people me-2"></i>Gestionar Usuarios</a></li>
-                  <li><a class="dropdown-item" href="{{ route('admin.usuario-rol.index') }}"><i class="bi bi-shield-check me-2"></i>Asignar Roles</a></li>
-                  @endif
 
-                  <!-- Mesa de Partes (Director/Admin/Administrador/MesaPartes) -->
-                  @if($puedeMesaPartes)
-                  <li>
-                    <hr class="dropdown-divider">
-                  </li>
-                  <li class="dropdown-header">Mesa de Partes</li>
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.mesa.index') }}">
-                      <i class="bi bi-inbox me-2"></i>Ver Documentos Recibidos
-                    </a>
-                  </li>
-                  @endif
-
-                  <li>
-                    <hr class="dropdown-divider">
-                  </li>
-                  <li class="dropdown-header">Contenidos</li>
-
-
-                  <!-- Publicar Noticia (Director/Admin/Administrador/Editor/Secretaria) -->
-                  @if($puedePublicar)
-                  <li>
-                    <a class="dropdown-item" href="{{ route('noticias.create') }}">
-                      <i class="bi bi-plus-circle me-2"></i>Publicar Noticia
-                    </a>
-                  </li>
-                  @endif
-
-                  <!-- Gestionar Comité Directivo (solo Director/Admin/Administrador) -->
-                  @if($isAdminLike)
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.comite-directivo.index') }}">
-                      <i class="bi bi-people-fill me-2"></i>Gestionar Comité Directivo
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.imagenes-inicio.index') }}">
-                      <i class="bi bi-images me-2"></i>Imágenes del Inicio
-                    </a>
-                  </li>
-                  @endif
-
-                  <!-- Módulo Asistencia -->
-                  @if($puedeAsistencia)
-                  <li><hr class="dropdown-divider"></li>
-                  <li class="dropdown-header">Asistencia</li>
-                  @if($isAdminLike)
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.grados.index') }}">
-                      <i class="bi bi-journal-text me-2"></i>Gestionar Grados
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.secciones.index') }}">
-                      <i class="bi bi-diagram-3 me-2"></i>Gestionar Secciones
-                    </a>
-                  </li>
-                  @endif
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.alumnos.index') }}">
-                      <i class="bi bi-people me-2"></i>Gestionar Alumnos
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.asistencia.index') }}">
-                      <i class="bi bi-calendar-check me-2"></i>Registrar Asistencia
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="{{ route('admin.asistencia.historial-seccion') }}">
-                      <i class="bi bi-bar-chart-line me-2"></i>Historial por Sección
-                    </a>
-                  </li>
-                  @endif
-
-                  <li>
-                    <hr class="dropdown-divider">
-                  </li>
-                  <li>
-                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                      @csrf
-                      <button class="dropdown-item text-danger d-flex align-items-center" type="submit">
-                        <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
-                      </button>
-                    </form>
-                  </li>
                 </ul>
               </div>
               @endauth

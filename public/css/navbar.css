@@ -343,6 +343,47 @@
   transform: scale(1.1);
 }
 
+/* ---- Mega menú de usuario (desktop) ---- */
+@media (min-width: 992px) {
+  .mega-user-menu {
+    padding: 0 !important;
+    min-width: 200px;
+    overflow: hidden;
+  }
+  .mega-cols {
+    display: flex;
+    align-items: flex-start;
+  }
+  .mega-col {
+    flex: 1;
+    min-width: 155px;
+    padding: .75rem .5rem .75rem .5rem;
+    border-right: 1px solid rgba(0,0,0,.07);
+  }
+  .mega-col:last-child { border-right: none; }
+  .mega-col .dropdown-header {
+    padding: .2rem .6rem .35rem;
+    margin-bottom: .1rem;
+    font-size: .7rem;
+  }
+  .mega-col .dropdown-item {
+    padding: .42rem .75rem;
+    font-size: .875rem;
+    border-radius: .375rem;
+  }
+  .mega-col .dropdown-item:hover {
+    transform: none;
+    background: #f0f4ff;
+  }
+  .mega-footer {
+    border-top: 1px solid rgba(0,0,0,.07);
+    padding: .4rem .5rem;
+  }
+  .mega-footer .dropdown-item:hover {
+    transform: none;
+  }
+}
+
 /* Responsive para móvil */
 @media (max-width: 991.98px) {
   .user-menu-toggle {
