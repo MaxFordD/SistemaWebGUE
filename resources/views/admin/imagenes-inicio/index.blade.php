@@ -67,7 +67,7 @@
     <button class="btn btn-primary btn-sm"
             data-bs-toggle="modal" data-bs-target="#modalAgregar"
             data-seccion="carousel">
-      <i class="bi bi-plus-lg me-1"></i>Nueva diapositiva
+      <i class="bi bi-plus-lg me-1"></i>Nueva Imagen
     </button>
   </div>
 
@@ -100,17 +100,7 @@
       </div>
     </div>
     @endforeach
-
-    {{-- Tarjeta agregar --}}
-    <div class="col-6 col-md-4 col-lg-3">
-      <button class="card-add w-100 border-0"
-              data-bs-toggle="modal" data-bs-target="#modalAgregar"
-              data-seccion="carousel">
-        <i class="bi bi-plus-circle display-5 mb-2"></i>
-        <span class="small fw-semibold">Nueva diapositiva</span>
-      </button>
-    </div>
-  </div>
+  </div>{{-- fin row carrusel --}}
 
   {{-- ====== TALLERES ====== --}}
   <div class="d-flex align-items-center gap-3 mb-3">
@@ -159,19 +149,9 @@
       </div>
     </div>
     @endforeach
+  </div>{{-- fin row talleres --}}
 
-    {{-- Tarjeta agregar --}}
-    <div class="col-6 col-md-4 col-lg-3">
-      <button class="card-add w-100 border-0"
-              data-bs-toggle="modal" data-bs-target="#modalAgregar"
-              data-seccion="taller">
-        <i class="bi bi-plus-circle display-5 mb-2"></i>
-        <span class="small fw-semibold">Nuevo taller</span>
-      </button>
-    </div>
-  </div>
-
-</div>
+</div>{{-- fin container-fluid --}}
 @endsection
 
 @push('modals')
