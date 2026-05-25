@@ -17,6 +17,49 @@ class ImagenInicioController extends Controller
         return view('admin.imagenes-inicio.index', compact('carousel', 'talleres'));
     }
 
+    public function store(Request $request)
+    {
+        $rules = [
+            'seccion' => 'required|in:carousel,taller',
+            'foto'    => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'alt'     => 'required|string|max:255',
+        ];
+
+        if ($request->seccion === 'taller') {
+            $rules['titulo']      = 'required|string|max:100';
+            $rules['descripcion'] = 'required|string|max:255';
+            $rules['icono']       = 'required|string|max:50';
+        }
+
+        $request->validate($rules, [
+            'foto.required'        => 'La imagen es obligatoria.',
+            'foto.image'           => 'El archivo debe ser una imagen.',
+            'foto.mimes'           => 'Solo se aceptan JPG, PNG o WEBP.',
+            'foto.max'             => 'La imagen no debe superar 2 MB.',
+            'alt.required'         => 'El texto alternativo es obligatorio.',
+            'titulo.required'      => 'El título es obligatorio.',
+            'descripcion.required' => 'La descripción es obligatoria.',
+            'icono.required'       => 'El ícono es obligatorio.',
+        ]);
+
+        $path  = $request->file('foto')->store('imagenes_inicio', 'public');
+        $orden = (ImagenInicio::where('seccion', $request->seccion)->max('orden') ?? 0) + 1;
+
+        ImagenInicio::create([
+            'seccion'     => $request->seccion,
+            'orden'       => $orden,
+            'ruta'        => 'storage/' . $path,
+            'alt'         => $request->alt,
+            'titulo'      => $request->seccion === 'taller' ? $request->titulo      : null,
+            'descripcion' => $request->seccion === 'taller' ? $request->descripcion : null,
+            'icono'       => $request->seccion === 'taller' ? $request->icono       : null,
+            'activo'      => 1,
+        ]);
+
+        return redirect()->route('admin.imagenes-inicio.index')
+            ->with('success', 'Imagen agregada correctamente.');
+    }
+
     public function update(Request $request, $id)
     {
         $imagen = ImagenInicio::findOrFail($id);
@@ -44,11 +87,9 @@ class ImagenInicioController extends Controller
         ]);
 
         if ($request->hasFile('foto')) {
-            // Eliminar imagen anterior si fue subida (está en storage)
             if (str_starts_with($imagen->ruta, 'storage/')) {
                 Storage::disk('public')->delete(str_replace('storage/', '', $imagen->ruta));
             }
-
             $path = $request->file('foto')->store('imagenes_inicio', 'public');
             $imagen->ruta = 'storage/' . $path;
         }
@@ -65,5 +106,19 @@ class ImagenInicioController extends Controller
 
         return redirect()->route('admin.imagenes-inicio.index')
             ->with('success', 'Imagen actualizada correctamente.');
+    }
+
+    public function destroy($id)
+    {
+        $imagen = ImagenInicio::findOrFail($id);
+
+        if (str_starts_with($imagen->ruta, 'storage/')) {
+            Storage::disk('public')->delete(str_replace('storage/', '', $imagen->ruta));
+        }
+
+        $imagen->delete();
+
+        return redirect()->route('admin.imagenes-inicio.index')
+            ->with('success', 'Imagen eliminada correctamente.');
     }
 }

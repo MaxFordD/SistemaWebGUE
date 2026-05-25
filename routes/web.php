@@ -81,7 +81,9 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 
 	// Imágenes del inicio
 	Route::get('/imagenes-inicio', [ImagenInicioController::class, 'index'])->name('imagenes-inicio.index');
+	Route::post('/imagenes-inicio', [ImagenInicioController::class, 'store'])->name('imagenes-inicio.store');
 	Route::put('/imagenes-inicio/{id}', [ImagenInicioController::class, 'update'])->name('imagenes-inicio.update');
+	Route::delete('/imagenes-inicio/{id}', [ImagenInicioController::class, 'destroy'])->name('imagenes-inicio.destroy');
 
 	// Comité Directivo
 	Route::get('/comite-directivo', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'index'])->name('comite-directivo.index');
