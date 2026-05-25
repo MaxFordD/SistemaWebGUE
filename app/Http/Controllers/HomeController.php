@@ -1,19 +1,21 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\ImagenInicio;
 use App\Models\Noticia;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        // Obtener las últimas 3 noticias activas
         $ultimas = Noticia::where('estado', 'A')
             ->orderByDesc('fecha_publicacion')
             ->limit(3)
             ->get();
 
-        // Pasar las noticias a la vista
-        return view('welcome', compact('ultimas')); // Esta es la vista que se debe mostrar
+        $slides  = ImagenInicio::where('seccion', 'carousel')->where('activo', 1)->orderBy('orden')->get();
+        $talleres = ImagenInicio::where('seccion', 'taller')->where('activo', 1)->orderBy('orden')->get();
+
+        return view('welcome', compact('ultimas', 'slides', 'talleres'));
     }
 }

@@ -220,6 +220,11 @@
                       <i class="bi bi-people-fill me-2"></i>Gestionar Comité Directivo
                     </a>
                   </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ route('admin.imagenes-inicio.index') }}">
+                      <i class="bi bi-images me-2"></i>Imágenes del Inicio
+                    </a>
+                  </li>
                   @endif
 
                   <!-- Módulo Asistencia -->

@@ -19,23 +19,15 @@
         <div id="heroCarousel" class="carousel slide carousel-fade h-100 rounded-3 overflow-hidden shadow-sm"
              data-bs-ride="carousel" data-bs-interval="5000">
           <div class="carousel-inner h-100">
-            @php
-              $slides = [
-                ['img'=>'images/gue.jpg','alt'=>'Fachada del colegio'],
-                ['img'=>'images/colegio001.jpg','alt'=>'Estudiantes en actividades'],
-                ['img'=>'images/colegio003.jpg','alt'=>'Instalaciones del campus'],
-              ];
-            @endphp
-
             @foreach($slides as $i => $s)
               <div class="carousel-item h-100 {{ $i === 0 ? 'active' : '' }}">
-                <img src="{{ asset($s['img']) }}" class="d-block w-100 h-100 object-cover"
-                     alt="{{ $s['alt'] }}" loading="lazy" decoding="async">
+                <img src="{{ asset($s->ruta) }}" class="d-block w-100 h-100 object-cover"
+                     alt="{{ $s->alt }}" loading="lazy" decoding="async">
               </div>
             @endforeach
           </div>
 
-          {{-- Controles mejorados --}}
+          {{-- Controles --}}
           <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" aria-label="Anterior">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
           </button>
@@ -43,7 +35,7 @@
             <span class="carousel-control-next-icon" aria-hidden="true"></span>
           </button>
 
-          {{-- Indicadores mejorados --}}
+          {{-- Indicadores --}}
           <div class="carousel-indicators">
             @foreach($slides as $i => $s)
               <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $i }}"
@@ -87,30 +79,21 @@
       </div>
 
       <div class="row">
-        @php
-          $talleres = [
-            ['img'=>'images/talleres/musica.jpg','titulo'=>'Música','desc'=>'Práctica instrumental, ensambles y teoría musical.','icon'=>'music-note-beamed'],
-            ['img'=>'images/talleres/deporte.jpg','titulo'=>'Deporte','desc'=>'Fútbol, vóley y atletismo para todas las categorías.','icon'=>'trophy'],
-            ['img'=>'images/talleres/pintura.jpg','titulo'=>'Artes Plásticas','desc'=>'Dibujo, pintura y técnicas mixtas.','icon'=>'palette'],
-            ['img'=>'images/talleres/danza.jpg','titulo'=>'Danza','desc'=>'Danza moderna y folclore peruano.','icon'=>'person-arms-up'],
-          ];
-        @endphp
-
         @foreach($talleres as $t)
           <div class="col-md-6 col-lg-3 mb-4">
             <div class="card h-100 shadow-sm border-0 hover-lift taller-card">
               <div class="card-img-wrapper">
                 <img class="card-img-top"
-                     src="{{ asset($t['img']) }}"
-                     alt="Taller de {{ $t['titulo'] }}"
+                     src="{{ asset($t->ruta) }}"
+                     alt="{{ $t->alt }}"
                      loading="lazy" decoding="async">
                 <div class="card-overlay">
-                  <i class="bi bi-{{ $t['icon'] ?? 'star-fill' }} display-4 text-white"></i>
+                  <i class="bi bi-{{ $t->icono ?? 'star-fill' }} display-4 text-white"></i>
                 </div>
               </div>
               <div class="card-body">
-                <h5 class="card-title fw-bold">{{ $t['titulo'] }}</h5>
-                <p class="card-text text-muted">{{ $t['desc'] }}</p>
+                <h5 class="card-title fw-bold">{{ $t->titulo }}</h5>
+                <p class="card-text text-muted">{{ $t->descripcion }}</p>
               </div>
             </div>
           </div>

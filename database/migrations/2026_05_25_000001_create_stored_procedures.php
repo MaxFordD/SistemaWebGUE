@@ -44,6 +44,7 @@ return new class extends Migration
             SELECT LAST_INSERT_ID() AS grado_id;
         END");
 
+        DB::unprepared('DROP PROCEDURE IF EXISTS sp_Grado_Actualizar');
         DB::unprepared("CREATE PROCEDURE sp_Grado_Actualizar(
             IN p_grado_id SMALLINT,
             IN p_nombre   VARCHAR(30),
@@ -95,6 +96,7 @@ return new class extends Migration
             WHERE s.seccion_id = p_seccion_id;
         END');
 
+        DB::unprepared('DROP PROCEDURE IF EXISTS sp_Seccion_Insertar');
         DB::unprepared("CREATE PROCEDURE sp_Seccion_Insertar(
             IN p_grado_id     SMALLINT,
             IN p_nombre       VARCHAR(10),
@@ -107,6 +109,7 @@ return new class extends Migration
             SELECT LAST_INSERT_ID() AS seccion_id;
         END");
 
+        DB::unprepared('DROP PROCEDURE IF EXISTS sp_Seccion_Actualizar');
         DB::unprepared("CREATE PROCEDURE sp_Seccion_Actualizar(
             IN p_seccion_id  SMALLINT,
             IN p_grado_id    SMALLINT,
@@ -160,6 +163,7 @@ return new class extends Migration
             WHERE a.alumno_id = p_alumno_id;
         END');
 
+        DB::unprepared('DROP PROCEDURE IF EXISTS sp_Alumno_Insertar');
         DB::unprepared("CREATE PROCEDURE sp_Alumno_Insertar(
             IN p_seccion_id       SMALLINT,
             IN p_nombres          VARCHAR(100),
@@ -174,6 +178,7 @@ return new class extends Migration
             SELECT LAST_INSERT_ID() AS alumno_id;
         END");
 
+        DB::unprepared('DROP PROCEDURE IF EXISTS sp_Alumno_Actualizar');
         DB::unprepared("CREATE PROCEDURE sp_Alumno_Actualizar(
             IN p_alumno_id        INT,
             IN p_seccion_id       SMALLINT,

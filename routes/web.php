@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\GradoController;
 use App\Http\Controllers\Admin\SeccionController;
 use App\Http\Controllers\Admin\AlumnoController;
 use App\Http\Controllers\Admin\AsistenciaController;
+use App\Http\Controllers\Admin\ImagenInicioController;
 
 // === Autenticación ===
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -77,6 +78,10 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 	Route::get('/usuario-rol/{usuarioId}', [UsuarioRolController::class, 'show'])->name('usuario-rol.show');
 	Route::post('/usuario-rol/asignar', [UsuarioRolController::class, 'asignar'])->name('usuario-rol.asignar');
 	Route::post('/usuario-rol/remover', [UsuarioRolController::class, 'remover'])->name('usuario-rol.remover');
+
+	// Imágenes del inicio
+	Route::get('/imagenes-inicio', [ImagenInicioController::class, 'index'])->name('imagenes-inicio.index');
+	Route::put('/imagenes-inicio/{id}', [ImagenInicioController::class, 'update'])->name('imagenes-inicio.update');
 
 	// Comité Directivo
 	Route::get('/comite-directivo', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'index'])->name('comite-directivo.index');
