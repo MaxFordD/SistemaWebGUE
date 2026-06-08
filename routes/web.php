@@ -128,6 +128,10 @@ Route::middleware(['auth', 'role:Director,Administrador,Auxiliar'])->prefix('adm
     Route::post('/alumnos', [AlumnoController::class, 'store'])->name('alumnos.store');
     Route::put('/alumnos/{id}', [AlumnoController::class, 'update'])->name('alumnos.update');
     Route::delete('/alumnos/{id}', [AlumnoController::class, 'destroy'])->name('alumnos.destroy');
+    Route::delete('/alumnos/{id}/borrar', [AlumnoController::class, 'borrar'])->name('alumnos.borrar');
+    Route::post('/alumnos/borrar-masivo', [AlumnoController::class, 'borrarMasivo'])->name('alumnos.borrarMasivo');
+    Route::post('/alumnos/importar/preview', [AlumnoController::class, 'importarPreview'])->name('alumnos.importar.preview');
+    Route::post('/alumnos/importar/confirmar', [AlumnoController::class, 'importarConfirmar'])->name('alumnos.importar.confirmar');
 });
 
 // === Mesa de Partes - Gestión ===
