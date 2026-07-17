@@ -8,9 +8,6 @@
         <h1 class="h4 mb-0">Asignar Roles a Usuarios</h1>
     </div>
 
-    @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-    @if (session('error'))   <div class="alert alert-danger">{{ session('error') }}</div> @endif
-
     <div class="card">
         <div class="card-header bg-white"><strong>Seleccione un Usuario</strong></div>
         <div class="card-body p-0">

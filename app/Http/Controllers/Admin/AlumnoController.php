@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\AlumnoExport;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AlumnoController extends Controller
 {
@@ -32,6 +35,31 @@ class AlumnoController extends Controller
         }
     }
 
+    public function exportar(Request $request)
+    {
+        $seccionId = $request->get('seccion_id');
+        $año       = $request->get('año', date('Y'));
+
+        if (!$seccionId) {
+            return redirect()->route('admin.alumnos.index')->with('error', 'Selecciona una sección para exportar.');
+        }
+
+        $alumnos = collect(DB::select('CALL sp_Alumno_ListarPorSeccion(?)', [(int) $seccionId]));
+        $seccionData = DB::select('CALL sp_Seccion_ObtenerPorId(?)', [(int) $seccionId]);
+        $seccion = $seccionData[0] ?? null;
+
+        $meta = [
+            'grado'   => $seccion->grado   ?? '',
+            'seccion' => $seccion->seccion  ?? '',
+            'nivel'   => $seccion->nivel    ?? '',
+            'año'     => $año,
+        ];
+
+        $nombre = 'alumnos_' . ($seccion->grado ?? '') . '_' . ($seccion->seccion ?? '') . '_' . $año . '.xlsx';
+
+        return Excel::download(new AlumnoExport($alumnos, $meta), $nombre);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -53,13 +81,14 @@ class AlumnoController extends Controller
         ]);
 
         try {
-            DB::select('CALL sp_Alumno_Insertar(?, ?, ?, ?, ?, ?)', [
+            DB::select('CALL sp_Alumno_Insertar(?, ?, ?, ?, ?, ?, ?)', [
                 (int) $request->seccion_id,
                 $request->nombres,
                 $request->apellidos,
                 $request->dni,
                 $request->fecha_nacimiento ?: null,
                 $request->sexo,
+                bin2hex(random_bytes(16)),
             ]);
 
             return redirect()->route('admin.alumnos.index', [
@@ -152,7 +181,7 @@ class AlumnoController extends Controller
     public function importarPreview(Request $request)
     {
         $request->validate([
-            'archivo' => 'required|file|mimes:csv,txt|max:5120',
+            'archivo' => 'required|file|max:5120',
             'año'     => 'required|integer|min:2020|max:2099',
         ]);
 
@@ -161,7 +190,13 @@ class AlumnoController extends Controller
         $bom = fread($handle, 3);
         if ($bom !== "\xEF\xBB\xBF") rewind($handle);
 
-        $rawHeader = fgetcsv($handle, 0, ';');
+        // Auto-detectar separador: tab o punto y coma
+        $firstLine = fgets($handle);
+        rewind($handle);
+        if ($bom === "\xEF\xBB\xBF") fread($handle, 3);
+        $sep = str_contains($firstLine, "\t") ? "\t" : ';';
+
+        $rawHeader = fgetcsv($handle, 0, $sep);
         if (!$rawHeader) {
             return response()->json(['ok' => false, 'error' => 'El archivo está vacío o no es válido.'], 422);
         }
@@ -178,7 +213,7 @@ class AlumnoController extends Controller
 
         $known = ['grado', 'seccion', 'apellidos', 'nombres', 'dni', 'fecha_nacimiento', 'sexo'];
         $rows  = [];
-        while (($row = fgetcsv($handle, 0, ';')) !== false) {
+        while (($row = fgetcsv($handle, 0, $sep)) !== false) {
             if (count($row) !== count($normalizedHeader)) continue;
             $mapped = array_combine($normalizedHeader, $row);
             $rows[] = array_intersect_key($mapped, array_flip($known));
@@ -275,8 +310,9 @@ class AlumnoController extends Controller
             }
 
             try {
-                DB::select('CALL sp_Alumno_Insertar(?, ?, ?, ?, ?, ?)', [
+                DB::select('CALL sp_Alumno_Insertar(?, ?, ?, ?, ?, ?, ?)', [
                     $seccion->seccion_id, $nombres, $apellidos, $dni, $fechaNac, $sexo,
+                    bin2hex(random_bytes(16)),
                 ]);
                 $inserted++;
             } catch (\Exception $e) {
@@ -294,6 +330,50 @@ class AlumnoController extends Controller
             'skipped'  => $skipped,
             'errors'   => $errors,
         ]);
+    }
+
+    public function qr($id, Request $request)
+    {
+        $alumnoData = DB::select('CALL sp_Alumno_ObtenerPorId(?)', [(int) $id]);
+        if (empty($alumnoData)) {
+            abort(404);
+        }
+        $alumno = $alumnoData[0];
+
+        $qrSvg = QrCode::size(260)->generate($alumno->codigo_qr);
+
+        if ($request->ajax()) {
+            return view('admin.alumnos.qr-carnet', compact('alumno', 'qrSvg'));
+        }
+
+        return view('admin.alumnos.qr', compact('alumno', 'qrSvg'));
+    }
+
+    public function qrTodos(Request $request)
+    {
+        $seccionId = $request->get('seccion_id');
+        if (!$seccionId) {
+            return redirect()->route('admin.alumnos.index')->with('error', 'Selecciona una sección para descargar los QR.');
+        }
+
+        $seccionData = DB::select('CALL sp_Seccion_ObtenerPorId(?)', [(int) $seccionId]);
+        $seccion = $seccionData[0] ?? null;
+
+        $alumnos = DB::table('Alumno')
+            ->where('seccion_id', (int) $seccionId)
+            ->where('estado', 1)
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->get();
+
+        $tarjetas = $alumnos->map(function ($alumno) {
+            return [
+                'alumno' => $alumno,
+                'qrSvg'  => QrCode::size(160)->generate($alumno->codigo_qr),
+            ];
+        });
+
+        return view('admin.alumnos.qr-todos', compact('seccion', 'tarjetas'));
     }
 
     public function borrarMasivo(Request $request)

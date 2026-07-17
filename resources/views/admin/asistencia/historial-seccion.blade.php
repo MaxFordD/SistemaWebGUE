@@ -135,6 +135,26 @@
             </div>
         </div>
 
+        {{-- Gráficas --}}
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold small">Distribución global</div>
+                    <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+                        <canvas id="chartPie" style="max-height:200px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold small">% Asistencia por alumno (Top 10)</div>
+                    <div class="card-body" style="min-height:220px;">
+                        <canvas id="chartBar" style="max-height:200px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Tabla detalle por alumno --}}
         <div class="card shadow-sm">
             <div class="card-body p-0">
@@ -200,3 +220,49 @@
     @endif
 </div>
 @endsection
+
+@if($seccionId && $resumen->isNotEmpty())
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const totAsistio  = {{ $totAsistio }};
+const totFaltas   = {{ $totFaltas }};
+const totTardanza = {{ $totTardanza }};
+
+// Pie: distribución global
+new Chart(document.getElementById('chartPie'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Asistió', 'Faltas', 'Tardanzas'],
+        datasets: [{ data: [totAsistio, totFaltas, totTardanza], backgroundColor: ['#198754','#dc3545','#fd7e14'] }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+});
+
+// Bar: % asistencia por alumno (top 10)
+const alumnos = @json($resumen->sortByDesc(fn($r) => $r->total_asistio + $r->total_faltas + $r->total_tardanzas > 0
+    ? round($r->total_asistio / ($r->total_asistio + $r->total_faltas + $r->total_tardanzas) * 100)
+    : 0)->take(10)->values());
+
+const labels = alumnos.map(a => a.apellidos.split(' ')[0]);
+const pcts   = alumnos.map(a => {
+    const t = a.total_asistio + a.total_faltas + a.total_tardanzas;
+    return t > 0 ? Math.round(a.total_asistio / t * 100) : 0;
+});
+const colors = pcts.map(p => p >= 85 ? '#198754' : p >= 70 ? '#fd7e14' : '#dc3545');
+
+new Chart(document.getElementById('chartBar'), {
+    type: 'bar',
+    data: {
+        labels,
+        datasets: [{ label: '% Asistencia', data: pcts, backgroundColor: colors, borderRadius: 4 }]
+    },
+    options: {
+        indexAxis: 'y',
+        scales: { x: { max: 100, ticks: { callback: v => v + '%' } } },
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+@endpush
+@endif

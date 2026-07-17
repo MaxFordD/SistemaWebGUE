@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Noticia;
+use App\Services\ArchivoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -20,13 +21,39 @@ class NoticiaController extends Controller
             // Trae solo noticias activas ordenadas desc por fecha
             $rows = collect(DB::select('CALL sp_Noticia_ListarActivas()'));
 
+            // Filtrar por búsqueda
+            $busqueda = trim($request->get('buscar', ''));
+            if ($busqueda !== '') {
+                $termino = mb_strtolower($busqueda);
+                $rows = $rows->filter(function($row) use ($termino) {
+                    return str_contains(mb_strtolower($row->titulo ?? ''), $termino)
+                        || str_contains(mb_strtolower($row->resumen ?? ''), $termino);
+                })->values();
+            }
+
+            // Filtrar por año
+            $año = $request->get('año', '');
+            if ($año !== '') {
+                $rows = $rows->filter(function($row) use ($año) {
+                    return isset($row->fecha_publicacion) &&
+                           substr($row->fecha_publicacion, 0, 4) === (string)$año;
+                })->values();
+            }
+
             // Convertir stdClass a instancias del modelo Noticia para usar accessors
             $rows = $rows->map(function($row) {
                 $noticia = new Noticia();
                 foreach (get_object_vars($row) as $key => $value) {
                     $noticia->$key = $value;
                 }
-                $noticia->exists = true; // Marcar como existente en BD
+                $noticia->exists = true;
+
+                // Limpiar resumen de HTML (el SP puede devolver resumen con etiquetas)
+                $rawResumen = !empty($noticia->resumen) ? $noticia->resumen : ($noticia->contenido ?? '');
+                $rawResumen = html_entity_decode($rawResumen, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $rawResumen = html_entity_decode($rawResumen, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $noticia->resumen = trim(strip_tags($rawResumen));
+
                 return $noticia;
             });
 
@@ -91,16 +118,19 @@ class NoticiaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'titulo'      => 'required|string|max:200',
-            'contenido'   => 'required|string',
-            'archivos'    => 'nullable|array',
-            'archivos.*'  => 'file|mimes:jpeg,jpg,png,gif,pdf,doc,docx,xls,xlsx|max:2048',
+            'titulo'       => 'required|string|max:200',
+            'contenido'    => 'required|string',
+            'archivos'     => 'nullable|array',
+            'archivos.*'   => 'file|mimes:jpeg,jpg,png,gif,pdf,doc,docx,xls,xlsx|max:2048',
+            'video_urls'   => 'nullable|array',
+            'video_urls.*' => 'nullable|url|max:500',
         ], [
             'titulo.required'      => 'El título es obligatorio.',
             'contenido.required'   => 'El contenido es obligatorio.',
             'archivos.*.file'      => 'Cada archivo debe ser válido.',
             'archivos.*.mimes'     => 'Formato no permitido. Solo se aceptan imágenes, PDF, Word y Excel.',
             'archivos.*.max'       => 'Cada archivo no debe superar 2MB.',
+            'video_urls.*.url'     => 'Cada enlace de video debe ser una URL válida.',
         ]);
 
         $user = auth()->user();
@@ -108,6 +138,21 @@ class NoticiaController extends Controller
         if (!$usuarioId) {
             return back()->withInput()->with('error', 'No se pudo identificar al usuario autenticado.');
         }
+
+        // Decodificar entidades HTML (por si TinyMCE codificó el contenido pegado)
+        // y limpiar atributos de redes sociales (class, style, id, data-*)
+        $titulo    = html_entity_decode($request->input('titulo'),    ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $contenido = html_entity_decode($request->input('contenido'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $contenido = preg_replace('/\s+(?:class|style|id|data-[\w-]+)="[^"]*"/i', '', $contenido);
+
+        // Eliminar imágenes emoji de Facebook CDN (alt="⚙️" causa error en MySQL utf8)
+        $contenido = preg_replace('/<img\b[^>]*fbcdn\.net[^>]*\/?>/i', '', $contenido);
+
+        // MySQL utf8 no soporta emojis 4-byte ni variation selectors
+        $titulo    = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $titulo);
+        $contenido = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $contenido);
+        $titulo    = preg_replace('/[\x{FE00}-\x{FE0F}]/u', '', $titulo);
+        $contenido = preg_replace('/[\x{FE00}-\x{FE0F}]/u', '', $contenido);
 
         // Subida de múltiples archivos a storage/app/public/noticias
         $rutasArchivos = [];
@@ -120,6 +165,8 @@ class NoticiaController extends Controller
                     if (!Storage::disk('public')->exists($ruta)) {
                         throw new \Exception("El archivo no se guardó correctamente: $ruta");
                     }
+
+                    app(ArchivoService::class)->optimizarImagen($ruta);
 
                     $rutasArchivos[] = $ruta;
                     Log::info("Archivo guardado exitosamente: $ruta");
@@ -134,12 +181,17 @@ class NoticiaController extends Controller
             }
         }
 
-        // Concatenar rutas con separador ';' (sin espacios para consistencia)
+        // Agregar URLs de video
+        foreach ((array)$request->input('video_urls', []) as $url) {
+            $url = trim($url);
+            if ($url && filter_var($url, FILTER_VALIDATE_URL)) {
+                $rutasArchivos[] = $url;
+            }
+        }
+
         $rutaImagenConcatenada = !empty($rutasArchivos) ? implode(';', $rutasArchivos) : null;
 
         // Ejecutamos el SP con OUTPUT
-        $titulo    = $request->input('titulo');
-        $contenido = $request->input('contenido');
 
         try {
             // Inicializar variables de salida
@@ -214,11 +266,13 @@ class NoticiaController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'titulo'      => 'required|string|max:200',
-            'contenido'   => 'required|string',
-            'estado'      => 'required|in:A,I',
-            'archivos'    => 'nullable|array',
-            'archivos.*'  => 'file|mimes:jpeg,jpg,png,gif,pdf,doc,docx,xls,xlsx|max:2048',
+            'titulo'       => 'required|string|max:200',
+            'contenido'    => 'required|string',
+            'estado'       => 'required|in:A,I',
+            'archivos'     => 'nullable|array',
+            'archivos.*'   => 'file|mimes:jpeg,jpg,png,gif,pdf,doc,docx,xls,xlsx|max:2048',
+            'video_urls'   => 'nullable|array',
+            'video_urls.*' => 'nullable|url|max:500',
         ]);
 
         // Obtener noticia actual para manejar archivos existentes
@@ -241,6 +295,8 @@ class NoticiaController extends Controller
                         throw new \Exception("El archivo no se guardó correctamente: $ruta");
                     }
 
+                    app(ArchivoService::class)->optimizarImagen($ruta);
+
                     $rutasArchivos[] = $ruta;
                     Log::info("Archivo actualizado exitosamente: $ruta");
                 } catch (\Exception $e) {
@@ -253,13 +309,35 @@ class NoticiaController extends Controller
             }
         }
 
-        // Combinar archivos existentes con nuevos
+        // Agregar URLs de video nuevas
+        foreach ((array)$request->input('video_urls', []) as $url) {
+            $url = trim($url);
+            if ($url && filter_var($url, FILTER_VALIDATE_URL)) {
+                $rutasArchivos[] = $url;
+            }
+        }
+
+        // Combinar archivos existentes con nuevos (archivos + videos)
         $todasLasRutas = $archivosExistentes;
         if (!empty($rutasArchivos)) {
-            $todasLasRutas = $archivosExistentes 
+            $todasLasRutas = $archivosExistentes
                 ? $archivosExistentes . ';' . implode(';', $rutasArchivos)
                 : implode(';', $rutasArchivos);
         }
+
+        // Decodificar entidades HTML y limpiar atributos de redes sociales
+        $titulo    = html_entity_decode($request->input('titulo'),    ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $contenido = html_entity_decode($request->input('contenido'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $contenido = preg_replace('/\s+(?:class|style|id|data-[\w-]+)="[^"]*"/i', '', $contenido);
+
+        // Eliminar imágenes emoji de Facebook CDN
+        $contenido = preg_replace('/<img\b[^>]*fbcdn\.net[^>]*\/?>/i', '', $contenido);
+
+        // MySQL utf8 no soporta emojis 4-byte ni variation selectors
+        $titulo    = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $titulo);
+        $contenido = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $contenido);
+        $titulo    = preg_replace('/[\x{FE00}-\x{FE0F}]/u', '', $titulo);
+        $contenido = preg_replace('/[\x{FE00}-\x{FE0F}]/u', '', $contenido);
 
         try {
             // Inicializar variables de salida
@@ -268,10 +346,10 @@ class NoticiaController extends Controller
             // Llamar al procedimiento
             DB::statement('CALL sp_Noticia_Actualizar(?, ?, ?, ?, ?, @resultado, @mensaje)', [
                 (int)$id,
-                $request->input('titulo'),
-                $request->input('contenido'),
+                $titulo,
+                $contenido,
                 $todasLasRutas,
-                $request->input('estado', 'A')
+                $request->input('estado', 'A'),
             ]);
 
             // Obtener resultados

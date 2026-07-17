@@ -10,7 +10,7 @@
 
 @section('content')
 
-<section class="directivo-hero py-5 bg-light">
+<section class="directivo-hero py-5">
   <div class="container">
     <div class="text-center" data-aos="fade-up">
       <h1 class="display-4 fw-bold mb-3">Comité Directivo</h1>
@@ -22,7 +22,7 @@
 </section>
 
 
-<section class="filtros py-3 bg-white border-bottom">
+<section class="filtros py-3">
   <div class="container">
     <div class="d-flex flex-wrap justify-content-center gap-2" data-aos="fade-up">
 

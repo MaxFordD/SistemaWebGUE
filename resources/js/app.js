@@ -6,8 +6,9 @@
 // Importar CSS (Vite lo procesará)
 import '../css/app.css';
 
+// Bootstrap JS (incluye Popper) - auto-hospedado vía Vite en vez de CDN
+import * as bootstrap from 'bootstrap';
+window.bootstrap = bootstrap;
+
 // Aquí puedes agregar JavaScript personalizado
 console.log('SistemaWebGUE cargado correctamente');
-
-// Ejemplo: Inicializar tooltips de Bootstrap si es necesario
-// import 'bootstrap';

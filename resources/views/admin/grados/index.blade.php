@@ -57,15 +57,15 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <div class="btn-group btn-group-sm">
+                                            <div class="d-flex gap-2 justify-content-center">
                                                 <button type="button"
-                                                    class="btn btn-outline-primary"
+                                                    class="btn btn-sm btn-outline-primary"
                                                     title="Editar"
                                                     onclick="abrirEditar({{ $grado->grado_id }}, '{{ addslashes($grado->nombre) }}', '{{ $grado->nivel }}', {{ $grado->estado }})">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <button type="button"
-                                                    class="btn btn-outline-danger"
+                                                    class="btn btn-sm btn-outline-danger"
                                                     title="Desactivar"
                                                     onclick="confirmarEliminar({{ $grado->grado_id }}, '{{ addslashes($grado->nombre) }}')">
                                                     <i class="bi bi-x-circle"></i>

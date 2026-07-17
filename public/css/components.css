@@ -190,7 +190,7 @@
 }
 
 .hero-split .row > [class*="col-"] > * {
-  min-height: clamp(380px, 60vh, 680px);
+  height: clamp(380px, 52vh, 520px);
 }
 
 #hero h1 {

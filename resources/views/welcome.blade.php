@@ -6,23 +6,31 @@
 @push('styles')
 <style>
 .modal-close-top-right{ right:.5rem; top:.5rem; }
+/* Subir el hero (carrusel + texto) solo en la página de inicio */
+body.page-home .main-wrapper > .container.mt-3{ margin-top:.25rem !important; }
+body.page-home #main-content{ margin-top:0 !important; }
 </style>
 @endpush
 
 @section('content')
-{{-- ====== HERO en dos columnas (Carrusel + Texto) ====== --}}
-<section id="hero" class="hero-split py-3">
+{{-- ====== HERO 60/40 (Fotografía + Contenido) ====== --}}
+<section id="hero" class="hero-split pt-0 pt-lg-1 pb-4 pb-lg-5">
   <div class="container">
     <div class="row g-3 g-lg-4 align-items-stretch">
-      {{-- Columna IZQUIERDA: Carrusel --}}
-      <div class="col-12 col-lg-6">
+      {{-- Columna IZQUIERDA (60%): Carrusel institucional --}}
+      <div class="col-12 col-lg-7">
         <div id="heroCarousel" class="carousel slide carousel-fade h-100 rounded-3 overflow-hidden shadow-sm"
              data-bs-ride="carousel" data-bs-interval="5000">
           <div class="carousel-inner h-100">
             @foreach($slides as $i => $s)
               <div class="carousel-item h-100 {{ $i === 0 ? 'active' : '' }}">
+                @if($i === 0)
+                <img src="{{ asset($s->ruta) }}" class="d-block w-100 h-100 object-cover"
+                     alt="{{ $s->alt }}" loading="eager" fetchpriority="high" decoding="async">
+                @else
                 <img src="{{ asset($s->ruta) }}" class="d-block w-100 h-100 object-cover"
                      alt="{{ $s->alt }}" loading="lazy" decoding="async">
+                @endif
               </div>
             @endforeach
           </div>
@@ -47,13 +55,14 @@
         </div>
       </div>
 
-      {{-- Columna DERECHA: Texto + botones --}}
-      <div class="col-12 col-lg-6">
+      {{-- Columna DERECHA (40%): Texto + botones --}}
+      <div class="col-12 col-lg-5">
         <div class="hero-copy h-100 rounded-3 shadow-sm d-flex flex-column justify-content-center p-4 p-lg-5">
 
+          <span class="hero-eyebrow">Institución Educativa Emblemática</span>
+
           <h1 class="fw-bold mb-3 lh-sm">
-            Institución Educativa Emblemática<br class="d-none d-xl-inline">
-            José Faustino Sánchez Carrión Trujillo
+            José Faustino Sánchez Carrión
           </h1>
 
           <p class="lead text-muted mb-4">
@@ -62,8 +71,8 @@
           </p>
 
           <div class="mt-auto pt-2">
-            <a href="{{ route('noticias.index') }}" class="btn btn-primary btn-lg me-3 mb-2">Ver Noticias</a>
-            <a href="{{ route('nosotros') }}" class="btn btn-outline-secondary btn-lg mb-2">Conócenos</a>
+            <a href="{{ route('nosotros') }}" class="btn btn-primary btn-lg me-3 mb-2">Conocer más</a>
+            <a href="{{ route('noticias.index') }}" class="btn btn-outline-secondary btn-lg mb-2">Ver noticias</a>
           </div>
         </div>
       </div>
@@ -71,16 +80,36 @@
   </div>
 </section>
 
-  {{-- ====== TALLERES / ACTIVIDADES ====== --}}
-  <section class="talleres py-5 bg-white">
+  {{-- ====== LOGROS INSTITUCIONALES ====== --}}
+  <section class="logros-section py-5">
     <div class="container">
-      <div class="d-flex align-items-center justify-content-between mb-4">
+      <div class="section-heading text-center mb-5">
+        <h2 class="h1 fw-bold mb-0">Logros Institucionales</h2>
+      </div>
+      <div class="row g-4">
+        @foreach($logros as $l)
+          <div class="col-md-6 col-lg-3 animate-on-scroll">
+            <div class="logro-card h-100">
+              <div class="logro-icon"><i class="bi {{ $l['icon'] }}"></i></div>
+              <h5 class="fw-bold mb-2">{{ $l['titulo'] }}</h5>
+              <p class="text-muted mb-0 small">{{ $l['descripcion'] }}</p>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    </div>
+  </section>
+
+  {{-- ====== TALLERES / ACTIVIDADES ====== --}}
+  <section class="talleres py-5">
+    <div class="container">
+      <div class="section-heading text-center mb-5">
         <h2 class="h1 fw-bold mb-0">Talleres y Actividades</h2>
       </div>
 
-      <div class="row">
+      <div class="row g-4">
         @foreach($talleres as $t)
-          <div class="col-md-6 col-lg-3 mb-4">
+          <div class="col-md-6 col-lg-3 animate-on-scroll">
             <div class="card h-100 shadow-sm border-0 hover-lift taller-card">
               <div class="card-img-wrapper">
                 <img class="card-img-top"
@@ -99,58 +128,30 @@
           </div>
         @endforeach
       </div>
-
-      <div class="text-center d-md-none mt-2">
-        <a href="#" class="btn btn-outline-dark btn-sm">Ver todos</a>
-      </div>
     </div>
   </section>
- <!--
-  {{-- ====== GALERÍA DE INSTALACIONES ====== --}}
-  <section class="galeria py-5">
+
+{{-- ====== ÚLTIMAS NOTICIAS ====== --}}
+  @if($ultimas->isNotEmpty())
+  <section class="noticias-home-section">
     <div class="container">
       <div class="d-flex align-items-center justify-content-between mb-4">
-        <h2 class="h1 fw-bold mb-0">Galería de Instalaciones</h2>
-        <small class="text-muted d-none d-md-inline">Explora nuestros ambientes</small>
+        <div class="section-heading mb-0">
+          <h2 class="h1 fw-bold mb-0">Últimas Noticias</h2>
+        </div>
+        <a href="{{ route('noticias.index') }}" class="btn btn-outline-primary btn-sm">Ver todas</a>
       </div>
-
-      @php
-        $fotos = [
-          'images/galeria/aula.jpg',
-          'images/galeria/laboratorio.jpg',
-          'images/galeria/biblioteca.jpg',
-          'images/galeria/cancha.jpg',
-          'images/galeria/patio.jpg',
-          'images/galeria/auditorio.jpg',
-          'images/galeria/ingreso.jpg',
-          'images/galeria/computo.jpg',
-        ];
-      @endphp
-
-      <div class="row g-0">
-        @foreach($fotos as $i => $src)
-          <div class="col-6 col-md-3">
-            <a href="{{ asset($src) }}" class="gal-item d-block" data-index="{{ $i }}"
-               data-bs-toggle="modal" data-bs-target="#galeriaModal">
-              <img src="{{ asset($src) }}" class="img-fluid"
-                   alt="Instalaciones del colegio: imagen {{ $i+1 }}"
-                   loading="lazy" decoding="async">
-            </a>
-          </div>
+      <div class="row g-4">
+        @foreach($ultimas as $n)
+        <div class="col-md-4 animate-on-scroll">
+          @include('noticias._card', ['noticia' => $n])
+        </div>
         @endforeach
       </div>
     </div>
   </section>
- Modal Galería 
-  <div class="modal fade" id="galeriaModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content bg-dark text-white position-relative">
-        <button type="button" class="btn-close btn-close-white position-absolute modal-close-top-right" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        <img id="galeriaImg" src="" class="img-fluid w-100" alt="Vista ampliada de la imagen seleccionada">
-      </div>
-    </div>
-  </div>
-</div>-->
+  @endif
+
 @endsection
 
 @push('scripts')

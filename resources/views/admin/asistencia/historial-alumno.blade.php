@@ -18,11 +18,23 @@
 @section('content')
 <div class="container-fluid py-4">
 
-    {{-- Breadcrumb / volver --}}
-    <div class="mb-3">
+    {{-- Breadcrumb / volver + descargas --}}
+    <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <a href="{{ url()->previous() }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i>Volver
         </a>
+        @if($historial->isNotEmpty())
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.asistencia.reporte-alumno-pdf', [$alumno->alumno_id, 'mes' => $mes, 'año' => $año]) }}"
+               class="btn btn-sm btn-danger" target="_blank">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+            <a href="{{ route('admin.asistencia.reporte-alumno-excel', [$alumno->alumno_id, 'mes' => $mes, 'año' => $año]) }}"
+               class="btn btn-sm btn-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+            </a>
+        </div>
+        @endif
     </div>
 
     {{-- Encabezado alumno --}}

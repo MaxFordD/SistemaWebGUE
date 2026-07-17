@@ -11,12 +11,14 @@ class SeccionController extends Controller
 {
     public function index(Request $request)
     {
-        $año = $request->get('año', date('Y'));
+        $año   = $request->get('año', date('Y'));
+        $nivel = $request->get('nivel', '');
 
         try {
-            $secciones = collect(DB::select('CALL sp_Seccion_Listar(?)', [(int) $año]));
+            $secciones = collect(DB::select('CALL sp_Seccion_Listar(?)', [(int) $año]))
+                ->when($nivel, fn($c) => $c->filter(fn($s) => $s->nivel === $nivel)->values());
             $grados    = collect(DB::select('CALL sp_Grado_ListarActivos()'));
-            return view('admin.secciones.index', compact('secciones', 'grados', 'año'));
+            return view('admin.secciones.index', compact('secciones', 'grados', 'año', 'nivel'));
         } catch (\Exception $e) {
             Log::error('Error al listar secciones: ' . $e->getMessage());
             return redirect()->route('admin.dashboard')->with('error', 'Error al cargar las secciones.');

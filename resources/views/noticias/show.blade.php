@@ -86,53 +86,35 @@
 
         {{-- Galería de imágenes principal --}}
         @if(count($noticia->imagenes) > 0)
-        @php
-        $documentos = array_diff($noticia->archivos, $noticia->imagenes);
-        @endphp
+        @php $documentos = array_diff($noticia->archivos, $noticia->imagenes); @endphp
         <div class="mb-4">
             @if(count($noticia->imagenes) === 1)
             {{-- Imagen única destacada --}}
-            @php
-            $rutaImagen = 'storage/' . ltrim($noticia->primera_imagen, '/');
-            $existeImagen = file_exists(public_path($rutaImagen));
-            @endphp
-            @if($existeImagen)
             <div class="position-relative rounded-4 overflow-hidden shadow-lg" style="max-height: 600px; background-color: #f8f9fa;">
-                <img src="{{ asset($rutaImagen) }}"
+                <img src="{{ asset('storage/' . ltrim($noticia->primera_imagen, '/')) }}"
                      alt="{{ $noticia->titulo }}"
                      class="w-100"
                      style="object-fit: contain; max-height: 600px;"
                      onerror="this.parentElement.style.display='none'">
             </div>
             @else
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle me-2"></i>La imagen de esta noticia no está disponible.
-            </div>
-            @endif
-            @else
             {{-- Galería de múltiples imágenes --}}
-            @php
-            $imagenesExistentes = array_filter($noticia->imagenes, function($img) {
-                return file_exists(public_path('storage/' . ltrim($img, '/')));
-            });
-            @endphp
-            @if(count($imagenesExistentes) > 0)
             <div id="galeriaNoticia" class="carousel slide shadow-lg rounded-4 overflow-hidden" data-bs-ride="carousel" style="background-color: #f8f9fa;">
                 <div class="carousel-indicators">
-                    @foreach($imagenesExistentes as $index => $imagen)
+                    @foreach($noticia->imagenes as $index => $imagen)
                     <button type="button" data-bs-target="#galeriaNoticia" data-bs-slide-to="{{ $index }}"
                             class="{{ $index === 0 ? 'active' : '' }}" aria-current="{{ $index === 0 ? 'true' : 'false' }}"
                             aria-label="Imagen {{ $index + 1 }}"></button>
                     @endforeach
                 </div>
                 <div class="carousel-inner">
-                    @foreach($imagenesExistentes as $index => $imagen)
+                    @foreach($noticia->imagenes as $index => $imagen)
                     <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
                         <img src="{{ asset('storage/' . ltrim($imagen, '/')) }}"
                              class="d-block w-100"
                              alt="Imagen {{ $index + 1 }}"
                              style="max-height: 600px; object-fit: contain;"
-                             onerror="this.parentElement.style.display='none'">
+                             onerror="this.parentElement.parentElement.style.display='none'">
                     </div>
                     @endforeach
                 </div>
@@ -145,11 +127,6 @@
                     <span class="visually-hidden">Siguiente</span>
                 </button>
             </div>
-            @else
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle me-2"></i>Las imágenes de esta noticia no están disponibles.
-            </div>
-            @endif
             <p class="text-center text-muted mt-2 small">
                 <i class="bi bi-images me-1"></i>{{ count($noticia->imagenes) }} {{ count($noticia->imagenes) === 1 ? 'imagen' : 'imágenes' }}
             </p>
@@ -160,9 +137,49 @@
         {{-- Contenido del artículo --}}
         <section class="bg-white p-4 p-md-5 rounded-4 shadow-sm mb-4">
             <div class="noticia-contenido" style="line-height: 1.9; font-size: 1.1rem; color: #333;">
-                {!! $noticia->contenido !!}
+                @php
+                    $contenidoHtml = html_entity_decode($noticia->contenido ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $contenidoHtml = html_entity_decode($contenidoHtml, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                @endphp
+                {!! $contenidoHtml !!}
             </div>
         </section>
+
+        {{-- Videos embebidos --}}
+        @if(count($noticia->videos) > 0)
+        <section class="mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-play-circle me-2 text-danger"></i>Videos</h5>
+            <div class="row g-3">
+                @foreach($noticia->videos as $vurl)
+                @php
+                    $embedSrc  = \App\Models\Noticia::embedUrl($vurl);
+                    $plat      = \App\Models\Noticia::plataforma($vurl);
+                    $isFb      = $plat === 'facebook';
+                    // Reels son verticales (9:16), videos normales son horizontales (16:9)
+                    $isReel    = str_contains($vurl, '/reel/') || str_contains($vurl, '/reels/');
+                    $maxW      = $isReel ? '340px' : '640px';
+                    $aspRatio  = $isReel ? '9/16' : '16/9';
+                @endphp
+                <div class="{{ count($noticia->videos) === 1 ? 'col-12' : 'col-md-6' }}">
+                    <div style="max-width:{{ $maxW }}; margin:0 auto;">
+                        <div style="position:relative; width:100%; aspect-ratio:{{ $aspRatio }}; border-radius:.5rem; overflow:hidden;" class="shadow-sm">
+                            <iframe src="{{ $embedSrc }}"
+                                    title="Video"
+                                    style="position:absolute; top:0; left:0; width:100%; height:100%; border:0;"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowfullscreen
+                                    {{ $isFb ? 'scrolling=no' : '' }}></iframe>
+                        </div>
+                        <div class="mt-1 text-muted small text-center">
+                            <i class="bi bi-{{ $plat === 'youtube' ? 'youtube text-danger' : ($plat === 'facebook' ? 'facebook text-primary' : 'play-circle') }} me-1"></i>
+                            {{ ucfirst($plat) }}
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </section>
+        @endif
 
         {{-- Documentos adjuntos --}}
         @if(isset($documentos) && count($documentos) > 0)

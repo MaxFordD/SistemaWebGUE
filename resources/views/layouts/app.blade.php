@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
   <title>@yield('title', 'I.E. GUEJFSC')</title>
 
   <!-- Favicons -->
@@ -19,13 +20,13 @@
   <meta name="msapplication-TileColor" content="#7a1a0c">
   <meta name="msapplication-config" content="{{ asset('browserconfig.xml') }}">
 
-  <!-- Bootstrap 5.3.8 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
-  <!-- Vite: Compilación de assets (CSS y JS) -->
+  <!-- Bootstrap y Bootstrap Icons se auto-hospedan vía Vite (resources/css/app.css) -->
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+  <style>
+    /* Evita que los nav-links rompan línea en desktop */
+    .navbar-nav .nav-link { white-space: nowrap; font-size: .875rem; }
+  </style>
   @stack('styles')
 </head>
 
@@ -33,12 +34,13 @@
 
   <a class="skip-link" href="#main-content">Saltar al contenido</a>
   <header class="header-sticky" role="banner">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-gue nav-elevable" aria-label="Navegación principal">
+    <nav class="navbar navbar-expand-xxl navbar-dark bg-gue nav-elevable" aria-label="Navegación principal">
       <div class="container">
         <!-- Logo y marca -->
         <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}" aria-label="Inicio">
           <img class="brand-logo" src="{{ asset('images/INSIGNIA G.U.E..png') }}"
-            alt="Insignia del colegio José Faustino Sánchez Carrión" loading="lazy" decoding="async" />
+            alt="Insignia del colegio José Faustino Sánchez Carrión" width="320" height="313"
+            loading="eager" decoding="async" />
           <span class="ms-2 d-none d-sm-inline text-center">
             JOSÉ FAUSTINO<br />SÁNCHEZ CARRIÓN
           </span>
@@ -82,6 +84,11 @@
                 @if(request()->routeIs('comite-directivo')) aria-current="page" @endif>
                 Comité Directivo
               </a>
+              <a class="nav-link {{ request()->routeIs('historia-legado') ? 'is-active' : '' }}"
+                href="{{ route('historia-legado') }}"
+                @if(request()->routeIs('historia-legado')) aria-current="page" @endif>
+                Historia y Legado
+              </a>
             </div>
 
             <!-- Separador visual en desktop -->
@@ -101,54 +108,90 @@
 
               @auth
               @php
-              // === Cargar roles del usuario autenticado usando tus SP ===
-              // Soporta nombres de rol: Director (admin), Admin, Administrador, Editor
-              $rolesUser = collect();
-              $isAdminLike = false; // Director/Admin/Administrador
-              $puedePublicar = false; // Director/Admin/Administrador/Editor
+              $rolesUser     = collect();
+              $userPermisos  = collect();
+              $esAdmin       = false;
+              $isAdminLike   = false;
+              $puedeVerPersonas    = false;
+              $puedeVerUsuarios    = false;
+              $puedeAsignarRoles   = false;
+              $puedeGestionarRoles = false;
+              $puedePermisos       = false;
+              $puedePublicar       = false;
+              $puedeComite         = false;
+              $puedeHistoria       = false;
+              $puedeImagenes       = false;
+              $puedeNosotros       = false;
+              $puedeMesaPartes     = false;
+              $puedeAlumnos        = false;
+              $puedeGrados         = false;
+              $puedeSecciones      = false;
+              $puedeRegistrar      = false;
+              $puedeReportes       = false;
+              $puedeAsistencia     = false;
+              $mesaPartesPendientes = 0;
 
               try {
-              $u = auth()->user();
-              // 1) Resolver ID real en tu tabla Usuario (puede ser usuario_id o id)
+              $u   = auth()->user();
               $uid = $u->usuario_id ?? $u->id ?? null;
 
-              // 2) Si no hay uid, intentar mapear por nombre_usuario
-              if (!$uid && !empty($u->nombre_usuario)) {
-              $row = DB::select('SELECT usuario_id FROM Usuario WHERE nombre_usuario = ? LIMIT 1', [$u->nombre_usuario]);
-              if (!empty($row)) $uid = (int) $row[0]->usuario_id;
-              }
-              // 3) O por email contra Persona.correo
-              if (!$uid && !empty($u->email)) {
-              $row = DB::select('
-              SELECT u.usuario_id
-              FROM Usuario u
-              INNER JOIN Persona p ON u.persona_id = p.persona_id
-              WHERE p.correo = ?
-              LIMIT 1
-              ', [$u->email]);
-              if (!empty($row)) $uid = (int) $row[0]->usuario_id;
+              // Cargar roles desde sesión o SP
+              $sessionRoles = session('user_roles');
+              if ($sessionRoles !== null) {
+                  $rolesUser = collect($sessionRoles);
+              } elseif ($uid) {
+                  $fetched = collect(DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [(int)$uid]))
+                      ->pluck('nombre')->filter()->map(fn($n) => mb_strtolower(trim($n)))->toArray();
+                  session(['user_roles' => $fetched]);
+                  $rolesUser = collect($fetched);
               }
 
-              // 4) Con uid, traer roles
-              if ($uid) {
-              $rolesUser = collect(DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [$uid]))
-              ->pluck('nombre')
-              ->filter()
-              ->map(fn($n) => mb_strtolower(trim($n)));
-              }
+              $esAdmin     = $rolesUser->contains(fn($r) => in_array($r, ['administrador','admin']));
+              $isAdminLike = $esAdmin; // bitácora solo Administrador
 
-              // 5) Flags de permisos
-              $isAdminLike = $rolesUser->contains(fn($r) => in_array($r, ['director','admin','administrador']));
-              $puedeMesaPartes = $isAdminLike || $rolesUser->contains('mesapartes');
-              $puedePublicar = $isAdminLike || $rolesUser->contains(fn($r) => in_array($r, ['editor','secretaria']));
-              $puedeAsistencia = $isAdminLike || $rolesUser->contains('auxiliar');
-              } catch (\Throwable $e) {
-              $rolesUser = collect();
-              $isAdminLike = false;
-              $puedeMesaPartes = false;
-              $puedePublicar = false;
-              $puedeAsistencia = false;
+              // Cargar permisos desde sesión o DB
+              try {
+                  $sessionPermisos = session('user_permisos');
+                  if ($sessionPermisos !== null) {
+                      $userPermisos = collect($sessionPermisos);
+                  } elseif ($uid) {
+                      $slugs = $u->roles()
+                          ->with(['permisos' => fn($q) => $q->where('estado', 'A')])
+                          ->get()
+                          ->flatMap(fn($r) => $r->permisos->pluck('slug'))
+                          ->unique()->toArray();
+                      session(['user_permisos' => $slugs]);
+                      $userPermisos = collect($slugs);
+                  }
+              } catch (\Throwable $e) { /* tabla Permiso aún no existe */ }
+
+              $hasP = fn($slug) => $esAdmin || $userPermisos->contains($slug);
+
+              $puedeVerPersonas    = $hasP('personas.admin');
+              $puedeVerUsuarios    = $hasP('usuarios.admin');
+              $puedeAsignarRoles   = $hasP('roles.asignar');
+              $puedeGestionarRoles = $hasP('roles.admin');
+              $puedePermisos       = $hasP('permisos.admin');
+              $puedePublicar       = $hasP('noticias.admin');
+              $puedeComite         = $hasP('comite.admin');
+              $puedeHistoria       = $hasP('historia.admin');
+              $puedeImagenes       = $hasP('imagenes.admin');
+              $puedeNosotros       = $hasP('nosotros.admin');
+              $puedeMesaPartes     = $hasP('mesa.admin');
+              $puedeAlumnos        = $hasP('alumnos.admin');
+              $puedeGrados         = $hasP('grados.admin');
+              $puedeSecciones      = $hasP('secciones.admin');
+              $puedeRegistrar      = $hasP('asistencia.registrar');
+              $puedeReportes       = $hasP('asistencia.reportes');
+              $puedeAsistencia     = $puedeAlumnos || $puedeGrados || $puedeSecciones || $puedeRegistrar || $puedeReportes;
+
+              if ($puedeMesaPartes) {
+                  try {
+                      $mesaPartesPendientes = collect(DB::select('CALL sp_MesaPartes_Listar()'))
+                          ->where('estado', 'Pendiente')->count();
+                  } catch (\Throwable $e) {}
               }
+              } catch (\Throwable $e) { /* defaults ya seteados arriba */ }
               @endphp
 
               <div class="nav-item dropdown">
@@ -172,42 +215,73 @@
                   <li>
                     <div class="mega-cols">
 
-                      {{-- Columna 1: Panel + Usuarios --}}
+                      {{-- Columna 1: Mi cuenta + Usuarios --}}
                       <div class="mega-col">
                         <span class="dropdown-header">Mi cuenta</span>
                         <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
                           <i class="bi bi-speedometer2 me-2"></i>Panel de Control
                         </a>
+                        <a class="dropdown-item" href="{{ route('perfil.contrasena') }}">
+                          <i class="bi bi-key me-2"></i>Cambiar contraseña
+                        </a>
                         @if($isAdminLike)
+                        <a class="dropdown-item" href="{{ route('admin.bitacora.index') }}">
+                          <i class="bi bi-journal-text me-2"></i>Bitácora
+                        </a>
+                        @endif
+                        @if($puedeVerPersonas || $puedeVerUsuarios || $puedeAsignarRoles || $puedeGestionarRoles || $puedePermisos)
                         <span class="dropdown-header mt-2">Usuarios</span>
+                        @if($puedeVerPersonas)
                         <a class="dropdown-item" href="{{ route('admin.personas.index') }}">
                           <i class="bi bi-person-badge me-2"></i>Personas
                         </a>
+                        @endif
+                        @if($puedeVerUsuarios)
                         <a class="dropdown-item" href="{{ route('admin.usuarios.index') }}">
                           <i class="bi bi-people me-2"></i>Usuarios
                         </a>
+                        @endif
+                        @if($puedeAsignarRoles)
                         <a class="dropdown-item" href="{{ route('admin.usuario-rol.index') }}">
                           <i class="bi bi-shield-check me-2"></i>Asignar Roles
                         </a>
                         @endif
+                        @if($puedePermisos)
+                        <a class="dropdown-item" href="{{ route('admin.roles-permisos.index') }}">
+                          <i class="bi bi-lock me-2"></i>Permisos por Rol
+                        </a>
+                        @endif
+                        @endif
                       </div>
 
                       {{-- Columna 2: Contenidos + Mesa de Partes --}}
-                      @if($puedePublicar || $isAdminLike || $puedeMesaPartes)
+                      @if($puedePublicar || $puedeComite || $puedeHistoria || $puedeImagenes || $puedeNosotros || $puedeMesaPartes)
                       <div class="mega-col">
-                        @if($puedePublicar || $isAdminLike)
+                        @if($puedePublicar || $puedeComite || $puedeHistoria || $puedeImagenes || $puedeNosotros)
                         <span class="dropdown-header">Contenidos</span>
                         @if($puedePublicar)
                         <a class="dropdown-item" href="{{ route('noticias.create') }}">
                           <i class="bi bi-plus-circle me-2"></i>Publicar Noticia
                         </a>
                         @endif
-                        @if($isAdminLike)
+                        @if($puedeComite)
                         <a class="dropdown-item" href="{{ route('admin.comite-directivo.index') }}">
                           <i class="bi bi-people-fill me-2"></i>Comité Directivo
                         </a>
+                        @endif
+                        @if($puedeHistoria)
+                        <a class="dropdown-item" href="{{ route('admin.historia-legado.index') }}">
+                          <i class="bi bi-hourglass-split me-2"></i>Historia y Legado
+                        </a>
+                        @endif
+                        @if($puedeImagenes)
                         <a class="dropdown-item" href="{{ route('admin.imagenes-inicio.index') }}">
                           <i class="bi bi-images me-2"></i>Imágenes del Inicio
+                        </a>
+                        @endif
+                        @if($puedeNosotros)
+                        <a class="dropdown-item" href="{{ route('admin.nosotros.edit') }}">
+                          <i class="bi bi-info-circle me-2"></i>Nosotros
                         </a>
                         @endif
                         @endif
@@ -215,6 +289,9 @@
                         <span class="dropdown-header mt-2">Mesa de Partes</span>
                         <a class="dropdown-item" href="{{ route('admin.mesa.index') }}">
                           <i class="bi bi-inbox me-2"></i>Ver Documentos
+                          @if($mesaPartesPendientes > 0)
+                            <span class="badge bg-danger ms-auto">{{ $mesaPartesPendientes }}</span>
+                          @endif
                         </a>
                         @endif
                       </div>
@@ -224,23 +301,31 @@
                       @if($puedeAsistencia)
                       <div class="mega-col">
                         <span class="dropdown-header">Asistencia</span>
-                        @if($isAdminLike)
+                        @if($puedeGrados)
                         <a class="dropdown-item" href="{{ route('admin.grados.index') }}">
                           <i class="bi bi-journal-text me-2"></i>Grados
                         </a>
+                        @endif
+                        @if($puedeSecciones)
                         <a class="dropdown-item" href="{{ route('admin.secciones.index') }}">
                           <i class="bi bi-diagram-3 me-2"></i>Secciones
                         </a>
                         @endif
+                        @if($puedeAlumnos)
                         <a class="dropdown-item" href="{{ route('admin.alumnos.index') }}">
                           <i class="bi bi-people me-2"></i>Alumnos
                         </a>
+                        @endif
+                        @if($puedeRegistrar)
                         <a class="dropdown-item" href="{{ route('admin.asistencia.index') }}">
                           <i class="bi bi-calendar-check me-2"></i>Registrar
                         </a>
+                        @endif
+                        @if($puedeReportes)
                         <a class="dropdown-item" href="{{ route('admin.asistencia.historial-seccion') }}">
                           <i class="bi bi-bar-chart-line me-2"></i>Historial
                         </a>
+                        @endif
                       </div>
                       @endif
 
@@ -337,45 +422,45 @@
   </div>
 
   <footer class="site-footer" role="contentinfo">
-    <div class="container py-5">
-      <div class="row g-4">
-        <!-- Columna 1: Información institucional + Enlaces -->
-        <div class="col-lg-3 col-md-6 col-12">
-          <h5 class="fw-bold mb-3 text-white">I.E. José Faustino Sánchez Carrión</h5>
-          <h6 class="fw-bold mb-3 text-white small">Enlaces Rápidos</h6>
+    <div class="container py-2 py-lg-3">
+      <div class="row g-2">
+        <!-- Columna 1: Enlaces -->
+        <div class="col-lg-3 col-6">
+          <h6 class="fw-bold mb-2 text-white small">Enlaces Rápidos</h6>
           <ul class="list-unstyled mb-0">
-            <li class="mb-2"><a href="{{ route('home') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Inicio</a></li>
-            <li class="mb-2"><a href="{{ route('nosotros') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Nosotros</a></li>
-            <li class="mb-2"><a href="{{ route('noticias.index') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Noticias</a></li>
-            <li class="mb-2"><a href="{{ route('comite-directivo') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Comité Directivo</a></li>
-            <li class="mb-2"><a href="{{ route('mesa.create') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Mesa de Partes</a></li>
+            <li class="mb-1"><a href="{{ route('home') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Inicio</a></li>
+            <li class="mb-1"><a href="{{ route('nosotros') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Nosotros</a></li>
+            <li class="mb-1"><a href="{{ route('noticias.index') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Noticias</a></li>
+            <li class="mb-1"><a href="{{ route('comite-directivo') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Comité Directivo</a></li>
+            <li class="mb-1"><a href="{{ route('historia-legado') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Historia y Legado</a></li>
+            <li class="mb-1"><a href="{{ route('mesa.create') }}" class="footer-link"><i class="bi bi-chevron-right me-1"></i>Mesa de Partes</a></li>
           </ul>
         </div>
 
         <!-- Columna 2: Información de contacto -->
-        <div class="col-lg-3 col-md-6 col-12">
-          <h6 class="fw-bold mb-3 text-white">Contacto</h6>
+        <div class="col-lg-3 col-6 text-center">
+          <h6 class="fw-bold mb-2 text-white">Contacto</h6>
           <ul class="list-unstyled footer-text small mb-0">
-            <li class="mb-2 d-flex align-items-start">
+            <li class="mb-1 d-flex align-items-start justify-content-center">
               <i class="bi bi-geo-alt-fill text-warning me-2 mt-1 flex-shrink-0"></i>
               <span>Av. Moche 990<br>Trujillo, La Libertad</span>
             </li>
-            <li class="mb-2 d-flex align-items-center">
+            <li class="mb-1 d-flex align-items-center justify-content-center">
               <i class="bi bi-telephone-fill text-warning me-2 flex-shrink-0"></i>
               <span>927 803 520</span>
             </li>
-            <li class="mb-2 d-flex align-items-center">
+            <li class="mb-1 d-flex align-items-center justify-content-center">
               <i class="bi bi-envelope-fill text-warning me-2 flex-shrink-0"></i>
               <a href="mailto:contacto@iejfsc.edu.pe" class="footer-link">contacto@iejfsc.edu.pe</a>
             </li>
-            <li class="mb-2 d-flex align-items-center">
+            <li class="mb-1 d-flex align-items-center justify-content-center">
               <i class="bi bi-clock-fill text-warning me-2 flex-shrink-0"></i>
               <span>Lun - Vie: 8:00 AM - 3:00 PM</span>
             </li>
           </ul>
 
           <!-- Redes Sociales -->
-          <div class="mt-3">
+          <div class="mt-2">
             <h6 class="fw-bold mb-2 text-white small">Síguenos en Redes</h6>
             <a href="https://www.facebook.com/share/17mn3mct7J/" target="_blank" rel="noopener noreferrer" class="btn btn-facebook d-inline-flex align-items-center gap-2" aria-label="Visítanos en Facebook">
               <i class="bi bi-facebook fs-5"></i>
@@ -385,13 +470,13 @@
         </div>
 
         <!-- Columna 3: Mapa -->
-        <div class="col-lg-6 col-md-12 col-12">
-          <h6 class="fw-bold mb-3 text-white">Nuestra Ubicación</h6>
+        <div class="col-lg-6 col-12">
+          <h6 class="fw-bold mb-2 text-white">Nuestra Ubicación</h6>
           <div class="footer-map">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.989019787752!2d-79.0267859!3d-8.122970199999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91ad3d7c75297dad%3A0x7dfdf768dab093b4!2sInstituci%C3%B3n%20Educativa%20Jos%C3%A9%20Faustino%20S%C3%A1nchez%20Carri%C3%B3n!5e0!3m2!1ses-419!2spe!4v1732636610000"
               width="100%"
-              height="200"
+              height="160"
               style="border:0; border-radius: 8px;"
               allowfullscreen=""
               loading="lazy"
@@ -402,7 +487,7 @@
         </div>
       </div>
 
-      <hr class="my-4 border-light opacity-25">
+      <hr class="my-1 border-light opacity-25">
 
       <div class="row">
         <div class="col-12 text-center">
@@ -419,10 +504,10 @@
     <i class="bi bi-arrow-up"></i>
   </button>
 
+
   @stack('modals')
 
-  <!-- JS: Bootstrap 5 bundle (Popper incluido). Sin jQuery requerido. -->
-  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Bootstrap JS ya se carga vía Vite (resources/js/app.js). Sin jQuery requerido. -->
   <script defer src="{{ asset('js/navbar.js') }}"></script>
   <script defer src="{{ asset('js/scroll-to-top.js') }}"></script>
   @stack('scripts')

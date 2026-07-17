@@ -6,8 +6,7 @@
 <div class="py-4">
     <h1 class="h4 mb-3">Asignar  2 rol a usuario</h1>
 
-    @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-    @if (session('error'))   <div class="alert alert-danger">{{ session('error') }}</div> @endif
+
     @if ($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
@@ -79,7 +78,7 @@
                         @forelse($rolesUsuario as $r)
                             <tr>
                                 <td>{{ $r->rol_id }}</td>
-                                <td>{{ $r->nombre_rol }}</td>
+                                <td>{{ $r->nombre }}</td>
                                 <td>{{ $r->descripcion }}</td>
                             </tr>
                         @empty

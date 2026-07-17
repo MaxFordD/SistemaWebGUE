@@ -111,6 +111,36 @@ class UsuarioController extends Controller
         return redirect()->route('admin.usuarios.index')->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
 
+    public function perfilContrasena()
+    {
+        return view('perfil.contrasena');
+    }
+
+    public function perfilUpdateContrasena(Request $request)
+    {
+        $data = $request->validate([
+            'contrasena_actual' => 'required|string',
+            'contrasena_nueva'  => 'required|string|min:6|confirmed',
+        ], [
+            'contrasena_actual.required' => 'La contraseña actual es obligatoria',
+            'contrasena_nueva.required'  => 'La contraseña nueva es obligatoria',
+            'contrasena_nueva.min'       => 'La contraseña debe tener al menos 6 caracteres',
+            'contrasena_nueva.confirmed' => 'Las contraseñas no coinciden',
+        ]);
+
+        $user = auth()->user();
+
+        if (!Hash::check($data['contrasena_actual'], $user->contrasena)) {
+            return back()->with('error', 'La contraseña actual es incorrecta');
+        }
+
+        DB::table('Usuario')
+            ->where('usuario_id', $user->usuario_id)
+            ->update(['contrasena' => Hash::make($data['contrasena_nueva'])]);
+
+        return back()->with('success', 'Contraseña actualizada exitosamente');
+    }
+
     public function changePassword($id)
     {
         $usuario = collect(DB::select('CALL sp_Usuario_ObtenerPorId(?)', [(int)$id]))->first();

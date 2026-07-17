@@ -18,9 +18,9 @@
 .bg-gue{
   background:
     linear-gradient(135deg,
-      rgba(122, 26, 12, var(--nav-alpha)) 0%,
-      rgba(93, 20, 9, var(--nav-alpha)) 50%,
-      rgba(107, 22, 7, var(--nav-alpha)) 100%
+      rgba(123, 30, 22, var(--nav-alpha)) 0%,
+      rgba(92, 22, 16, var(--nav-alpha)) 50%,
+      rgba(107, 26, 18, var(--nav-alpha)) 100%
     );
   border-bottom: 1px solid rgba(255,255,255,.1);
   backdrop-filter: saturate(180%) blur(12px);
@@ -49,7 +49,7 @@
   padding: 1rem 0;
   transition: padding 0.3s ease;
 }
-@media (min-width: 992px){
+@media (min-width: 1400px){
   .navbar{
     min-height: 90px;
     padding: 0.75rem 0;
@@ -81,7 +81,7 @@
   text-shadow: 0 2px 8px rgba(0,0,0,.3);
   line-height: 1.3;
 }
-@media (min-width: 992px){
+@media (min-width: 1400px){
   .navbar-brand span {
     font-size: 1.35rem;
     letter-spacing: 0.75px;
@@ -102,7 +102,7 @@
 }
 
 @media (min-width: 768px) { .brand-logo { height: 76px; } }
-@media (min-width: 992px){ .brand-logo { height: 70px; } }
+@media (min-width: 1400px){ .brand-logo { height: 70px; } }
 
 /* Espaciado entre grupos de navegación */
 .navbar-nav {
@@ -142,7 +142,7 @@
   left: 100%;
 }
 
-@media (min-width: 992px){
+@media (min-width: 1400px){
   .navbar-dark .navbar-nav .nav-link{
     font-size: 1.08rem;
   }
@@ -207,7 +207,7 @@
 }
 
 /* Colapso móvil mejorado */
-@media (max-width: 991.98px){
+@media (max-width: 1399.98px){
   #navbarNav{
     background: linear-gradient(135deg, rgba(0,0,0,.25), rgba(0,0,0,.15));
     margin: 0.75rem -1rem -1rem;
@@ -247,19 +247,9 @@
   align-items: center;
 }
 
-.dropdown-item svg {
-  flex-shrink: 0;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-}
-
 .dropdown-item:hover {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   transform: translateX(4px);
-}
-
-.dropdown-item:hover svg {
-  opacity: 1;
 }
 
 .dropdown-item.text-danger:hover {
@@ -318,21 +308,24 @@
   text-overflow: ellipsis;
 }
 
-/* Botón de ingresar mejorado */
+/* Botón de ingresar — pill dorado sólido, elegante, sin sombra */
 .btn-outline-light {
-  border-width: 2px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  border: none;
+  background: var(--secondary-color);
+  color: var(--primary-dark);
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  box-shadow: none;
+  transition: background-color 0.25s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .btn-outline-light:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255,255,255,.3);
-  background: rgba(255,255,255,0.15);
-  border-color: #fff;
+  background: var(--secondary-light);
+  color: var(--primary-dark);
+  box-shadow: none;
 }
 
 .btn-outline-light svg {
@@ -385,7 +378,7 @@
 }
 
 /* Responsive para móvil */
-@media (max-width: 991.98px) {
+@media (max-width: 1399.98px) {
   .user-menu-toggle {
     width: 100%;
     justify-content: flex-start;
@@ -410,6 +403,11 @@
     z-index: 1000;
   }
 
+  /* Prevenir que el panel de usuario cierre el navbar */
+  .navbar-collapse.show {
+    display: block !important;
+  }
+
   /* Dropdown en móvil - estilo acordeón DENTRO del navbar */
   .nav-item.dropdown {
     position: static !important;
@@ -421,7 +419,7 @@
     transform: none !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     border: 1px solid rgba(0,0,0,0.1);
-    margin: 0.5rem 1rem;
+    margin: 0.5rem 0;
     padding: 0.5rem;
     border-radius: 0.75rem;
     max-height: 400px;
@@ -434,22 +432,5 @@
 
   .navbar-collapse .dropdown-menu.show {
     display: block !important;
-    animation: slideDown 0.3s ease;
-  }
-
-  /* Prevenir que el dropdown cierre el navbar */
-  .navbar-collapse.show {
-    display: block !important;
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      max-height: 0;
-    }
-    to {
-      opacity: 1;
-      max-height: 400px;
-    }
   }
 }

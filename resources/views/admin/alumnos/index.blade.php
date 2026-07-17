@@ -17,8 +17,18 @@
                 @endif
             </p>
         </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalImportar">
+        <div class="d-flex gap-2 flex-wrap">
+            @if($seccion)
+            <a href="{{ route('admin.alumnos.exportar', ['seccion_id' => $seccionId, 'año' => $año]) }}"
+               class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel
+            </a>
+            <a href="{{ route('admin.alumnos.qrTodos', ['seccion_id' => $seccionId, 'año' => $año]) }}"
+               class="btn btn-outline-dark" target="_blank">
+                <i class="bi bi-qr-code me-2"></i>Descargar todos los QR
+            </a>
+            @endif
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalImportar">
                 <i class="bi bi-file-earmark-arrow-up me-2"></i>Importar CSV
             </button>
             @if($seccion)
@@ -94,6 +104,9 @@
                     {{ $alumnos->count() }} alumno(s) registrado(s)
                 </span>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <input type="text" id="buscarAlumno" class="form-control form-control-sm"
+                           placeholder="Buscar nombre o DNI..." style="width:200px;"
+                           oninput="filtrarAlumnos(this.value)">
                     <span class="badge bg-success">{{ $alumnos->where('estado', 1)->count() }} activos</span>
                     <span class="badge bg-secondary">{{ $alumnos->where('estado', 0)->count() }} inactivos</span>
                     <button type="button" id="btnBorrarSeleccionados" class="btn btn-sm btn-danger d-none"
@@ -150,8 +163,12 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-outline-primary" title="Editar"
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <button type="button" class="btn btn-sm btn-outline-dark" title="Ver/Imprimir carnet QR"
+                                            onclick="verQr({{ $a->alumno_id }})">
+                                            <i class="bi bi-qr-code"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" title="Editar"
                                             onclick="modoEditar(
                                                 {{ $a->alumno_id }},
                                                 {{ $a->seccion_id }},
@@ -164,11 +181,11 @@
                                             )">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-warning" title="Desactivar"
+                                        <button type="button" class="btn btn-sm btn-outline-warning" title="Desactivar"
                                             onclick="confirmarDesactivar({{ $a->alumno_id }}, '{{ addslashes($a->apellidos) }}, {{ addslashes($a->nombres) }}')">
                                             <i class="bi bi-x-circle"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-danger" title="Eliminar definitivamente"
+                                        <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar definitivamente"
                                             onclick="confirmarBorrar({{ $a->alumno_id }}, '{{ addslashes($a->apellidos) }}, {{ addslashes($a->nombres) }}')">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -216,7 +233,7 @@
                 <div id="importStep1">
                     <div class="alert alert-info small mb-3">
                         <i class="bi bi-info-circle me-1"></i>
-                        El archivo debe estar separado por <strong>punto y coma (;)</strong>.
+                        El archivo puede estar separado por <strong>tabulaciones</strong> (Excel) o <strong>punto y coma (;)</strong>.
                         Columnas esperadas: <code>grado, seccion, apellido, nombre, dni, fecha_nacimiento</code>.
                         Si falta alguna columna requerida, el sistema te pedirá completarla.
                     </div>
@@ -249,6 +266,31 @@
                 </button>
                 <button type="button" id="btnImportar" class="btn btn-success d-none" onclick="confirmarImportar()">
                     <i class="bi bi-cloud-upload me-1"></i>Importar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Ver/Imprimir carnet QR --}}
+<div class="modal fade" id="modalQr" tabindex="-1" aria-labelledby="modalQrLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header no-print">
+                <h6 class="modal-title fw-bold" id="modalQrLabel">
+                    <i class="bi bi-qr-code me-2"></i>Carnet QR
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body" id="qrModalBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+            <div class="modal-footer no-print">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i>Imprimir
                 </button>
             </div>
         </div>
@@ -332,6 +374,12 @@
 
 @push('scripts')
 <script>
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
 const form     = document.getElementById('formAlumno');
 const storeUrl = '{{ route("admin.alumnos.store") }}';
 const baseEditUrl = '{{ url("admin/alumnos") }}';
@@ -361,6 +409,19 @@ function modoEditar(id, seccionId, nombres, apellidos, dni, fechaNac, sexo, esta
     form.estado.value = estado;
     document.getElementById('campoEstado').classList.remove('d-none');
     new bootstrap.Modal(document.getElementById('modalAlumno')).show();
+}
+
+function verQr(id) {
+    const body = document.getElementById('qrModalBody');
+    body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+    new bootstrap.Modal(document.getElementById('modalQr')).show();
+
+    fetch(`${baseEditUrl}/${id}/qr`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(resp => resp.text())
+        .then(html => { body.innerHTML = html; })
+        .catch(() => {
+            body.innerHTML = '<div class="alert alert-danger m-0">No se pudo cargar el carnet.</div>';
+        });
 }
 
 function confirmarDesactivar(id, nombre) {
@@ -432,16 +493,21 @@ async function analizarCsv() {
     fd.append('_token', csrfToken);
 
     try {
-        const resp = await fetch(previewUrl, { method: 'POST', body: fd });
+        const resp = await fetch(previewUrl, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } });
         const data = await resp.json();
         hideImportLoading();
+        if (!resp.ok) {
+            const msg = data.errors ? Object.values(data.errors).flat().join('\n') : (data.message ?? `Error ${resp.status}`);
+            alert('Error: ' + msg);
+            return;
+        }
         if (!data.ok) { alert('Error: ' + data.error); return; }
         importRows    = data.rows;
         importMissing = data.missing;
         renderImportPaso2(data);
     } catch (e) {
         hideImportLoading();
-        alert('Error de conexión con el servidor.');
+        alert('Error al procesar la respuesta del servidor: ' + e.message);
     }
 }
 
@@ -458,6 +524,7 @@ function renderImportPaso2(data) {
         step2.classList.remove('d-none');
         document.getElementById('btnAnalizar').classList.add('d-none');
         document.getElementById('btnImportar').classList.remove('d-none');
+        document.getElementById('btnImportar').disabled = false;
         return;
     }
 
@@ -514,14 +581,14 @@ function renderImportPaso2(data) {
                     </div>
                 </td>`;
             }
-            return `<td><input type="text" class="form-control form-control-sm" name="import_${campo}_${i}" value="${row[campo] ?? ''}"></td>`;
+            return `<td><input type="text" class="form-control form-control-sm" name="import_${campo}_${i}" value="${escapeHtml(row[campo])}"></td>`;
         }).join('');
 
         html += `<tr>
             <td class="text-center text-muted small">${i + 1}</td>
-            <td>${row.apellidos ?? ''}, ${row.nombres ?? ''}</td>
-            <td class="font-monospace">${row.dni ?? ''}</td>
-            <td class="small">${row.grado ?? ''} ${row.seccion ?? ''}</td>
+            <td>${escapeHtml(row.apellidos)}, ${escapeHtml(row.nombres)}</td>
+            <td class="font-monospace">${escapeHtml(row.dni)}</td>
+            <td class="small">${escapeHtml(row.grado)} ${escapeHtml(row.seccion)}</td>
             ${extraCells}
         </tr>`;
     });
@@ -531,6 +598,7 @@ function renderImportPaso2(data) {
     step2.classList.remove('d-none');
     document.getElementById('btnAnalizar').classList.add('d-none');
     document.getElementById('btnImportar').classList.remove('d-none');
+    document.getElementById('btnImportar').disabled = false;
 }
 
 function setSexoTodos(sexo) {
@@ -565,16 +633,21 @@ async function confirmarImportar() {
     fd.append('_token', csrfToken);
 
     try {
-        const resp = await fetch(confirmarUrl, { method: 'POST', body: fd });
+        const resp = await fetch(confirmarUrl, { method: 'POST', body: fd, headers: { 'Accept': 'application/json' } });
         const data = await resp.json();
         hideImportLoading();
         document.getElementById('btnImportar').disabled = false;
+        if (!resp.ok) {
+            const msg = data.errors ? Object.values(data.errors).flat().join('\n') : (data.message ?? `Error ${resp.status}`);
+            alert('Error: ' + msg);
+            return;
+        }
         if (!data.ok) { alert('Error: ' + data.error); return; }
         renderImportResultados(data);
     } catch (e) {
         hideImportLoading();
         document.getElementById('btnImportar').disabled = false;
-        alert('Error de conexión con el servidor.');
+        alert('Error al procesar la respuesta del servidor: ' + e.message);
     }
 }
 
@@ -610,7 +683,7 @@ function renderImportResultados(data) {
     if (data.errors.length > 0) {
         html += `<div class="alert alert-danger" style="max-height:200px;overflow-y:auto;">
             <strong><i class="bi bi-exclamation-triangle me-1"></i>Errores:</strong>
-            <ul class="mb-0 mt-2 small">${data.errors.map(e => `<li>${e}</li>`).join('')}</ul>
+            <ul class="mb-0 mt-2 small">${data.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul>
         </div>`;
     }
 
@@ -618,11 +691,14 @@ function renderImportResultados(data) {
         html += `
         <div class="alert alert-success">
             <i class="bi bi-check-circle me-2"></i>
-            <strong>${data.inserted}</strong> alumno(s) importados correctamente.
-        </div>
-        <button class="btn btn-primary w-100" onclick="location.reload()">
-            <i class="bi bi-arrow-clockwise me-2"></i>Recargar para ver los cambios
-        </button>`;
+            <strong>${data.inserted}</strong> alumno(s) importados correctamente. Recargando...
+        </div>`;
+        document.getElementById('importStep2').classList.add('d-none');
+        document.getElementById('importStep3').innerHTML = html;
+        document.getElementById('importStep3').classList.remove('d-none');
+        document.getElementById('btnImportar').classList.add('d-none');
+        setTimeout(() => location.reload(), 1500);
+        return;
     }
 
     document.getElementById('importStep2').classList.add('d-none');
@@ -656,6 +732,15 @@ document.getElementById('modalImportar').addEventListener('hidden.bs.modal', fun
     importRows = []; importMissing = [];
 });
 // ── Fin Importar CSV ───────────────────────────────────────────────────────
+
+function filtrarAlumnos(termino) {
+    const t = termino.toLowerCase();
+    document.querySelectorAll('tbody tr[id^="fila-"]').forEach(fila => {
+        const texto = fila.querySelector('td:nth-child(3)')?.textContent.toLowerCase() +
+                      fila.querySelector('td:nth-child(4)')?.textContent.toLowerCase();
+        fila.style.display = texto.includes(t) ? '' : 'none';
+    });
+}
 
 // Forzar mayúsculas en nombres y apellidos
 ['nombres','apellidos'].forEach(function(campo) {

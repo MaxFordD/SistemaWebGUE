@@ -11,9 +11,7 @@
   padding-top: var(--nav-h);
   height: var(--wave-h); /* reducido */
   overflow: hidden;
-  background: linear-gradient(180deg,
-    transparent 0%,
-    rgba(247, 202, 25, 0.05) 100%);
+  background: none;
   flex-shrink: 0;
 }
 

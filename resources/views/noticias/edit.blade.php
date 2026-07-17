@@ -80,8 +80,15 @@
 
                         @php
                         $archivosActuales = [];
+                        $videosActuales   = [];
                         if (!empty($noticia->imagen)) {
-                            $archivosActuales = array_filter(array_map('trim', explode(';', $noticia->imagen)));
+                            foreach (array_filter(array_map('trim', explode(';', $noticia->imagen))) as $item) {
+                                if (str_starts_with($item, 'http')) {
+                                    $videosActuales[] = $item;
+                                } else {
+                                    $archivosActuales[] = $item;
+                                }
+                            }
                         }
                         @endphp
 
@@ -120,6 +127,27 @@
                         </div>
                         @endif
 
+                        {{-- Videos actuales --}}
+                        @if(count($videosActuales) > 0)
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-play-circle me-1"></i>Videos actuales
+                            </label>
+                            <ul class="list-group">
+                                @foreach($videosActuales as $vurl)
+                                @php
+                                    $plat = str_contains($vurl,'youtube.com')||str_contains($vurl,'youtu.be') ? 'youtube' : (str_contains($vurl,'facebook')||str_contains($vurl,'fb.watch') ? 'facebook' : 'otro');
+                                @endphp
+                                <li class="list-group-item d-flex align-items-center gap-2">
+                                    <i class="bi bi-{{ $plat === 'youtube' ? 'youtube text-danger' : ($plat === 'facebook' ? 'facebook text-primary' : 'play-circle') }} fs-5"></i>
+                                    <span class="text-truncate small flex-grow-1">{{ $vurl }}</span>
+                                </li>
+                                @endforeach
+                            </ul>
+                            <div class="form-text"><i class="bi bi-info-circle me-1"></i>Los videos se conservan al actualizar. Agrega nuevos abajo.</div>
+                        </div>
+                        @endif
+
                         <div class="mb-4">
                             <label for="archivos" class="form-label fw-semibold">
                                 <i class="bi bi-images me-1"></i>Agregar Nuevas Imágenes y Documentos
@@ -134,6 +162,26 @@
 
                         <!-- Preview de archivos nuevos -->
                         <div id="archivos-preview" class="mb-4"></div>
+
+                        {{-- Agregar videos nuevos --}}
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-play-circle me-1"></i>Agregar videos (YouTube o Facebook)
+                            </label>
+                            <div id="video-urls-container">
+                                <div class="input-group mb-2 video-url-row">
+                                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                    <input type="url" name="video_urls[]" class="form-control"
+                                           placeholder="https://www.youtube.com/watch?v=... o https://www.facebook.com/...">
+                                    <button type="button" class="btn btn-outline-danger btn-quitar-video d-none">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="btn-agregar-video">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar otro video
+                            </button>
+                        </div>
 
                         <div class="d-flex gap-2 justify-content-end">
                             <a href="{{ route('noticias.show', $noticia->noticia_id) }}" class="btn btn-secondary">
@@ -155,4 +203,16 @@
 <script src="{{ asset('vendor/tinymce/js/tinymce/tinymce.min.js') }}"></script>
 <script src="{{ asset('js/tinymce-init.js') }}"></script>
 <script defer src="{{ asset('js/noticia-create.js') }}"></script>
+<script>
+document.getElementById('btn-agregar-video').addEventListener('click', function () {
+    const container = document.getElementById('video-urls-container');
+    const row = document.createElement('div');
+    row.className = 'input-group mb-2 video-url-row';
+    row.innerHTML = `<span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+        <input type="url" name="video_urls[]" class="form-control" placeholder="https://www.youtube.com/watch?v=... o https://www.facebook.com/...">
+        <button type="button" class="btn btn-outline-danger btn-quitar-video"><i class="bi bi-x-lg"></i></button>`;
+    container.appendChild(row);
+    row.querySelector('.btn-quitar-video').addEventListener('click', () => row.remove());
+});
+</script>
 @endpush

@@ -6,6 +6,7 @@ use App\Models\MesaParte;
 use App\Services\ArchivoService;
 use App\Jobs\EnviarNotificacionMesaPartes;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -82,10 +83,29 @@ class MesaPartesController extends Controller
     }
 
     // Mostrar lista de documentos (para el administrador)
-    public function index()
+    public function index(Request $request)
     {
-        $documentos = DB::select('CALL sp_MesaPartes_Listar()');
-        return view('admin.mesa.index', compact('documentos'));
+        $estado  = $request->get('estado', '');
+        $perPage = 15;
+        $page    = max(1, (int) $request->get('page', 1));
+
+        $todos = collect(DB::select('CALL sp_MesaPartes_Listar()'));
+
+        if ($estado !== '') {
+            $todos = $todos->filter(fn($d) => $d->estado === $estado)->values();
+        }
+
+        $documentos = new LengthAwarePaginator(
+            $todos->forPage($page, $perPage)->values(),
+            $todos->count(),
+            $perPage,
+            $page,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
+
+        $estados = ['Pendiente', 'Aceptado', 'Rechazado'];
+
+        return view('admin.mesa.index', compact('documentos', 'estado', 'estados'));
     }
 
     // Mostrar detalle de un documento
@@ -95,7 +115,17 @@ class MesaPartesController extends Controller
         if (empty($documento)) {
             abort(404);
         }
-        return view('admin.mesa.show', ['doc' => $documento[0]]);
+        $doc = $documento[0];
+
+        // Obtener nombre del tipo de documento si el SP no lo devuelve
+        if (!isset($doc->tipo_documento) && isset($doc->tipo_documento_id)) {
+            $tipo = DB::table('Tipos_Documento')
+                ->where('tipo_id', $doc->tipo_documento_id)
+                ->value('nombre');
+            $doc->tipo_documento = $tipo ?? 'Sin tipo';
+        }
+
+        return view('admin.mesa.show', compact('doc'));
     }
 
     // Actualizar estado (Pendiente / Revisado / Aceptado / Rechazado)
@@ -107,7 +137,7 @@ class MesaPartesController extends Controller
         DB::statement('SET @resultado = 0, @mensaje = ""');
 
         // Llamar al procedimiento
-        DB::statement('CALL sp_MesaPartes_ActualizarEstado(?, ?, @resultado, @mensaje)', [
+        DB::statement('CALL sp_MesaPartes_CambiarEstado(?, ?, @resultado, @mensaje)', [
             $id, $request->estado
         ]);
 

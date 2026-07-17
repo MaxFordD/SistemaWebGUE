@@ -204,6 +204,135 @@ class AsistenciaController extends Controller
         }
     }
 
+    public function reporteAlumnoPdf(Request $request, $alumnoId)
+    {
+        $mes = $request->get('mes', date('n'));
+        $año = $request->get('año', date('Y'));
+
+        $meses = [
+            1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',
+            5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',
+            9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre',
+        ];
+
+        try {
+            $alumnoData = DB::select('CALL sp_Alumno_ObtenerPorId(?)', [(int)$alumnoId]);
+            if (empty($alumnoData)) abort(404);
+            $alumno = $alumnoData[0];
+
+            $historial = collect(DB::select('CALL sp_Asistencia_HistorialPorAlumno(?, ?, ?)', [
+                (int)$alumnoId, (int)$mes, (int)$año,
+            ]));
+
+            $totales = [
+                'asistio'  => $historial->where('estado_asistencia', 'Asistio')->count(),
+                'falta'    => $historial->where('estado_asistencia', 'Falta')->count(),
+                'tardanza' => $historial->where('estado_asistencia', 'Tardanza')->count(),
+            ];
+
+            $pdf = Pdf::loadView('admin.asistencia.reporte-alumno-pdf', compact(
+                'alumno', 'historial', 'totales', 'mes', 'año', 'meses'
+            ))->setPaper('a4', 'portrait');
+
+            $nombre = str_replace(' ', '_', $alumno->apellidos . '_' . $alumno->nombres);
+            return $pdf->download("asistencia_{$nombre}_{$meses[(int)$mes]}{$año}.pdf");
+
+        } catch (\Exception $e) {
+            Log::error('Error PDF alumno: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al generar el PDF.');
+        }
+    }
+
+    public function reporteAlumnoExcel(Request $request, $alumnoId)
+    {
+        $mes = $request->get('mes', date('n'));
+        $año = $request->get('año', date('Y'));
+
+        $meses = [
+            1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',
+            5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',
+            9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre',
+        ];
+
+        try {
+            $alumnoData = DB::select('CALL sp_Alumno_ObtenerPorId(?)', [(int)$alumnoId]);
+            if (empty($alumnoData)) abort(404);
+            $alumno = $alumnoData[0];
+
+            $historial = collect(DB::select('CALL sp_Asistencia_HistorialPorAlumno(?, ?, ?)', [
+                (int)$alumnoId, (int)$mes, (int)$año,
+            ]));
+
+            $meta = [
+                'alumno'     => $alumno->apellidos . ', ' . $alumno->nombres,
+                'dni'        => $alumno->dni ?? '',
+                'grado'      => ($alumno->grado ?? '') . ' — Sección ' . ($alumno->seccion ?? ''),
+                'mes_nombre' => $meses[(int)$mes],
+                'año'        => $año,
+            ];
+
+            $nombre = str_replace(' ', '_', $alumno->apellidos . '_' . $alumno->nombres);
+            return Excel::download(
+                new \App\Exports\AsistenciaAlumnoExport($historial, $meta),
+                "asistencia_{$nombre}_{$meses[(int)$mes]}{$año}.xlsx"
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Error Excel alumno: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al generar el Excel.');
+        }
+    }
+
+    // Hora límite para considerar Tardanza en el registro por QR (formato H:i)
+    private const HORA_LIMITE_TARDANZA = '08:00';
+
+    public function escanear(Request $request)
+    {
+        $request->validate([
+            'codigo_qr' => 'required|string|max:40',
+        ]);
+
+        try {
+            $alumnoData = DB::select('CALL sp_Alumno_ObtenerPorCodigoQR(?)', [$request->codigo_qr]);
+
+            if (empty($alumnoData)) {
+                return response()->json([
+                    'ok'    => false,
+                    'error' => 'Código no reconocido o alumno inactivo.',
+                ], 404);
+            }
+
+            $alumno    = $alumnoData[0];
+            $usuarioId = auth()->user()->usuario_id;
+            $ahora     = now();
+            $fecha     = $ahora->format('Y-m-d');
+            $estado    = $ahora->format('H:i') <= self::HORA_LIMITE_TARDANZA ? 'Asistio' : 'Tardanza';
+
+            DB::statement('CALL sp_Asistencia_RegistrarOActualizar(?, ?, ?, ?, ?)', [
+                (int) $alumno->alumno_id,
+                (int) $usuarioId,
+                $fecha,
+                $estado,
+                null,
+            ]);
+
+            return response()->json([
+                'ok'      => true,
+                'alumno'  => [
+                    'nombres'   => $alumno->nombres,
+                    'apellidos' => $alumno->apellidos,
+                    'grado'     => $alumno->grado,
+                    'seccion'   => $alumno->seccion,
+                ],
+                'estado' => $estado,
+                'hora'   => $ahora->format('H:i:s'),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al escanear QR de asistencia: ' . $e->getMessage());
+            return response()->json(['ok' => false, 'error' => 'Error al registrar la asistencia.'], 500);
+        }
+    }
+
     public function historialAlumno(Request $request, $alumnoId)
     {
         $mes = $request->get('mes', date('n'));

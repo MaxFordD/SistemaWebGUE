@@ -1,0 +1,161 @@
+/* ===============================
+   CLAYMORPHISM - Sistema de diseño global
+   Retematiza los componentes compartidos de Bootstrap
+   (botones, tarjetas, formularios, modales, alertas, tabs)
+   para que todo el sistema comparta el mismo lenguaje visual
+   suave y "acolchado".
+   Se importa al final de app.css para poder sobreescribir
+   los estilos previos de Bootstrap y de los demás archivos.
+   =============================== */
+
+:root {
+  --clay-radius-sm: 12px;
+  --clay-radius: 16px;
+  --clay-radius-lg: 24px;
+  --clay-surface: #f8f4ec;
+  --clay-shadow-dark: rgba(122, 26, 12, 0.14);
+  --clay-shadow-darker: rgba(0, 0, 0, 0.16);
+  --clay-shadow-light: rgba(255, 255, 255, 0.8);
+}
+
+/* ---------- Tarjetas ---------- */
+.card {
+  border: none;
+  border-radius: var(--clay-radius-lg) !important;
+  background: var(--clay-surface);
+  box-shadow: 8px 8px 18px var(--clay-shadow-dark), -8px -8px 18px var(--clay-shadow-light);
+}
+
+.card-header,
+.card-footer {
+  background: transparent !important;
+  border-color: rgba(122, 26, 12, 0.08) !important;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  border-radius: var(--clay-radius) !important;
+  box-shadow: 3px 3px 8px var(--clay-shadow-dark), -3px -3px 8px var(--clay-shadow-light);
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active,
+.btn.active,
+.btn:focus:active {
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.18), inset -2px -2px 5px rgba(255, 255, 255, 0.4);
+  transform: translateY(0);
+}
+
+.btn-sm {
+  border-radius: var(--clay-radius-sm) !important;
+}
+
+.btn-check:checked + .btn {
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- Formularios ---------- */
+.form-control,
+.form-select {
+  border-radius: var(--clay-radius-sm) !important;
+  border-color: rgba(0, 0, 0, 0.07);
+  background-color: var(--clay-surface);
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.07), inset -2px -2px 6px rgba(255, 255, 255, 0.6);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--clay-surface);
+  border-color: var(--primary-color);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.08), inset -2px -2px 5px rgba(255, 255, 255, 0.6),
+    0 0 0 0.2rem rgba(122, 26, 12, 0.15);
+}
+
+/* .input-group: el radio de arriba rompe el esquinado que Bootstrap aplica
+   automáticamente para que los elementos agrupados (ícono + input + botón)
+   se vean como una sola pieza. Sin esto, el ícono queda cuadrado en el borde
+   de unión mientras el input/select de al lado queda redondeado ahí mismo. */
+.input-group > .form-control,
+.input-group > .form-select,
+.input-group > .input-group-text,
+.input-group > .btn {
+  border-radius: 0 !important;
+}
+
+.input-group > :first-child {
+  border-top-left-radius: var(--clay-radius-sm) !important;
+  border-bottom-left-radius: var(--clay-radius-sm) !important;
+}
+
+.input-group > :last-child {
+  border-top-right-radius: var(--clay-radius-sm) !important;
+  border-bottom-right-radius: var(--clay-radius-sm) !important;
+}
+
+.input-group-text {
+  border-radius: var(--clay-radius-sm);
+  background-color: var(--clay-surface);
+}
+
+.form-check-input {
+  border-radius: 5px;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- Modales ---------- */
+.modal-content {
+  border: none;
+  border-radius: var(--clay-radius-lg) !important;
+  box-shadow: 14px 14px 30px rgba(0, 0, 0, 0.22), -8px -8px 20px rgba(255, 255, 255, 0.5);
+}
+
+.modal-header,
+.modal-footer {
+  border-color: rgba(122, 26, 12, 0.08) !important;
+}
+
+/* ---------- Alertas ---------- */
+.alert {
+  border: none;
+  border-radius: var(--clay-radius) !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.08), -4px -4px 12px rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- Pestañas (nav-tabs) ---------- */
+.nav-tabs {
+  border-bottom: none;
+  gap: 0.5rem;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  border-radius: var(--clay-radius) !important;
+  background: var(--clay-surface);
+  color: var(--gray-700);
+  box-shadow: 3px 3px 8px var(--clay-shadow-dark), -3px -3px 8px var(--clay-shadow-light);
+  margin-bottom: 0;
+}
+
+.nav-tabs .nav-link:hover {
+  border-color: transparent;
+}
+
+.nav-tabs .nav-link.active {
+  background: var(--primary-color);
+  color: #fff;
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- Tablas (contenedor) ---------- */
+.table-responsive {
+  border-radius: var(--clay-radius);
+}
+
+/* ---------- Inputs de tipo file/color no pierden su base nativa ---------- */
+.form-control[type="file"] {
+  box-shadow: none;
+}

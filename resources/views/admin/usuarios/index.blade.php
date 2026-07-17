@@ -11,8 +11,6 @@
         </a>
     </div>
 
-    @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-    @if (session('error'))   <div class="alert alert-danger">{{ session('error') }}</div> @endif
     @if ($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
@@ -23,33 +21,33 @@
         <div class="card-header bg-white"><strong>Usuarios Registrados</strong></div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-sm mb-0 align-middle">
+                <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>ID</th>
+                            <th class="text-center">ID</th>
                             <th>Nombre de Usuario</th>
                             <th>Persona</th>
                             <th>DNI</th>
                             <th>Correo</th>
-                            <th>Estado</th>
-                            <th style="width: 250px;">Acciones</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center" style="width: 250px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                     @forelse($usuarios as $u)
                         <tr>
-                            <td>{{ $u->usuario_id }}</td>
+                            <td class="text-center">{{ $u->usuario_id }}</td>
                             <td>{{ $u->nombre_usuario }}</td>
                             <td>{{ $u->apellidos }}, {{ $u->nombres }}</td>
                             <td>{{ $u->dni }}</td>
                             <td>{{ $u->correo }}</td>
-                            <td>
+                            <td class="text-center">
                                 <span class="badge {{ $u->estado === 'A' ? 'bg-success' : 'bg-secondary' }}">
                                     {{ $u->estado === 'A' ? 'Activo' : 'Inactivo' }}
                                 </span>
                             </td>
-                            <td>
-                                <div class="d-flex gap-1">
+                            <td class="text-center">
+                                <div class="d-flex gap-2 justify-content-center">
                                     <a href="{{ route('admin.usuarios.edit', $u->usuario_id) }}" class="btn btn-warning btn-sm" title="Editar usuario">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>

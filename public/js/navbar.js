@@ -30,7 +30,6 @@ class NavbarManager {
     this.animateAlerts();
     this.setupAlertAutoDismiss();
     this.setupScrollToTop();
-    this.setupDropdownAccessibility();
     this.setupScrollAnimations();
     this.setupFormLoadingStates();
     this.markExternalLinks();
@@ -128,50 +127,6 @@ class NavbarManager {
         }
       });
     });
-
-    // NUEVO: Prevenir que el dropdown cierre el navbar
-    const dropdownItems = document.querySelectorAll('.navbar-collapse .dropdown-item');
-    dropdownItems.forEach(item => {
-      item.addEventListener('click', (e) => {
-        // Solo cerrar el navbar si el item NO es un header o divider
-        if (!item.classList.contains('dropdown-header') &&
-            item.tagName !== 'HR' &&
-            item.querySelector('form[action*="logout"]')) {
-          // Es el botón de logout, cerrar navbar
-          if (window.innerWidth < 992 && navCollapse) {
-            setTimeout(() => {
-              const bsCollapse = bootstrap.Collapse.getInstance(navCollapse);
-              if (bsCollapse) bsCollapse.hide();
-            }, 100);
-          }
-        }
-      });
-    });
-
-    // CRÍTICO: Mantener el navbar abierto cuando se abre/cierra el dropdown
-    document.addEventListener('show.bs.dropdown', (e) => {
-      if (window.innerWidth < 992) {
-        const dropdown = e.target;
-        if (navCollapse && navCollapse.contains(dropdown)) {
-          // Prevenir que el navbar se cierre
-          navCollapse.classList.add('show');
-        }
-      }
-    });
-
-    document.addEventListener('hide.bs.dropdown', (e) => {
-      if (window.innerWidth < 992) {
-        const dropdown = e.target;
-        if (navCollapse && navCollapse.contains(dropdown)) {
-          // Mantener el navbar abierto
-          setTimeout(() => {
-            if (!navCollapse.classList.contains('show')) {
-              navCollapse.classList.add('show');
-            }
-          }, 10);
-        }
-      }
-    });
   }
 
   // Smooth scroll para anchors
@@ -258,39 +213,28 @@ class NavbarManager {
     });
   }
 
-  // Mejorar accesibilidad del dropdown
-  setupDropdownAccessibility() {
-    const dropdownToggles = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-    
-    dropdownToggles.forEach(toggle => {
-      toggle.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          toggle.click();
-        }
-      });
-
-      const dropdown = toggle.nextElementSibling;
-      if (dropdown && dropdown.classList.contains('dropdown-menu')) {
-        dropdown.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') {
-            const bsDropdown = bootstrap.Dropdown.getInstance(toggle);
-            if (bsDropdown) {
-              bsDropdown.hide();
-              toggle.focus();
-            }
-          }
-        });
-      }
-    });
-  }
-
   // Animación de aparición para elementos con clase .animate-on-scroll
   setupScrollAnimations() {
+    const items = document.querySelectorAll('.animate-on-scroll');
+    if (!items.length) return;
+
+    const style = document.createElement('style');
+    style.textContent = `.animate-in { opacity: 1 !important; transform: translateY(0) !important; }`;
+    document.head.appendChild(style);
+
+    // Respeta "reducir movimiento": el contenido queda visible sin animar, nunca oculto.
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      items.forEach(el => el.classList.add('animate-in'));
+      return;
+    }
+
+    const reveal = (el) => el.classList.add('animate-in');
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('animate-in');
+          reveal(entry.target);
           observer.unobserve(entry.target);
         }
       });
@@ -299,16 +243,15 @@ class NavbarManager {
       rootMargin: '0px 0px -50px 0px'
     });
 
-    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+    items.forEach(el => {
       el.style.opacity = '0';
       el.style.transform = 'translateY(30px)';
       el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
       observer.observe(el);
+      // Red de seguridad: si el observer nunca dispara (pestaña oculta, render
+      // headless, etc.), el contenido se revela igual y no queda en blanco.
+      setTimeout(() => reveal(el), 2000);
     });
-
-    const style = document.createElement('style');
-    style.textContent = `.animate-in { opacity: 1 !important; transform: translateY(0) !important; }`;
-    document.head.appendChild(style);
   }
 
   // Detectar y marcar enlaces externos

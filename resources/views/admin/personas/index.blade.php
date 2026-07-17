@@ -19,8 +19,6 @@
         <h1 class="h4 mb-0">Gestión de Personas</h1>
     </div>
 
-    @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-    @if (session('error'))   <div class="alert alert-danger">{{ session('error') }}</div> @endif
     @if ($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
@@ -65,35 +63,35 @@
         <div class="card-header bg-white"><strong>Personas Registradas</strong></div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-sm mb-0 align-middle">
+                <table class="table table-hover mb-0 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>ID</th>
+                            <th class="text-center">ID</th>
                             <th>Nombres</th>
                             <th>Apellidos</th>
                             <th>DNI</th>
                             <th>Teléfono</th>
                             <th>Correo</th>
-                            <th>Estado</th>
-                            <th style="width: 150px;">Acciones</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center" style="width: 150px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                     @forelse($personas as $p)
                         <tr>
-                            <td>{{ $p->persona_id }}</td>
+                            <td class="text-center">{{ $p->persona_id }}</td>
                             <td>{{ $p->nombres }}</td>
                             <td>{{ $p->apellidos }}</td>
                             <td>{{ $p->dni }}</td>
                             <td>{{ $p->telefono }}</td>
                             <td>{{ $p->correo }}</td>
-                            <td>
+                            <td class="text-center">
                                 <span class="badge {{ $p->estado === 'A' ? 'bg-success' : 'bg-secondary' }}">
                                     {{ $p->estado === 'A' ? 'Activo' : 'Inactivo' }}
                                 </span>
                             </td>
-                            <td>
-                                <div class="d-flex gap-1">
+                            <td class="text-center">
+                                <div class="d-flex gap-2 justify-content-center">
                                     <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $p->persona_id }}" title="Editar persona">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>

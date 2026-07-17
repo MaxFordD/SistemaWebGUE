@@ -87,14 +87,14 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <div class="btn-group btn-group-sm" role="group">
+                                    <div class="d-flex gap-2 justify-content-center">
                                         <a href="{{ route('admin.comite-directivo.edit', $directivo->directivo_id) }}"
-                                           class="btn btn-outline-primary"
+                                           class="btn btn-sm btn-outline-primary"
                                            title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <button type="button"
-                                                class="btn btn-outline-danger"
+                                                class="btn btn-sm btn-outline-danger"
                                                 onclick="confirmarEliminacion({{ $directivo->directivo_id }}, '{{ addslashes($directivo->nombre_completo) }}')"
                                                 title="Desactivar">
                                             <i class="bi bi-x-circle"></i>
@@ -199,6 +199,36 @@ function confirmarRestauracion(id, nombre) {
     }
 }
 
+function eliminarPermanente(id, nombre) {
+    if (!confirm('¿Eliminar permanentemente a ' + nombre + '?\n\nEsta acción NO se puede deshacer y borrará también su foto.')) return;
+
+    fetch(`{{ url('/admin/comite-directivo') }}/${id}/force`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // Quitar el elemento de la lista sin recargar
+            const item = document.getElementById('directivo-item-' + id);
+            if (item) item.remove();
+
+            // Si no quedan inactivos, mostrar mensaje
+            const lista = document.getElementById('listaInactivos');
+            if (lista && lista.querySelectorAll('.list-group-item').length === 0) {
+                lista.style.display = 'none';
+                document.getElementById('sinInactivos').style.display = 'block';
+            }
+        } else {
+            alert('Error: ' + (data.message || 'No se pudo eliminar.'));
+        }
+    })
+    .catch(() => alert('Error de conexión al intentar eliminar.'));
+}
+
 // Cargar directivos inactivos cuando se abre el modal
 document.getElementById('modalInactivos').addEventListener('show.bs.modal', function (event) {
     const loadingDiv = document.getElementById('loadingInactivos');
@@ -241,7 +271,7 @@ document.getElementById('modalInactivos').addEventListener('shown.bs.modal', fun
                         : '';
 
                     html += `
-                        <div class="list-group-item">
+                        <div class="list-group-item" id="directivo-item-${directivo.directivo_id}">
                             <div class="row g-3 align-items-center">
                                 <div class="col-auto">
                                     ${foto}
@@ -250,17 +280,22 @@ document.getElementById('modalInactivos').addEventListener('shown.bs.modal', fun
                                     <div class="fw-semibold mb-1">${escapeHtml(directivo.nombre_completo)}</div>
                                     <div class="text-muted small">${escapeHtml(directivo.cargo)} ${gradoCargo}</div>
                                 </div>
-                                <div class="col-12 col-md-auto">
-                                    <form action="{{ route('admin.comite-directivo.restore', '') }}/${directivo.directivo_id}"
+                                <div class="col-12 col-md-auto d-flex gap-2">
+                                    <form action="{{ url('/admin/comite-directivo') }}/${directivo.directivo_id}/restore"
                                           method="POST"
-                                          style="display: inline-block; width: 100%;">
+                                          style="display: inline-block;">
                                         @csrf
                                         <button type="submit"
-                                                class="btn btn-sm btn-success w-100"
-                                                onclick="return confirm('¿Deseas reactivar a ${escapeHtml(directivo.nombre_completo).replace(/'/g, "\\'")}?\\n\\nEsta persona volverá a aparecer en la lista de directivos activos.');">
+                                                class="btn btn-sm btn-success"
+                                                onclick="return confirm('¿Deseas reactivar a ${escapeHtml(directivo.nombre_completo).replace(/'/g, "\\'")}?');">
                                             <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar
                                         </button>
                                     </form>
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger"
+                                            onclick="eliminarPermanente(${directivo.directivo_id}, '${escapeHtml(directivo.nombre_completo).replace(/'/g, "\\'")}')">
+                                        <i class="bi bi-trash-fill me-1"></i>Eliminar
+                                    </button>
                                 </div>
                             </div>
                         </div>

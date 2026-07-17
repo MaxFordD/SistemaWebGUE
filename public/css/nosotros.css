@@ -2,25 +2,95 @@
    Estilos para la página "Nosotros"
    ============================================ */
 
-/* Hero Section */
-.nosotros-hero {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+/* Hero Section (fondo: el gris plano del body, sin franja propia) */
+
+.nosotros-eyebrow-rule {
+  display: inline-block;
+  width: 28px;
+  height: 2px;
+  background: var(--secondary-color);
 }
 
-.nosotros-hero-img {
+.nosotros-historia-title {
+  font-size: clamp(2rem, 1.5vw + 1.5rem, 2.75rem);
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1.15;
   position: relative;
+  padding-bottom: 1rem;
+}
+
+.nosotros-historia-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--secondary-color);
+}
+
+/* Carrusel de "Nuestra Historia" */
+.nosotros-hero-carousel {
+  border-radius: 1.5rem;
   overflow: hidden;
-  max-height: 450px;
 }
 
-.nosotros-hero-img img {
+.nosotros-hero-carousel .carousel-item img {
+  aspect-ratio: 4 / 3;
   object-fit: cover;
-  height: 100%;
-  transition: transform 0.4s ease;
 }
 
-.nosotros-hero-img:hover img {
-  transform: scale(1.05);
+.nosotros-hero-carousel .carousel-control-prev,
+.nosotros-hero-carousel .carousel-control-next {
+  width: 48px;
+  height: 48px;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  background: var(--primary-color);
+  border-radius: 50%;
+  opacity: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: background-color 0.2s ease;
+}
+
+.nosotros-hero-carousel .carousel-control-prev { left: 1rem; }
+.nosotros-hero-carousel .carousel-control-next { right: 1rem; }
+
+.nosotros-hero-carousel .carousel-control-prev i,
+.nosotros-hero-carousel .carousel-control-next i {
+  font-size: 1.15rem;
+  color: #fff;
+}
+
+.nosotros-hero-carousel .carousel-control-prev:hover,
+.nosotros-hero-carousel .carousel-control-next:hover {
+  background: var(--primary-dark);
+}
+
+/* Puntos de paginación, debajo del carrusel (no superpuestos) */
+.nosotros-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.nosotros-carousel-dots button {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--gray-300);
+  padding: 0;
+  transition: all 0.25s ease;
+}
+
+.nosotros-carousel-dots button.active {
+  width: 28px;
+  background: var(--primary-color);
 }
 
 /* Misión y Visión */
@@ -36,11 +106,6 @@
 
 .mision-vision .icon-wrapper {
   display: inline-block;
-}
-
-/* Pilares Institucionales */
-.pilares {
-  background: #ffffff;
 }
 
 .pilar-card {
@@ -79,10 +144,6 @@
   line-height: 1.6;
 }
 
-/* Normas de Convivencia */
-.normas {
-  background: #f8f9fa;
-}
 
 .normas-list {
   display: flex;
@@ -94,7 +155,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem;
   background: #ffffff;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -128,10 +189,6 @@
 }
 
 /* CTA Section */
-.cta-section {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-}
-
 .cta-section .btn-primary {
   transition: all 0.3s ease;
 }

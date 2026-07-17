@@ -17,16 +17,22 @@ use App\Http\Controllers\Admin\SeccionController;
 use App\Http\Controllers\Admin\AlumnoController;
 use App\Http\Controllers\Admin\AsistenciaController;
 use App\Http\Controllers\Admin\ImagenInicioController;
+use App\Http\Controllers\HistoriaLegadoController;
+use App\Http\Controllers\NosotrosController;
+use App\Http\Controllers\Admin\HistoriaLegadoController as AdminHistoriaLegadoController;
+use App\Http\Controllers\Admin\NosotrosController as AdminNosotrosController;
+use App\Http\Controllers\Admin\RolPermisoController;
 
 // === Autenticación ===
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store')->middleware('throttle:5,1');
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
 // === Rutas Públicas ===
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/nosotros', fn() => view('nosotros'))->name('nosotros');
+Route::get('/nosotros', [NosotrosController::class, 'index'])->name('nosotros');
 Route::get('/comite-directivo', [ComiteDirectivoController::class, 'index'])->name('comite-directivo');
+Route::get('/historia-legado', [HistoriaLegadoController::class, 'index'])->name('historia-legado');
 
 // === Mesa de Partes (Público) ===
 Route::get('/mesa-partes/create', [MesaPartesController::class, 'create'])->name('mesa.create');
@@ -38,6 +44,12 @@ Route::get('/noticias/{id}', [NoticiaController::class, 'show'])
 	->whereNumber('id')
 	->name('noticias.show');
 
+// === Perfil propio ===
+Route::middleware(['auth'])->group(function () {
+    Route::get('/perfil/contrasena', [UsuarioController::class, 'perfilContrasena'])->name('perfil.contrasena');
+    Route::post('/perfil/contrasena', [UsuarioController::class, 'perfilUpdateContrasena'])->name('perfil.contrasena.update');
+});
+
 // === Administración - Dashboard ===
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
@@ -45,6 +57,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
 // === Administración - Director y Administrador ===
 Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->name('admin.')->group(function () {
+
+	// Permisos por Rol
+	Route::get('/roles-permisos', [RolPermisoController::class, 'index'])->name('roles-permisos.index');
+	Route::put('/roles-permisos/{rol}', [RolPermisoController::class, 'update'])->name('roles-permisos.update');
 
 	// Roles
 	Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
@@ -79,6 +95,9 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 	Route::post('/usuario-rol/asignar', [UsuarioRolController::class, 'asignar'])->name('usuario-rol.asignar');
 	Route::post('/usuario-rol/remover', [UsuarioRolController::class, 'remover'])->name('usuario-rol.remover');
 
+	// Bitácora
+	Route::get('/bitacora', [\App\Http\Controllers\Admin\BitacoraController::class, 'index'])->name('bitacora.index');
+
 	// Imágenes del inicio
 	Route::get('/imagenes-inicio', [ImagenInicioController::class, 'index'])->name('imagenes-inicio.index');
 	Route::post('/imagenes-inicio', [ImagenInicioController::class, 'store'])->name('imagenes-inicio.store');
@@ -94,6 +113,17 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 	Route::put('/comite-directivo/{id}', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'update'])->name('comite-directivo.update');
 	Route::delete('/comite-directivo/{id}', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'destroy'])->name('comite-directivo.destroy');
 	Route::post('/comite-directivo/{id}/restore', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'restore'])->name('comite-directivo.restore');
+	Route::delete('/comite-directivo/{id}/force', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'forceDelete'])->name('comite-directivo.force-delete');
+
+	// Historia y Legado
+	Route::get('/historia-legado',              [AdminHistoriaLegadoController::class, 'index'])->name('historia-legado.index');
+	Route::post('/historia-legado',             [AdminHistoriaLegadoController::class, 'store'])->name('historia-legado.store');
+	Route::put('/historia-legado/{id}',         [AdminHistoriaLegadoController::class, 'update'])->name('historia-legado.update');
+	Route::delete('/historia-legado/{id}',      [AdminHistoriaLegadoController::class, 'destroy'])->name('historia-legado.destroy');
+
+	// Nosotros
+	Route::get('/nosotros/edit',  [AdminNosotrosController::class, 'edit'])->name('nosotros.edit');
+	Route::put('/nosotros',       [AdminNosotrosController::class, 'update'])->name('nosotros.update');
 });
 
 // === Módulo Asistencia - Grados y Secciones (Director / Administrador) ===
@@ -120,11 +150,17 @@ Route::middleware(['auth', 'role:Director,Administrador,Auxiliar'])->prefix('adm
     Route::get('/asistencia/alumno/{alumnoId}', [AsistenciaController::class, 'historialAlumno'])->name('asistencia.historial-alumno');
     Route::get('/asistencia/reporte/pdf', [AsistenciaController::class, 'reportePdf'])->name('asistencia.reporte-pdf');
     Route::get('/asistencia/reporte/excel', [AsistenciaController::class, 'reporteExcel'])->name('asistencia.reporte-excel');
+    Route::get('/asistencia/alumno/{alumnoId}/pdf', [AsistenciaController::class, 'reporteAlumnoPdf'])->name('asistencia.reporte-alumno-pdf');
+    Route::get('/asistencia/alumno/{alumnoId}/excel', [AsistenciaController::class, 'reporteAlumnoExcel'])->name('asistencia.reporte-alumno-excel');
+    Route::post('/asistencia/escanear', [AsistenciaController::class, 'escanear'])->name('asistencia.escanear');
 });
 
 // === Módulo Asistencia - Alumnos (Director, Administrador, Auxiliar) ===
 Route::middleware(['auth', 'role:Director,Administrador,Auxiliar'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/alumnos', [AlumnoController::class, 'index'])->name('alumnos.index');
+    Route::get('/alumnos/exportar', [AlumnoController::class, 'exportar'])->name('alumnos.exportar');
+    Route::get('/alumnos/qr-todos', [AlumnoController::class, 'qrTodos'])->name('alumnos.qrTodos');
+    Route::get('/alumnos/{id}/qr', [AlumnoController::class, 'qr'])->name('alumnos.qr');
     Route::post('/alumnos', [AlumnoController::class, 'store'])->name('alumnos.store');
     Route::put('/alumnos/{id}', [AlumnoController::class, 'update'])->name('alumnos.update');
     Route::delete('/alumnos/{id}', [AlumnoController::class, 'destroy'])->name('alumnos.destroy');

@@ -3,7 +3,6 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;
 
 class Usuario extends Authenticatable
 {
@@ -16,10 +15,14 @@ class Usuario extends Authenticatable
     protected $fillable = ['persona_id', 'nombre_usuario', 'contrasena', 'estado'];
     protected $hidden = ['contrasena'];
 
-    // Autenticación personalizada: usa campo 'contrasena' en lugar de 'password'
     public function getAuthPassword()
     {
         return $this->contrasena;
+    }
+
+    public function getAuthPasswordName()
+    {
+        return 'password';
     }
 
     public function getAuthIdentifierName()
@@ -32,18 +35,10 @@ class Usuario extends Authenticatable
         return $this->usuario_id;
     }
 
-    // Override para permitir login con nombre_usuario en lugar de email
-    public function getAuthPasswordName()
+    public function getRememberTokenName()
     {
-        return 'contrasena';
+        return 'remember_token';
     }
-
-    // IMPORTANTE: Este mutator está comentado porque los hashes se insertan
-    // manualmente desde SQL. Si se descomenta, hasheará el hash (doble hash).
-    // public function setContrasenaAttribute($value)
-    // {
-    //     $this->attributes['contrasena'] = Hash::make($value);
-    // }
 
     public function persona()
     {
@@ -60,9 +55,10 @@ class Usuario extends Authenticatable
         return $this->roles()->where('nombre', $role)->exists();
     }
 
-    // Para que Auth::attempt funcione con nombre_usuario
-    public function getRememberTokenName()
+    public function hasPermission(string $slug): bool
     {
-        return 'remember_token';
+        return $this->roles()
+            ->whereHas('permisos', fn($q) => $q->where('slug', $slug)->where('estado', 'A'))
+            ->exists();
     }
 }

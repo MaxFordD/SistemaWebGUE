@@ -1,15 +1,33 @@
 -- Base de Datos: BDSistemaWebGUE (MySQL)
--- Convertido desde SQL Server
 
 SET FOREIGN_KEY_CHECKS = 0;
+
+-- =============================================
+-- ELIMINAR TABLAS EXISTENTES
+-- =============================================
+DROP TABLE IF EXISTS Asistencia;
+DROP TABLE IF EXISTS Alumno;
+DROP TABLE IF EXISTS Seccion;
+DROP TABLE IF EXISTS Grado;
+DROP TABLE IF EXISTS imagenes_inicio;
+DROP TABLE IF EXISTS Historia_Legado;
+DROP TABLE IF EXISTS Bitacora;
+DROP TABLE IF EXISTS Mensaje;
+DROP TABLE IF EXISTS Mesa_Partes;
+DROP TABLE IF EXISTS Tipos_Documento;
+DROP TABLE IF EXISTS Noticia;
+DROP TABLE IF EXISTS UsuarioRol;
+DROP TABLE IF EXISTS Usuario;
+DROP TABLE IF EXISTS Persona;
+DROP TABLE IF EXISTS Comite_Directivo;
+DROP TABLE IF EXISTS Rol;
 
 -- Tabla: Rol
 CREATE TABLE Rol (
   rol_id      INT AUTO_INCREMENT PRIMARY KEY,
   nombre      VARCHAR(50)  NOT NULL UNIQUE,
   descripcion VARCHAR(200) NULL,
-  estado      CHAR(1)      NOT NULL DEFAULT 'A',
-  CONSTRAINT CK_Rol_Estado CHECK (estado IN ('A','I'))
+  estado      CHAR(1)      NOT NULL DEFAULT 'A'
 );
 
 -- Tabla: Persona
@@ -20,8 +38,7 @@ CREATE TABLE Persona (
   dni        CHAR(8)      NULL UNIQUE,
   telefono   CHAR(9)      NULL,
   correo     VARCHAR(100) NULL UNIQUE,
-  estado     CHAR(1)      NOT NULL DEFAULT 'A',
-  CONSTRAINT CK_Persona_Estado CHECK (estado IN ('A','I'))
+  estado     CHAR(1)      NOT NULL DEFAULT 'A'
 );
 
 -- Tabla: Usuario
@@ -31,7 +48,6 @@ CREATE TABLE Usuario (
   nombre_usuario VARCHAR(100)  NOT NULL UNIQUE,
   contrasena     VARCHAR(200)  NOT NULL,
   estado         CHAR(1)       NOT NULL DEFAULT 'A',
-  CONSTRAINT CK_Usuario_Estado CHECK (estado IN ('A','I')),
   CONSTRAINT FK_Usuario_Persona FOREIGN KEY (persona_id) REFERENCES Persona(persona_id)
 );
 
@@ -53,7 +69,6 @@ CREATE TABLE Noticia (
   usuario_id        INT          NOT NULL,
   fecha_publicacion DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   estado            CHAR(1)      NOT NULL DEFAULT 'A',
-  CONSTRAINT CK_Noticia_Estado CHECK (estado IN ('A','I')),
   CONSTRAINT FK_Noticia_Usuario FOREIGN KEY (usuario_id) REFERENCES Usuario(usuario_id)
 );
 
@@ -75,7 +90,6 @@ CREATE TABLE Mesa_Partes (
   tipo_documento_id INT          NOT NULL DEFAULT 4,
   fecha_envio       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   estado            VARCHAR(50)  NOT NULL DEFAULT 'Pendiente',
-  CONSTRAINT CK_MP_Estado CHECK (estado IN ('Pendiente','Revisado')),
   CONSTRAINT FK_MesaPartes_TipoDocumento FOREIGN KEY (tipo_documento_id) REFERENCES Tipos_Documento(tipo_id)
 );
 
@@ -88,8 +102,20 @@ CREATE TABLE Comite_Directivo (
   foto            VARCHAR(500) NULL,
   biografia       TEXT         NULL,
   orden           INT          NOT NULL DEFAULT 0,
-  estado          CHAR(1)      NOT NULL DEFAULT 'A',
-  CONSTRAINT CK_CD_Estado CHECK (estado IN ('A','I'))
+  estado          CHAR(1)      NOT NULL DEFAULT 'A'
+);
+
+-- Tabla: Historia_Legado
+CREATE TABLE Historia_Legado (
+  item_id    INT AUTO_INCREMENT PRIMARY KEY,
+  tipo       ENUM('foto','texto','video') NOT NULL,
+  titulo     VARCHAR(200) NOT NULL,
+  contenido  TEXT NULL,
+  archivo    VARCHAR(500) NULL,
+  url_video  VARCHAR(500) NULL,
+  orden      SMALLINT NOT NULL DEFAULT 0,
+  estado     CHAR(1) NOT NULL DEFAULT 'A',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabla: Bitacora
@@ -114,6 +140,71 @@ CREATE TABLE Mensaje (
   CONSTRAINT FK_Msj_Destinatario FOREIGN KEY (destinatario_usuario_id) REFERENCES Usuario(usuario_id)
 );
 
+-- =============================================
+-- MÓDULO DE ASISTENCIA ESCOLAR
+-- =============================================
+
+-- Tabla: Grado
+CREATE TABLE Grado (
+  grado_id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre   VARCHAR(30) NOT NULL,
+  nivel    ENUM('Primaria','Secundaria') NOT NULL,
+  estado   TINYINT NOT NULL DEFAULT 1
+);
+
+-- Tabla: Seccion
+CREATE TABLE Seccion (
+  seccion_id  INT AUTO_INCREMENT PRIMARY KEY,
+  grado_id    INT NOT NULL,
+  nombre      VARCHAR(10) NOT NULL,
+  turno       ENUM('Mañana','Tarde') NOT NULL DEFAULT 'Mañana',
+  año_lectivo SMALLINT NOT NULL,
+  estado      TINYINT NOT NULL DEFAULT 1,
+  CONSTRAINT FK_Seccion_Grado FOREIGN KEY (grado_id) REFERENCES Grado(grado_id)
+);
+
+-- Tabla: Alumno
+CREATE TABLE Alumno (
+  alumno_id        INT AUTO_INCREMENT PRIMARY KEY,
+  seccion_id       INT NOT NULL,
+  nombres          VARCHAR(100) NOT NULL,
+  apellidos        VARCHAR(100) NOT NULL,
+  dni              VARCHAR(8)   NOT NULL UNIQUE,
+  fecha_nacimiento DATE         NULL,
+  sexo             ENUM('M','F') NOT NULL,
+  estado           TINYINT NOT NULL DEFAULT 1,
+  CONSTRAINT FK_Alumno_Seccion FOREIGN KEY (seccion_id) REFERENCES Seccion(seccion_id)
+);
+
+-- Tabla: Asistencia
+CREATE TABLE Asistencia (
+  asistencia_id     INT AUTO_INCREMENT PRIMARY KEY,
+  alumno_id         INT NOT NULL,
+  usuario_id        INT NOT NULL,
+  fecha             DATE NOT NULL,
+  estado_asistencia ENUM('Asistio','Falta','Tardanza') NOT NULL,
+  observacion       TEXT NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT UQ_Asistencia_Alumno_Fecha UNIQUE (alumno_id, fecha),
+  CONSTRAINT FK_Asistencia_Alumno  FOREIGN KEY (alumno_id)  REFERENCES Alumno(alumno_id),
+  CONSTRAINT FK_Asistencia_Usuario FOREIGN KEY (usuario_id) REFERENCES Usuario(usuario_id)
+);
+
+-- Tabla: imagenes_inicio
+CREATE TABLE imagenes_inicio (
+  id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  seccion     ENUM('carousel','taller') NOT NULL,
+  orden       TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  ruta        VARCHAR(255) NOT NULL,
+  alt         VARCHAR(255) NOT NULL DEFAULT '',
+  titulo      VARCHAR(100) NULL,
+  descripcion VARCHAR(255) NULL,
+  icono       VARCHAR(50)  NULL,
+  activo      TINYINT NOT NULL DEFAULT 1,
+  created_at  TIMESTAMP NULL,
+  updated_at  TIMESTAMP NULL
+);
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =============================================
@@ -132,3 +223,14 @@ INSERT INTO Comite_Directivo (nombre_completo, cargo, grado_cargo, orden, estado
   ('Pendiente de designación',        'Subdirector de 3° grado',          '3° grado',         3, 'A'),
   ('Lic. Carlos Mendoza Torres',      'Coordinador Académico',            '4° y 5° grado',    4, 'A'),
   ('Lic. Ana Flores Castillo',        'Coordinadora de Tutoría',          'Todos los grados', 5, 'A');
+
+INSERT IGNORE INTO Rol (nombre, descripcion) VALUES ('Auxiliar', 'Gestión de asistencia de alumnos');
+
+INSERT INTO imagenes_inicio (seccion, orden, ruta, alt, titulo, descripcion, icono, activo, created_at, updated_at) VALUES
+  ('carousel', 1, 'images/gue.jpg',              'Fachada del colegio',        NULL,              NULL,                                                         NULL,                1, NOW(), NOW()),
+  ('carousel', 2, 'images/colegio001.jpg',       'Estudiantes en actividades', NULL,              NULL,                                                         NULL,                1, NOW(), NOW()),
+  ('carousel', 3, 'images/colegio003.jpg',       'Instalaciones del campus',   NULL,              NULL,                                                         NULL,                1, NOW(), NOW()),
+  ('taller',   1, 'images/talleres/musica.jpg',  'Taller de Música',           'Música',          'Práctica instrumental, ensambles y teoría musical.',        'music-note-beamed', 1, NOW(), NOW()),
+  ('taller',   2, 'images/talleres/deporte.jpg', 'Taller de Deporte',          'Deporte',         'Fútbol, vóley y atletismo para todas las categorías.',      'trophy',            1, NOW(), NOW()),
+  ('taller',   3, 'images/talleres/pintura.jpg', 'Taller de Artes Plásticas',  'Artes Plásticas', 'Dibujo, pintura y técnicas mixtas.',                        'palette',           1, NOW(), NOW()),
+  ('taller',   4, 'images/talleres/danza.jpg',   'Taller de Danza',            'Danza',           'Danza moderna y folclore peruano.',                         'person-arms-up',    1, NOW(), NOW());

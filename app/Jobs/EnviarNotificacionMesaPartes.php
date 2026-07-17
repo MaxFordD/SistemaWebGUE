@@ -67,13 +67,21 @@ class EnviarNotificacionMesaPartes implements ShouldQueue
     }
 
     /**
+     * Escapa texto proveniente del formulario público antes de insertarlo en HTML del correo.
+     */
+    private function e(?string $valor): string
+    {
+        return htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
      * Enviar correo de confirmación al remitente
      */
     protected function enviarCorreoRemitente()
     {
         Mail::html("
-            <p>Estimado/a <b>{$this->mesa->remitente}</b>,</p>
-            <p>Su documento con asunto <b>'{$this->mesa->asunto}'</b> fue recibido correctamente en la Mesa de Partes.</p>
+            <p>Estimado/a <b>{$this->e($this->mesa->remitente)}</b>,</p>
+            <p>Su documento con asunto <b>'{$this->e($this->mesa->asunto)}'</b> fue recibido correctamente en la Mesa de Partes.</p>
             <p>Gracias por su envío.<br><br>IE JFSC</p>
         ", function ($msg) {
             $msg->to($this->correoRemitente)
@@ -81,7 +89,7 @@ class EnviarNotificacionMesaPartes implements ShouldQueue
 
             // Adjuntar archivos
             foreach ($this->storedPaths as $i => $path) {
-                $msg->attach(storage_path('app/public/' . $path), [
+                $msg->attach(public_path('storage/' . $path), [
                     'as' => $this->originalNames[$i] ?? basename($path),
                 ]);
             }
@@ -96,10 +104,10 @@ class EnviarNotificacionMesaPartes implements ShouldQueue
         Mail::html("
             <p><b>Nuevo documento recibido en Mesa de Partes:</b></p>
             <p>
-                <b>Remitente:</b> {$this->mesa->remitente}<br>
-                <b>Asunto:</b> {$this->mesa->asunto}<br>
-                <b>Detalle:</b> {$this->mesa->detalle}<br>
-                <b>Tipo de documento:</b> {$this->tipoDocumento}<br>
+                <b>Remitente:</b> {$this->e($this->mesa->remitente)}<br>
+                <b>Asunto:</b> {$this->e($this->mesa->asunto)}<br>
+                <b>Detalle:</b> {$this->e($this->mesa->detalle)}<br>
+                <b>Tipo de documento:</b> {$this->e($this->tipoDocumento)}<br>
                 <b>Fecha:</b> " . now()->format('d/m/Y H:i:s') . "
             </p>
         ", function ($msg) {
@@ -108,7 +116,7 @@ class EnviarNotificacionMesaPartes implements ShouldQueue
 
             // Adjuntar archivos
             foreach ($this->storedPaths as $i => $path) {
-                $msg->attach(storage_path('app/public/' . $path), [
+                $msg->attach(public_path('storage/' . $path), [
                     'as' => $this->originalNames[$i] ?? basename($path),
                 ]);
             }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ImagenInicio;
+use App\Services\ArchivoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -43,6 +44,7 @@ class ImagenInicioController extends Controller
         ]);
 
         $path  = $request->file('foto')->store('imagenes_inicio', 'public');
+        app(ArchivoService::class)->optimizarImagen($path);
         $orden = (ImagenInicio::where('seccion', $request->seccion)->max('orden') ?? 0) + 1;
 
         ImagenInicio::create([
@@ -91,6 +93,7 @@ class ImagenInicioController extends Controller
                 Storage::disk('public')->delete(str_replace('storage/', '', $imagen->ruta));
             }
             $path = $request->file('foto')->store('imagenes_inicio', 'public');
+            app(ArchivoService::class)->optimizarImagen($path);
             $imagen->ruta = 'storage/' . $path;
         }
 

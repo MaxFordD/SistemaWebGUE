@@ -27,33 +27,55 @@ class Noticia extends Model
     ];
 
     // Agregar accessors automáticos
-    protected $appends = ['primera_imagen', 'imagenes', 'fecha_formateada', 'archivos'];
+    protected $appends = ['primera_imagen', 'imagenes', 'fecha_formateada', 'archivos', 'videos'];
 
-    // Método para obtener archivos como array
+    // Todos los valores del campo imagen que NO son URLs (rutas de archivo)
     public function getArchivosAttribute()
     {
-        if (empty($this->imagen)) {
-            return [];
-        }
-
-        return array_filter(array_map('trim', explode(';', $this->imagen)));
+        if (empty($this->imagen)) return [];
+        $all = array_filter(array_map('trim', explode(';', $this->imagen)));
+        return array_values(array_filter($all, fn($a) => !str_starts_with($a, 'http')));
     }
 
-    // Método para obtener solo imágenes (filtra por extensión)
+    // Solo archivos de imagen (jpg, png, gif, webp)
     public function getImagenesAttribute()
     {
-        if (empty($this->imagen)) {
-            return [];
-        }
-
-        $archivos = array_filter(array_map('trim', explode(';', $this->imagen)));
-        return array_filter($archivos, function($archivo) {
+        return array_values(array_filter($this->archivos, function ($archivo) {
             $ext = strtolower(pathinfo($archivo, PATHINFO_EXTENSION));
             return in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']);
-        });
+        }));
     }
 
-    // Método para obtener la primera imagen disponible
+    // Solo URLs de video (YouTube, Facebook, etc.)
+    public function getVideosAttribute()
+    {
+        if (empty($this->imagen)) return [];
+        $all = array_filter(array_map('trim', explode(';', $this->imagen)));
+        return array_values(array_filter($all, fn($a) => str_starts_with($a, 'http')));
+    }
+
+    // Convierte URL pública a URL de embed
+    public static function embedUrl(string $url): string
+    {
+        // YouTube: watch?v= o youtu.be/
+        if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
+            return 'https://www.youtube.com/embed/' . $m[1];
+        }
+        // Facebook video
+        if (str_contains($url, 'facebook.com') || str_contains($url, 'fb.watch')) {
+            return 'https://www.facebook.com/plugins/video.php?href=' . urlencode($url) . '&show_text=false&width=auto';
+        }
+        return $url;
+    }
+
+    // Detecta la plataforma del video
+    public static function plataforma(string $url): string
+    {
+        if (str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be')) return 'youtube';
+        if (str_contains($url, 'facebook.com') || str_contains($url, 'fb.watch')) return 'facebook';
+        return 'otro';
+    }
+
     public function getPrimeraImagenAttribute()
     {
         $imagenes = $this->imagenes;

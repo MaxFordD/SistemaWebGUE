@@ -33,7 +33,8 @@ class AdminController extends Controller
             ->take(5)
             ->values();
         // 4) Mesa de partes pendientes (máx 5)
-        $mpPendientes = collect(DB::select("CALL sp_MesaPartes_Listar(?)", ['Pendiente']))
+        $mpPendientes = collect(DB::select('CALL sp_MesaPartes_Listar()'))
+            ->where('estado', 'Pendiente')
             ->map(function ($r) use ($fixDate) {
                 $r->fecha_envio = $fixDate($r->fecha_envio ?? null);
                 return $r;

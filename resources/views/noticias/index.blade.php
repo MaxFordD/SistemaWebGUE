@@ -10,7 +10,7 @@
 @section('content')
 <div class="py-3">
    
-    <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
         <h1 class="h2 fw-bold mb-0">
             <i class="bi bi-newspaper me-2 text-primary"></i>Noticias
         </h1>
@@ -21,6 +21,40 @@
         @endrole
     </div>
 
+    {{-- Buscador y filtro año --}}
+    <form method="GET" action="{{ route('noticias.index') }}" class="mb-4">
+        <div class="d-flex gap-3 flex-wrap align-items-center">
+            <div class="search-bar-noticias" style="max-width: 380px;">
+                <button class="search-bar-noticias-btn" type="submit" title="Buscar">
+                    <i class="bi bi-search"></i>
+                </button>
+                <input type="text"
+                       name="buscar"
+                       class="form-control"
+                       placeholder="Buscar noticias..."
+                       value="{{ request('buscar') }}">
+                @if(request('buscar'))
+                    <a href="{{ route('noticias.index') }}" class="search-bar-noticias-btn" title="Limpiar búsqueda">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                @endif
+            </div>
+            <select name="año" class="form-select" style="max-width:120px;" onchange="this.form.submit()">
+                <option value="">AÑO</option>
+                @for($y = date('Y'); $y >= 2022; $y--)
+                    <option value="{{ $y }}" {{ request('año') == $y ? 'selected' : '' }}>{{ $y }}</option>
+                @endfor
+            </select>
+        </div>
+        @if(request('buscar') || request('año'))
+            <small class="text-muted mt-2 d-block">
+                {{ $noticias->total() }} resultado(s)
+                @if(request('buscar')) para "<strong>{{ request('buscar') }}</strong>"@endif
+                @if(request('año')) del año <strong>{{ request('año') }}</strong>@endif
+            </small>
+        @endif
+    </form>
+
     @if($noticias->isEmpty())
         <div class="alert alert-secondary d-flex align-items-center">
             <i class="bi bi-info-circle fs-4 me-3"></i>
@@ -30,131 +64,7 @@
         <div class="row g-3 g-md-4">
             @foreach($noticias as $n)
                 <div class="col-12 col-md-6 col-lg-4">
-                    <article class="card news-card-v2 h-100 hover-lift border-0 shadow-sm">
-                        {{-- Imagen destacada o placeholder --}}
-                        <div class="news-card-image-wrapper">
-                            @if($n->primera_imagen && file_exists(public_path('storage/' . ltrim($n->primera_imagen, '/'))))
-                                <img src="{{ asset('storage/' . ltrim($n->primera_imagen, '/')) }}"
-                                     class="news-card-image"
-                                     alt="{{ $n->titulo }}"
-                                     loading="lazy"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div class="news-card-placeholder" style="display: none;">
-                                    <i class="bi bi-newspaper display-1 text-white opacity-75"></i>
-                                </div>
-                            @else
-                                <div class="news-card-placeholder">
-                                    <i class="bi bi-newspaper display-1 text-white opacity-75"></i>
-                                </div>
-                            @endif
-
-                            {{-- Badge de categoría (opcional) --}}
-                            <div class="news-card-badge">
-                                <span class="badge bg-primary">
-                                    <i class="bi bi-bookmark-fill me-1"></i>Noticia
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="card-body d-flex flex-column">
-                            {{-- Fecha y autor --}}
-                            @if($n->fecha_formateada)
-                                <div class="news-card-meta mb-2">
-                                    <small class="text-muted d-flex align-items-center flex-wrap gap-2">
-                                        <span>
-                                            <i class="bi bi-calendar3 me-1"></i>
-                                            {{ $n->fecha_formateada }}
-                                        </span>
-                                        @if($n->autor ?? $n->nombre_usuario ?? null)
-                                            <span class="text-muted">•</span>
-                                            <span>
-                                                <i class="bi bi-person me-1"></i>
-                                                {{ $n->autor ?? $n->nombre_usuario }}
-                                            </span>
-                                        @endif
-                                    </small>
-                                </div>
-                            @endif
-
-                            {{-- Título --}}
-                            <h3 class="h5 mb-2 news-card-title">
-                                <a href="{{ route('noticias.show', $n->noticia_id) }}"
-                                   class="stretched-link text-decoration-none link-dark">
-                                    {{ $n->titulo }}
-                                </a>
-                            </h3>
-
-                            {{-- Resumen --}}
-                            @if(!empty($n->resumen))
-                                <p class="text-muted mb-3 flex-grow-1 news-card-excerpt">
-                                    {{ Str::limit($n->resumen, 120) }}
-                                </p>
-                            @elseif(!empty($n->contenido))
-                                <p class="text-muted mb-3 flex-grow-1 news-card-excerpt">
-                                    {{ Str::limit(strip_tags($n->contenido), 120) }}
-                                </p>
-                            @endif
-
-                            {{-- Botones de acción --}}
-                            <div class="mt-auto d-flex gap-2 justify-content-between align-items-center">
-                                <span class="btn btn-sm btn-outline-primary news-card-readmore">
-                                    Leer más <i class="bi bi-arrow-right ms-1"></i>
-                                </span>
-
-                                @auth
-                                @php
-                                    $user = auth()->user();
-                                    $rolesUsuario = [];
-                                    try {
-                                        $rolesUsuario = collect(DB::select('CALL sp_UsuarioRol_ListarPorUsuario(?)', [$user->usuario_id ?? $user->id]))
-                                            ->pluck('nombre')
-                                            ->map(fn($r) => strtolower(trim($r)))
-                                            ->toArray();
-                                    } catch (\Exception $e) {
-                                        \Log::error('Error al obtener roles: ' . $e->getMessage());
-                                    }
-
-                                    $tienePermiso = !empty(array_intersect($rolesUsuario, ['editor', 'administrador', 'director']));
-                                @endphp
-
-                                {{-- DEBUG: Mostrar info de permisos (ELIMINAR DESPUÉS) --}}
-                                @if(config('app.debug'))
-                                <small class="text-muted" style="z-index: 10; position: relative;">
-                                    Roles: [{{ implode(', ', $rolesUsuario) }}] | Permiso: {{ $tienePermiso ? 'SI' : 'NO' }}
-                                </small>
-                                @endif
-
-                                @if($tienePermiso)
-                                <div class="d-flex gap-1 position-relative" style="z-index: 2;">
-                                    <a href="{{ route('noticias.edit', $n->noticia_id) }}"
-                                       class="btn btn-sm btn-warning"
-                                       onclick="event.stopPropagation();"
-                                       title="Editar noticia">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <form action="{{ route('noticias.destroy', $n->noticia_id) }}"
-                                          method="POST"
-                                          class="d-inline delete-form"
-                                          onclick="event.stopPropagation();">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Eliminar noticia">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                                @else
-                                {{-- DEBUG: Mostrar por qué no tiene permiso --}}
-                                @if(config('app.debug'))
-                                <small class="text-danger" style="z-index: 10; position: relative;">
-                                    Sin permiso
-                                </small>
-                                @endif
-                                @endif
-                                @endauth
-                            </div>
-                        </div>
-                    </article>
+                    @include('noticias._card', ['noticia' => $n])
                 </div>
             @endforeach
         </div>

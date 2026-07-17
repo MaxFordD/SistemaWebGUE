@@ -11,8 +11,7 @@
         </a>
     </div>
 
-    @if (session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
-    @if (session('error'))   <div class="alert alert-danger">{{ session('error') }}</div> @endif
+
 
     <div class="card mb-4">
         <div class="card-header bg-white"><strong>Información del Usuario</strong></div>
@@ -42,12 +41,12 @@
                             @foreach($rolesAsignados as $rol)
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong>{{ $rol->nombre_rol }}</strong>
+                                        <strong>{{ $rol->nombre }}</strong>
                                         @if($rol->descripcion)
                                             <br><small class="text-muted">{{ $rol->descripcion }}</small>
                                         @endif
                                     </div>
-                                    <form action="{{ route('admin.usuario-rol.remover') }}" method="POST" onsubmit="return confirm('¿Está seguro de remover el rol {{ $rol->nombre_rol }}?');">
+                                    <form action="{{ route('admin.usuario-rol.remover') }}" method="POST" onsubmit="return confirm('¿Está seguro de remover el rol {{ $rol->nombre }}?');">
                                         @csrf
                                         <input type="hidden" name="usuario_id" value="{{ $usuario->usuario_id }}">
                                         <input type="hidden" name="rol_id" value="{{ $rol->rol_id }}">

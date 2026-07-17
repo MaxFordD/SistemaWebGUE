@@ -1,0 +1,197 @@
+/* ===============================
+   REDISEÑO DEL SITIO PÚBLICO
+   Estética institucional tipo universidad/colegio de
+   alto prestigio: vino + dorado, bordes de 18px, sombras
+   suaves, tipografía Inter, espaciado generoso.
+   Se importa AL FINAL de app.css (después de claymorphism.css)
+   para poder sobreescribir con selectores propios del sitio
+   público sin tocar el panel de administración.
+   =============================== */
+
+/* ---------- Botón de ingresar del navbar: sin sombra clay ---------- */
+.btn-outline-light {
+  box-shadow: none !important;
+}
+.btn-outline-light:hover,
+.btn-outline-light:active,
+.btn-outline-light:focus {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* ---------- Encabezados de sección reutilizables ---------- */
+.section-heading { margin-bottom: 2rem; }
+
+.hero-eyebrow {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary-color);
+  margin-bottom: 0.75rem;
+}
+
+/* ---------- Hero 60/40 ---------- */
+/* Alto fluido (clamp por viewport) en vez de un valor fijo: escala mejor
+   entre tamaños de pantalla y no depende de cuánto texto tenga el copy.
+   El límite superior evita que fotos pequeñas se agranden desproporcionadamente. */
+.hero-split .row > [class*="col-"] > * {
+  height: clamp(320px, 42vw, 480px) !important;
+  max-height: clamp(320px, 42vw, 480px) !important;
+}
+
+.hero-split .hero-copy {
+  border-radius: var(--radius-card) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08) !important;
+  overflow-y: auto;
+}
+
+.hero-split .carousel,
+.hero-split .carousel-inner,
+.hero-split .carousel-item {
+  border-radius: var(--radius-card) !important;
+}
+
+#hero h1 {
+  font-size: clamp(1.9rem, 2.2vw + 1.2rem, 2.6rem);
+}
+
+/* ---------- Logros institucionales ---------- */
+.logro-card {
+  background: var(--secondary-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.logro-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(123, 30, 22, 0.12);
+}
+
+.logro-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-card);
+  background: var(--secondary-subtle);
+  color: var(--secondary-dark);
+  font-size: 1.5rem;
+}
+
+/* ---------- Talleres ---------- */
+.taller-card {
+  border-radius: var(--radius-card) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06) !important;
+  overflow: hidden;
+}
+
+.taller-card:hover {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+.taller-card .card-img-wrapper {
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  overflow: hidden;
+}
+
+/* ---------- Tarjetas de noticias (ajuste fino) ---------- */
+.news-card-v2 {
+  border-radius: var(--radius-card) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+.news-card-v2:hover {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ---------- Barra de búsqueda de noticias (unificada, sin costura) ---------- */
+.search-bar-noticias {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-bar-noticias:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem var(--primary-subtle);
+}
+
+.search-bar-noticias .form-control {
+  border: none;
+  background: transparent;
+  box-shadow: none !important;
+  padding: 0.375rem 0.25rem;
+}
+
+.search-bar-noticias-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-full);
+  color: var(--gray-600);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.search-bar-noticias-btn:hover {
+  background: var(--gray-100);
+  color: var(--primary-color);
+}
+
+/* ---------- Footer: espaciado de columnas ---------- */
+.site-footer .row > [class*="col-"] { margin-bottom: 0.5rem; }
+
+/* ---------- Espaciado entre secciones públicas ----------
+   Valores distintos a propósito (no una sola regla repetida para todas):
+   logros/noticias respiran más, talleres queda en un punto intermedio.
+   Esto le da ritmo a la página en vez de un bloque monótono repetido. */
+.logros-section { padding-top: 5rem; padding-bottom: 5rem; }
+.talleres { padding-top: 4rem; padding-bottom: 4rem; }
+.noticias-home-section { padding-top: 4.5rem; padding-bottom: 4.5rem; }
+
+@media (max-width: 767.98px) {
+  .logros-section { padding-top: 3rem; padding-bottom: 3rem; }
+  .talleres { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+  .noticias-home-section { padding-top: 2.75rem; padding-bottom: 2.75rem; }
+}
+
+/* ---------- Acento institucional bajo los títulos de sección ----------
+   Línea dorada corta: el vino/dorado funciona como acento (botones,
+   íconos, esta línea), nunca como sombra o fondo de tarjeta. */
+.section-heading h2 {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.9rem;
+}
+
+.section-heading h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--secondary-color);
+}
+
+.section-heading.text-center h2::after {
+  left: 50%;
+  transform: translateX(-50%);
+}

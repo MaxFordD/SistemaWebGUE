@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ArchivoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -62,6 +63,7 @@ class ComiteDirectivoController extends Controller
         if ($request->hasFile('foto')) {
             try {
                 $rutaFoto = $request->file('foto')->store('directivos', 'public');
+                app(ArchivoService::class)->optimizarImagen($rutaFoto, 800);
             } catch (\Exception $e) {
                 return back()->withInput()->with('error', 'Error al subir la foto: ' . $e->getMessage());
             }
@@ -165,6 +167,7 @@ class ComiteDirectivoController extends Controller
         if ($request->hasFile('foto')) {
             try {
                 $nuevaFoto = $request->file('foto')->store('directivos', 'public');
+                app(ArchivoService::class)->optimizarImagen($nuevaFoto, 800);
                 // Eliminar foto anterior si existe
                 if ($fotoActual && Storage::disk('public')->exists($fotoActual)) {
                     Storage::disk('public')->delete($fotoActual);
@@ -268,6 +271,34 @@ class ComiteDirectivoController extends Controller
                 'success' => false,
                 'message' => 'Error al cargar los directivos inactivos.'
             ], 500);
+        }
+    }
+
+    /**
+     * Permanently delete an inactive directivo.
+     */
+    public function forceDelete($id)
+    {
+        try {
+            $directivo = DB::select('CALL sp_ComiteDirectivo_ObtenerPorId(?)', [(int)$id]);
+
+            if (empty($directivo) || $directivo[0]->estado !== 'I') {
+                return response()->json(['success' => false, 'message' => 'El directivo no existe o no está inactivo.'], 422);
+            }
+
+            $foto = $directivo[0]->foto ?? null;
+
+            DB::statement('DELETE FROM Comite_Directivo WHERE directivo_id = ?', [(int)$id]);
+
+            if ($foto && Storage::disk('public')->exists($foto)) {
+                Storage::disk('public')->delete($foto);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Directivo eliminado permanentemente.']);
+
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar permanentemente directivo: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error al eliminar el directivo.'], 500);
         }
     }
 

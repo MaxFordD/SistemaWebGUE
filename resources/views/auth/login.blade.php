@@ -27,7 +27,7 @@
                 <form method="POST" action="{{ route('login.store') }}" id="loginForm" novalidate>
                     @csrf
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="nombre_usuario" class="form-label">Nombre de usuario</label>
                         <input 
                             type="text" 
@@ -43,7 +43,7 @@
                         @enderror
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="password" class="form-label">Contraseña</label>
                         <div class="input-group">
                             <input 

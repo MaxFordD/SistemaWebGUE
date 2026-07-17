@@ -79,6 +79,27 @@
                         <!-- Preview de archivos -->
                         <div id="archivos-preview" class="mb-4"></div>
 
+                        {{-- Videos de YouTube o Facebook --}}
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-play-circle me-1"></i>Videos (YouTube o Facebook)
+                            </label>
+                            <div id="video-urls-container">
+                                <div class="input-group mb-2 video-url-row">
+                                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                    <input type="url" name="video_urls[]" class="form-control"
+                                           placeholder="https://www.youtube.com/watch?v=... o https://www.facebook.com/...">
+                                    <button type="button" class="btn btn-outline-danger btn-quitar-video d-none">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="btn-agregar-video">
+                                <i class="bi bi-plus-circle me-1"></i>Agregar otro video
+                            </button>
+                            <div class="form-text"><i class="bi bi-info-circle me-1"></i>Pega el enlace del video de YouTube o Facebook.</div>
+                        </div>
+
                         <div class="d-flex gap-2 justify-content-end">
                             <a href="{{ route('noticias.index') }}" class="btn btn-secondary">
                                 <i class="bi bi-x-circle me-1"></i>Cancelar
@@ -99,4 +120,16 @@
 <script src="{{ asset('vendor/tinymce/js/tinymce/tinymce.min.js') }}"></script>
 <script src="{{ asset('js/tinymce-init.js') }}"></script>
 <script defer src="{{ asset('js/noticia-create.js') }}"></script>
+<script>
+document.getElementById('btn-agregar-video').addEventListener('click', function () {
+    const container = document.getElementById('video-urls-container');
+    const row = document.createElement('div');
+    row.className = 'input-group mb-2 video-url-row';
+    row.innerHTML = `<span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+        <input type="url" name="video_urls[]" class="form-control" placeholder="https://www.youtube.com/watch?v=... o https://www.facebook.com/...">
+        <button type="button" class="btn btn-outline-danger btn-quitar-video"><i class="bi bi-x-lg"></i></button>`;
+    container.appendChild(row);
+    row.querySelector('.btn-quitar-video').addEventListener('click', () => row.remove());
+});
+</script>
 @endpush

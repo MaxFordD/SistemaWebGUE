@@ -22,6 +22,15 @@ document.addEventListener('DOMContentLoaded', function() {
         convert_urls: true,
         branding: false,
         promotion: false,
+        entity_encoding: 'raw',
+        // Limpiar HTML pegado de Facebook/redes sociales (quita class y style)
+        paste_preprocess: function(plugin, args) {
+            args.content = args.content
+                .replace(/\s+class="[^"]*"/gi, '')
+                .replace(/\s+style="[^"]*"/gi, '')
+                .replace(/\s+id="[^"]*"/gi, '')
+                .replace(/\s+data-[\w-]+="[^"]*"/gi, '');
+        },
         setup: function(editor) {
             editor.on('change', function() {
                 editor.save();

@@ -11,12 +11,18 @@
         </div>
         <div class="d-flex gap-2 align-items-center">
             {{-- Filtro de año --}}
-            <form method="GET" action="{{ route('admin.secciones.index') }}" class="d-flex gap-2">
-                <input type="number" class="form-control form-control-sm" name="año"
-                       value="{{ $año }}" min="2020" max="2099" style="width:90px">
-                <button class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-funnel"></i>
-                </button>
+            <form method="GET" action="{{ route('admin.secciones.index') }}" class="d-flex gap-2 align-items-center">
+                <select class="form-select form-select-sm" name="año" style="width:100px" onchange="this.form.submit()">
+                    @for($y = date('Y') + 1; $y >= 2020; $y--)
+                        <option value="{{ $y }}" {{ (int)$año === $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endfor
+                </select>
+                <select class="form-select form-select-sm" name="nivel" style="width:140px" onchange="this.form.submit()">
+                    <option value="" {{ $nivel === '' ? 'selected' : '' }}>NIVEL</option>
+                    <option value="Primaria"   {{ $nivel === 'Primaria'   ? 'selected' : '' }}>Primaria</option>
+                    <option value="Secundaria" {{ $nivel === 'Secundaria' ? 'selected' : '' }}>Secundaria</option>
+                </select>
+
             </form>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSeccion">
                 <i class="bi bi-plus-circle me-2"></i>Nueva Sección
@@ -69,15 +75,15 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
+                                    <div class="d-flex gap-2 justify-content-center">
                                         <button type="button"
-                                            class="btn btn-outline-primary"
+                                            class="btn btn-sm btn-outline-primary"
                                             title="Editar"
                                             onclick="abrirEditar({{ $sec->seccion_id }}, {{ $sec->grado_id }}, '{{ addslashes($sec->seccion) }}', '{{ $sec->turno }}', {{ $sec->año_lectivo }}, {{ $sec->estado }})">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <button type="button"
-                                            class="btn btn-outline-danger"
+                                            class="btn btn-sm btn-outline-danger"
                                             title="Desactivar"
                                             onclick="confirmarEliminar({{ $sec->seccion_id }}, '{{ addslashes($sec->grado) }} - {{ addslashes($sec->seccion) }}')">
                                             <i class="bi bi-x-circle"></i>
@@ -97,7 +103,8 @@
             </div>
         </div>
         <p class="text-muted small mt-3">
-            <i class="bi bi-info-circle me-1"></i>Total: <strong>{{ $secciones->count() }}</strong> sección(es) en {{ $año }}.
+            <i class="bi bi-info-circle me-1"></i>Total: <strong>{{ $secciones->count() }}</strong> sección(es)
+            en {{ $año }}{{ $nivel ? ' — ' . $nivel : '' }}.
         </p>
     @endif
 </div>
