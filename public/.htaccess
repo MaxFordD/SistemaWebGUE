@@ -3,6 +3,11 @@ DirectoryIndex index.php index.html
 <IfModule mod_rewrite.c>
     Options -MultiViews -Indexes
     RewriteEngine On
+
+    # Forzar HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
