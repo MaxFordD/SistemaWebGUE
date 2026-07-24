@@ -45,5 +45,15 @@ class AppServiceProvider extends ServiceProvider
 
             return $rolesUsuario->intersect($requeridos)->isNotEmpty();
         });
+
+        // Directiva Blade: @permission('noticias.admin') ... @endpermission
+        Blade::if('permission', function (...$slugs) {
+            $user = auth()->user();
+            if (!$user) {
+                return false;
+            }
+
+            return $user->hasAnyPermission($slugs);
+        });
     }
 }

@@ -25,6 +25,11 @@
             <a href="{{ route('admin.asistencia.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-calendar-check me-1"></i>Registro Diario
             </a>
+            @if(auth()->user()->hasRole('Director') || auth()->user()->hasRole('Administrador'))
+            <a href="{{ route('admin.asistencia.configuracion.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-gear me-1"></i>Configuración
+            </a>
+            @endif
             @if($seccionId)
             <a href="{{ route('admin.asistencia.reporte-pdf', ['seccion_id'=>$seccionId,'mes'=>$mes,'año'=>$año]) }}"
                class="btn btn-danger btn-sm" target="_blank">
@@ -100,12 +105,21 @@
 
         {{-- Tarjetas resumen global --}}
         @php
-            $totAsistio  = $resumen->sum('total_asistio');
-            $totFaltas   = $resumen->sum('total_faltas');
-            $totTardanza = $resumen->sum('total_tardanzas');
-            $totGlobal   = $totAsistio + $totFaltas + $totTardanza;
-            $pctAsistencia = $totGlobal > 0 ? round($totAsistio / $totGlobal * 100, 1) : 0;
+            $totAsistio     = $resumen->sum('total_asistio');
+            $totFaltas      = $resumen->sum('total_faltas');
+            $totTardanza    = $resumen->sum('total_tardanzas');
+            $totJustificada = $resumen->sum('total_justificadas');
+            $totGlobal      = $totAsistio + $totFaltas + $totTardanza + $totJustificada;
+            $pctAsistencia  = $totGlobal > 0 ? round($totAsistio / $totGlobal * 100, 1) : 0;
+            $totalReincidentes = $resumen->where('alerta_reincidencia', true)->count();
         @endphp
+        @if($totalReincidentes > 0)
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span><strong>{{ $totalReincidentes }}</strong> alumno(s) alcanzaron el umbral de reincidencia
+                ({{ $config->umbral_alertas_mes }} faltas/tardanzas en el mes). Revisa la tabla resaltada abajo.</span>
+        </div>
+        @endif
         <div class="row g-3 mb-4">
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm text-center py-3">
@@ -167,20 +181,27 @@
                                 <th width="90" class="text-center text-success">Asistió</th>
                                 <th width="90" class="text-center text-danger">Faltas</th>
                                 <th width="90" class="text-center text-warning">Tardanzas</th>
-                                <th width="160">% Asistencia</th>
+                                <th width="90" class="text-center text-info">Justif.</th>
+                                <th width="150">% Asistencia</th>
                                 <th width="110" class="text-center">Detalle</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($resumen as $i => $r)
                             @php
-                                $total   = $r->total_asistio + $r->total_faltas + $r->total_tardanzas;
+                                $total   = $r->total_asistio + $r->total_faltas + $r->total_tardanzas + $r->total_justificadas;
                                 $pct     = $total > 0 ? round($r->total_asistio / $total * 100) : 0;
                                 $color   = $pct >= 85 ? '' : ($pct >= 70 ? 'warn' : 'danger');
                             @endphp
-                            <tr>
+                            <tr class="{{ $r->alerta_reincidencia ? 'table-danger' : '' }}">
                                 <td class="text-center text-muted small">{{ $i + 1 }}</td>
-                                <td class="fw-semibold">{{ $r->apellidos }}, {{ $r->nombres }}</td>
+                                <td class="fw-semibold">
+                                    {{ $r->apellidos }}, {{ $r->nombres }}
+                                    @if($r->alerta_reincidencia)
+                                        <i class="bi bi-exclamation-triangle-fill text-danger ms-1"
+                                           title="Reincidencia: {{ $r->total_faltas + $r->total_tardanzas }} faltas/tardanzas en el mes (umbral: {{ $config->umbral_alertas_mes }})"></i>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     <span class="badge bg-success">{{ $r->total_asistio }}</span>
                                 </td>
@@ -189,6 +210,9 @@
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-warning text-dark">{{ $r->total_tardanzas }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info text-dark">{{ $r->total_justificadas }}</span>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
@@ -225,28 +249,29 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-const totAsistio  = {{ $totAsistio }};
-const totFaltas   = {{ $totFaltas }};
-const totTardanza = {{ $totTardanza }};
+const totAsistio     = {{ $totAsistio }};
+const totFaltas      = {{ $totFaltas }};
+const totTardanza    = {{ $totTardanza }};
+const totJustificada = {{ $totJustificada }};
 
 // Pie: distribución global
 new Chart(document.getElementById('chartPie'), {
     type: 'doughnut',
     data: {
-        labels: ['Asistió', 'Faltas', 'Tardanzas'],
-        datasets: [{ data: [totAsistio, totFaltas, totTardanza], backgroundColor: ['#198754','#dc3545','#fd7e14'] }]
+        labels: ['Asistió', 'Faltas', 'Tardanzas', 'Justificadas'],
+        datasets: [{ data: [totAsistio, totFaltas, totTardanza, totJustificada], backgroundColor: ['#198754','#dc3545','#fd7e14','#0dcaf0'] }]
     },
     options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
 });
 
 // Bar: % asistencia por alumno (top 10)
-const alumnos = @json($resumen->sortByDesc(fn($r) => $r->total_asistio + $r->total_faltas + $r->total_tardanzas > 0
-    ? round($r->total_asistio / ($r->total_asistio + $r->total_faltas + $r->total_tardanzas) * 100)
+const alumnos = @json($resumen->sortByDesc(fn($r) => $r->total_asistio + $r->total_faltas + $r->total_tardanzas + $r->total_justificadas > 0
+    ? round($r->total_asistio / ($r->total_asistio + $r->total_faltas + $r->total_tardanzas + $r->total_justificadas) * 100)
     : 0)->take(10)->values());
 
 const labels = alumnos.map(a => a.apellidos.split(' ')[0]);
 const pcts   = alumnos.map(a => {
-    const t = a.total_asistio + a.total_faltas + a.total_tardanzas;
+    const t = a.total_asistio + a.total_faltas + a.total_tardanzas + a.total_justificadas;
     return t > 0 ? Math.round(a.total_asistio / t * 100) : 0;
 });
 const colors = pcts.map(p => p >= 85 ? '#198754' : p >= 70 ? '#fd7e14' : '#dc3545');

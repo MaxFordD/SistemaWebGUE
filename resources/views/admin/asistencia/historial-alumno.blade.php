@@ -8,9 +8,10 @@
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 10px; border-radius: 20px; font-size: .8rem; font-weight: 600;
 }
-.pill-asistio  { background:#d1e7dd; color:#0f5132; }
-.pill-falta    { background:#f8d7da; color:#842029; }
-.pill-tardanza { background:#fff3cd; color:#664d03; }
+.pill-asistio     { background:#d1e7dd; color:#0f5132; }
+.pill-falta       { background:#f8d7da; color:#842029; }
+.pill-tardanza    { background:#fff3cd; color:#664d03; }
+.pill-justificada { background:#cff4fc; color:#055160; }
 .dia-semana    { font-size:.7rem; color:#6c757d; text-transform: uppercase; letter-spacing:.05em; }
 </style>
 @endpush
@@ -71,6 +72,10 @@
                 <div class="text-center px-3 py-2 rounded" style="background:#fff3cd">
                     <div class="fw-bold fs-4 text-warning">{{ $totales['tardanza'] }}</div>
                     <div class="small" style="color:#664d03">Tardanzas</div>
+                </div>
+                <div class="text-center px-3 py-2 rounded" style="background:#cff4fc">
+                    <div class="fw-bold fs-4" style="color:#055160">{{ $totales['justificada'] }}</div>
+                    <div class="small" style="color:#055160">Justificadas</div>
                 </div>
                 @php
                     $total = array_sum($totales);
@@ -160,18 +165,74 @@
                                         <span class="estado-pill pill-falta">
                                             <i class="bi bi-x-circle-fill"></i> Falta
                                         </span>
+                                    @elseif($reg->estado_asistencia === 'Justificada')
+                                        <span class="estado-pill pill-justificada">
+                                            <i class="bi bi-file-earmark-check-fill"></i> Justificada
+                                        </span>
                                     @else
                                         <span class="estado-pill pill-tardanza">
                                             <i class="bi bi-clock-fill"></i> Tardanza
                                         </span>
                                     @endif
+                                    @if($reg->hora_registro)
+                                        <div class="small text-muted mt-1">{{ substr($reg->hora_registro, 0, 5) }}</div>
+                                    @endif
                                 </td>
                                 <td class="text-muted small">
                                     {{ $reg->observacion ?: '—' }}
+                                    @if($reg->estado_asistencia === 'Justificada' && $reg->motivo_justificacion)
+                                        <div class="fst-italic">Motivo: {{ $reg->motivo_justificacion }}</div>
+                                    @endif
                                 </td>
                                 <td class="text-muted small">
                                     <i class="bi bi-person me-1"></i>{{ $reg->registrado_por }}
                                 </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Auditoría de cambios --}}
+    @if($auditoria->isNotEmpty())
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-white fw-semibold py-3">
+                <i class="bi bi-clock-history me-2 text-primary"></i>Historial de correcciones
+                <span class="text-muted fw-normal small">— quién editó un registro después de creado</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="120">Fecha registro</th>
+                                <th width="200">Cambio de estado</th>
+                                <th>Observación</th>
+                                <th width="150">Editado por</th>
+                                <th width="140">Cuándo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($auditoria as $ed)
+                            <tr>
+                                <td class="small">{{ \Carbon\Carbon::parse($ed->fecha_asistencia)->format('d/m/Y') }}</td>
+                                <td class="small">
+                                    <span class="text-muted">{{ $ed->estado_anterior ?: '—' }}</span>
+                                    <i class="bi bi-arrow-right mx-1"></i>
+                                    <strong>{{ $ed->estado_nuevo }}</strong>
+                                </td>
+                                <td class="small text-muted">
+                                    @if($ed->observacion_anterior !== $ed->observacion_nueva)
+                                        {{ $ed->observacion_anterior ?: '—' }} <i class="bi bi-arrow-right mx-1"></i> {{ $ed->observacion_nueva ?: '—' }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td class="small"><i class="bi bi-person me-1"></i>{{ $ed->editado_por }}</td>
+                                <td class="small text-muted">{{ \Carbon\Carbon::parse($ed->created_at)->format('d/m/Y H:i') }}</td>
                             </tr>
                             @endforeach
                         </tbody>

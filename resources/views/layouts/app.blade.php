@@ -123,6 +123,7 @@
               $puedeImagenes       = false;
               $puedeNosotros       = false;
               $puedeMesaPartes     = false;
+              $puedeBitacora       = false;
               $puedeAlumnos        = false;
               $puedeGrados         = false;
               $puedeSecciones      = false;
@@ -146,8 +147,8 @@
                   $rolesUser = collect($fetched);
               }
 
-              $esAdmin     = $rolesUser->contains(fn($r) => in_array($r, ['administrador','admin']));
-              $isAdminLike = $esAdmin; // bitácora solo Administrador
+              $esAdmin     = $rolesUser->contains(fn($r) => in_array($r, ['administrador','admin','director']));
+              $isAdminLike = $esAdmin;
 
               // Cargar permisos desde sesión o DB
               try {
@@ -179,11 +180,13 @@
               $puedeNosotros       = $hasP('nosotros.admin');
               $puedeMesaPartes     = $hasP('mesa.admin');
               $puedeAlumnos        = $hasP('alumnos.admin');
+              $puedeBitacora       = $hasP('bitacora.ver');
               $puedeGrados         = $hasP('grados.admin');
               $puedeSecciones      = $hasP('secciones.admin');
               $puedeRegistrar      = $hasP('asistencia.registrar');
               $puedeReportes       = $hasP('asistencia.reportes');
-              $puedeAsistencia     = $puedeAlumnos || $puedeGrados || $puedeSecciones || $puedeRegistrar || $puedeReportes;
+              $puedeConfigAsistencia = $hasP('asistencia.configurar');
+              $puedeAsistencia     = $puedeAlumnos || $puedeGrados || $puedeSecciones || $puedeRegistrar || $puedeReportes || $puedeConfigAsistencia;
 
               if ($puedeMesaPartes) {
                   try {
@@ -224,7 +227,7 @@
                         <a class="dropdown-item" href="{{ route('perfil.contrasena') }}">
                           <i class="bi bi-key me-2"></i>Cambiar contraseña
                         </a>
-                        @if($isAdminLike)
+                        @if($puedeBitacora)
                         <a class="dropdown-item" href="{{ route('admin.bitacora.index') }}">
                           <i class="bi bi-journal-text me-2"></i>Bitácora
                         </a>
@@ -239,6 +242,11 @@
                         @if($puedeVerUsuarios)
                         <a class="dropdown-item" href="{{ route('admin.usuarios.index') }}">
                           <i class="bi bi-people me-2"></i>Usuarios
+                        </a>
+                        @endif
+                        @if($puedeGestionarRoles)
+                        <a class="dropdown-item" href="{{ route('admin.roles.index') }}">
+                          <i class="bi bi-person-gear me-2"></i>Roles
                         </a>
                         @endif
                         @if($puedeAsignarRoles)
@@ -324,6 +332,14 @@
                         @if($puedeReportes)
                         <a class="dropdown-item" href="{{ route('admin.asistencia.historial-seccion') }}">
                           <i class="bi bi-bar-chart-line me-2"></i>Historial
+                        </a>
+                        @endif
+                        @if($puedeConfigAsistencia)
+                        <a class="dropdown-item" href="{{ route('admin.asistencia.configuracion.index') }}">
+                          <i class="bi bi-gear me-2"></i>Configuración
+                        </a>
+                        <a class="dropdown-item" href="{{ route('admin.asistencia.dias-no-habiles.index') }}">
+                          <i class="bi bi-calendar-x me-2"></i>Días no hábiles
                         </a>
                         @endif
                       </div>

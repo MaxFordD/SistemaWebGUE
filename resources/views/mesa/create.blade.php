@@ -19,6 +19,17 @@
         </div>
     </div>
 
+    @if ($errors->any())
+        <div class="alert alert-danger rounded-4 shadow-sm mb-3">
+            <strong><i class="bi bi-exclamation-circle-fill me-2"></i>Revisa lo siguiente:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card border-0 shadow-sm rounded-4 mesa-form-card">
         <div class="card-body p-3 p-md-4">
             <p class="text-muted mb-4">
@@ -35,7 +46,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" id="remitente" name="remitente" class="form-control" required aria-required="true" placeholder="Nombre completo">
+                            <input type="text" id="remitente" name="remitente" class="form-control" value="{{ old('remitente') }}" required aria-required="true" placeholder="Nombre completo">
                         </div>
                         <div class="invalid-feedback">
                             Por favor, ingrese el nombre del remitente.
@@ -49,7 +60,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                            <input type="text" id="dni" name="dni" class="form-control" required aria-required="true" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="12345678" minlength="8">
+                            <input type="text" id="dni" name="dni" class="form-control" value="{{ old('dni') }}" required aria-required="true" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" placeholder="12345678" minlength="8">
                         </div>
                         <div class="invalid-feedback">
                             Por favor, ingrese un DNI válido de 8 dígitos.
@@ -61,7 +72,7 @@
                         <label for="correo" class="form-label">Correo del remitente</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" id="correo" name="correo" class="form-control" placeholder="ejemplo@gmail.com">
+                            <input type="email" id="correo" name="correo" class="form-control" value="{{ old('correo') }}" placeholder="ejemplo@gmail.com">
                         </div>
                         <div class="invalid-feedback">
                             Por favor, ingrese un correo electrónico válido.
@@ -78,7 +89,7 @@
                             <select id="tipo_documento_id" name="tipo_documento_id" class="form-select" required aria-required="true">
                                 <option value="">Seleccione tipo...</option>
                                 @foreach ($tipos as $t)
-                                <option value="{{ $t->tipo_id }}">{{ $t->nombre }}</option>
+                                <option value="{{ $t->tipo_id }}" {{ old('tipo_documento_id') == $t->tipo_id ? 'selected' : '' }}>{{ $t->nombre }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -93,7 +104,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-chat-left-text"></i></span>
-                            <input type="text" id="asunto" name="asunto" class="form-control" required aria-required="true" placeholder="Breve descripción del asunto">
+                            <input type="text" id="asunto" name="asunto" class="form-control" value="{{ old('asunto') }}" required aria-required="true" placeholder="Breve descripción del asunto">
                         </div>
                         <div class="invalid-feedback">
                             Por favor, ingrese el asunto del documento.
@@ -102,7 +113,7 @@
 
                     <div class="col-12">
                         <label for="detalle" class="form-label">Detalle</label>
-                        <textarea id="detalle" name="detalle" class="form-control" rows="4" placeholder="Escribe el detalle del documento..."></textarea>
+                        <textarea id="detalle" name="detalle" class="form-control" rows="4" placeholder="Escribe el detalle del documento...">{{ old('detalle') }}</textarea>
                     </div>
 
                     <div class="col-12">

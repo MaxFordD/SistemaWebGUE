@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\UserRoleController;
 use App\Http\Controllers\ComiteDirectivoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NoticiaController;
@@ -22,6 +21,8 @@ use App\Http\Controllers\NosotrosController;
 use App\Http\Controllers\Admin\HistoriaLegadoController as AdminHistoriaLegadoController;
 use App\Http\Controllers\Admin\NosotrosController as AdminNosotrosController;
 use App\Http\Controllers\Admin\RolPermisoController;
+use App\Http\Controllers\Admin\AsistenciaConfiguracionController;
+use App\Http\Controllers\Admin\DiaNoHabilController;
 
 // === Autenticación ===
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -55,31 +56,40 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 	Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
 });
 
-// === Administración - Director y Administrador ===
-Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->name('admin.')->group(function () {
+// === Administración - por permiso (Director/Administrador siempre tienen acceso total) ===
 
-	// Permisos por Rol
+// Permisos por Rol y Roles: acciones sensibles de todo el sistema
+Route::middleware(['auth', 'permission:permisos.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/roles-permisos', [RolPermisoController::class, 'index'])->name('roles-permisos.index');
 	Route::put('/roles-permisos/{rol}', [RolPermisoController::class, 'update'])->name('roles-permisos.update');
+});
 
-	// Roles
+Route::middleware(['auth', 'permission:roles.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
 	Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
 	Route::post('/roles/{id}', [RoleController::class, 'update'])->name('roles.update');
 	Route::delete('/roles/{id}', [RoleController::class, 'destroy'])->name('roles.destroy');
+	Route::delete('/roles/{id}/force', [RoleController::class, 'forceDestroy'])->name('roles.force-destroy');
+});
 
-	// Asignación de roles (interfaz anterior)
-	Route::get('/roles/asignar', [UserRoleController::class, 'create'])->name('roles.assign');
-	Route::post('/roles/asignar', [UserRoleController::class, 'store'])->name('roles.assign.store');
-	Route::get('/roles/usuarios', [UserRoleController::class, 'index'])->name('roles.users');
+Route::middleware(['auth', 'permission:roles.asignar'])->prefix('admin')->name('admin.')->group(function () {
+	// Asignación Usuario-Rol
+	Route::get('/usuario-rol', [UsuarioRolController::class, 'index'])->name('usuario-rol.index');
+	Route::get('/usuario-rol/{usuarioId}', [UsuarioRolController::class, 'show'])->name('usuario-rol.show');
+	Route::post('/usuario-rol/asignar', [UsuarioRolController::class, 'asignar'])->name('usuario-rol.asignar');
+	Route::post('/usuario-rol/remover', [UsuarioRolController::class, 'remover'])->name('usuario-rol.remover');
+});
 
-	// Personas
+// Personas
+Route::middleware(['auth', 'permission:personas.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/personas', [PersonaController::class, 'index'])->name('personas.index');
 	Route::post('/personas', [PersonaController::class, 'store'])->name('personas.store');
 	Route::post('/personas/{id}', [PersonaController::class, 'update'])->name('personas.update');
 	Route::delete('/personas/{id}', [PersonaController::class, 'destroy'])->name('personas.destroy');
+});
 
-	// Usuarios
+// Usuarios
+Route::middleware(['auth', 'permission:usuarios.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios.index');
 	Route::get('/usuarios/create', [UsuarioController::class, 'create'])->name('usuarios.create');
 	Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
@@ -88,23 +98,23 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 	Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
 	Route::get('/usuarios/{id}/change-password', [UsuarioController::class, 'changePassword'])->name('usuarios.change-password');
 	Route::post('/usuarios/{id}/change-password', [UsuarioController::class, 'updatePassword'])->name('usuarios.update-password');
+});
 
-	// Asignación Usuario-Rol
-	Route::get('/usuario-rol', [UsuarioRolController::class, 'index'])->name('usuario-rol.index');
-	Route::get('/usuario-rol/{usuarioId}', [UsuarioRolController::class, 'show'])->name('usuario-rol.show');
-	Route::post('/usuario-rol/asignar', [UsuarioRolController::class, 'asignar'])->name('usuario-rol.asignar');
-	Route::post('/usuario-rol/remover', [UsuarioRolController::class, 'remover'])->name('usuario-rol.remover');
-
-	// Bitácora
+// Bitácora
+Route::middleware(['auth', 'permission:bitacora.ver'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/bitacora', [\App\Http\Controllers\Admin\BitacoraController::class, 'index'])->name('bitacora.index');
+});
 
-	// Imágenes del inicio
+// Imágenes del inicio
+Route::middleware(['auth', 'permission:imagenes.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/imagenes-inicio', [ImagenInicioController::class, 'index'])->name('imagenes-inicio.index');
 	Route::post('/imagenes-inicio', [ImagenInicioController::class, 'store'])->name('imagenes-inicio.store');
 	Route::put('/imagenes-inicio/{id}', [ImagenInicioController::class, 'update'])->name('imagenes-inicio.update');
 	Route::delete('/imagenes-inicio/{id}', [ImagenInicioController::class, 'destroy'])->name('imagenes-inicio.destroy');
+});
 
-	// Comité Directivo
+// Comité Directivo
+Route::middleware(['auth', 'permission:comite.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/comite-directivo', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'index'])->name('comite-directivo.index');
 	Route::get('/comite-directivo/inactivos', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'inactivos'])->name('comite-directivo.inactivos');
 	Route::get('/comite-directivo/create', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'create'])->name('comite-directivo.create');
@@ -114,64 +124,86 @@ Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->nam
 	Route::delete('/comite-directivo/{id}', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'destroy'])->name('comite-directivo.destroy');
 	Route::post('/comite-directivo/{id}/restore', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'restore'])->name('comite-directivo.restore');
 	Route::delete('/comite-directivo/{id}/force', [\App\Http\Controllers\Admin\ComiteDirectivoController::class, 'forceDelete'])->name('comite-directivo.force-delete');
+});
 
-	// Historia y Legado
+// Historia y Legado
+Route::middleware(['auth', 'permission:historia.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/historia-legado',              [AdminHistoriaLegadoController::class, 'index'])->name('historia-legado.index');
 	Route::post('/historia-legado',             [AdminHistoriaLegadoController::class, 'store'])->name('historia-legado.store');
 	Route::put('/historia-legado/{id}',         [AdminHistoriaLegadoController::class, 'update'])->name('historia-legado.update');
 	Route::delete('/historia-legado/{id}',      [AdminHistoriaLegadoController::class, 'destroy'])->name('historia-legado.destroy');
+});
 
-	// Nosotros
+// Nosotros
+Route::middleware(['auth', 'permission:nosotros.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/nosotros/edit',  [AdminNosotrosController::class, 'edit'])->name('nosotros.edit');
 	Route::put('/nosotros',       [AdminNosotrosController::class, 'update'])->name('nosotros.update');
 });
 
-// === Módulo Asistencia - Grados y Secciones (Director / Administrador) ===
-Route::middleware(['auth', 'role:Director,Administrador'])->prefix('admin')->name('admin.')->group(function () {
-
-    // Grados
+// === Módulo Asistencia - Grados y Secciones ===
+Route::middleware(['auth', 'permission:grados.admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/grados', [GradoController::class, 'index'])->name('grados.index');
     Route::post('/grados', [GradoController::class, 'store'])->name('grados.store');
     Route::put('/grados/{id}', [GradoController::class, 'update'])->name('grados.update');
     Route::delete('/grados/{id}', [GradoController::class, 'destroy'])->name('grados.destroy');
+});
 
-    // Secciones
+Route::middleware(['auth', 'permission:secciones.admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/secciones', [SeccionController::class, 'index'])->name('secciones.index');
     Route::post('/secciones', [SeccionController::class, 'store'])->name('secciones.store');
     Route::put('/secciones/{id}', [SeccionController::class, 'update'])->name('secciones.update');
     Route::delete('/secciones/{id}', [SeccionController::class, 'destroy'])->name('secciones.destroy');
 });
 
-// === Módulo Asistencia - Registro y Historial (Director, Administrador, Auxiliar) ===
-Route::middleware(['auth', 'role:Director,Administrador,Auxiliar'])->prefix('admin')->name('admin.')->group(function () {
+// Configuración de Asistencia (horarios, umbral de alertas, límite de días de edición, días no hábiles)
+Route::middleware(['auth', 'permission:asistencia.configurar'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/asistencia/configuracion', [AsistenciaConfiguracionController::class, 'index'])->name('asistencia.configuracion.index');
+    Route::put('/asistencia/configuracion', [AsistenciaConfiguracionController::class, 'update'])->name('asistencia.configuracion.update');
+
+    Route::get('/asistencia/dias-no-habiles', [DiaNoHabilController::class, 'index'])->name('asistencia.dias-no-habiles.index');
+    Route::post('/asistencia/dias-no-habiles', [DiaNoHabilController::class, 'store'])->name('asistencia.dias-no-habiles.store');
+    Route::delete('/asistencia/dias-no-habiles/{id}', [DiaNoHabilController::class, 'destroy'])->name('asistencia.dias-no-habiles.destroy');
+});
+
+// === Módulo Asistencia - Registro (registrar día a día, incluye escaneo QR) ===
+Route::middleware(['auth', 'permission:asistencia.registrar'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/asistencia', [AsistenciaController::class, 'index'])->name('asistencia.index');
     Route::post('/asistencia/guardar', [AsistenciaController::class, 'guardar'])->name('asistencia.guardar');
+    Route::post('/asistencia/escanear', [AsistenciaController::class, 'escanear'])->name('asistencia.escanear');
+});
+
+// === Módulo Asistencia - Historial y Reportes ===
+Route::middleware(['auth', 'permission:asistencia.reportes'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/asistencia/historial', [AsistenciaController::class, 'historialSeccion'])->name('asistencia.historial-seccion');
     Route::get('/asistencia/alumno/{alumnoId}', [AsistenciaController::class, 'historialAlumno'])->name('asistencia.historial-alumno');
     Route::get('/asistencia/reporte/pdf', [AsistenciaController::class, 'reportePdf'])->name('asistencia.reporte-pdf');
     Route::get('/asistencia/reporte/excel', [AsistenciaController::class, 'reporteExcel'])->name('asistencia.reporte-excel');
     Route::get('/asistencia/alumno/{alumnoId}/pdf', [AsistenciaController::class, 'reporteAlumnoPdf'])->name('asistencia.reporte-alumno-pdf');
     Route::get('/asistencia/alumno/{alumnoId}/excel', [AsistenciaController::class, 'reporteAlumnoExcel'])->name('asistencia.reporte-alumno-excel');
-    Route::post('/asistencia/escanear', [AsistenciaController::class, 'escanear'])->name('asistencia.escanear');
 });
 
-// === Módulo Asistencia - Alumnos (Director, Administrador, Auxiliar) ===
-Route::middleware(['auth', 'role:Director,Administrador,Auxiliar'])->prefix('admin')->name('admin.')->group(function () {
+// === Módulo Asistencia - Alumnos ===
+Route::middleware(['auth', 'permission:alumnos.admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/alumnos', [AlumnoController::class, 'index'])->name('alumnos.index');
     Route::get('/alumnos/exportar', [AlumnoController::class, 'exportar'])->name('alumnos.exportar');
+    Route::get('/alumnos/plantilla', [AlumnoController::class, 'plantilla'])->name('alumnos.plantilla');
     Route::get('/alumnos/qr-todos', [AlumnoController::class, 'qrTodos'])->name('alumnos.qrTodos');
     Route::get('/alumnos/{id}/qr', [AlumnoController::class, 'qr'])->name('alumnos.qr');
     Route::post('/alumnos', [AlumnoController::class, 'store'])->name('alumnos.store');
     Route::put('/alumnos/{id}', [AlumnoController::class, 'update'])->name('alumnos.update');
     Route::delete('/alumnos/{id}', [AlumnoController::class, 'destroy'])->name('alumnos.destroy');
-    Route::delete('/alumnos/{id}/borrar', [AlumnoController::class, 'borrar'])->name('alumnos.borrar');
-    Route::post('/alumnos/borrar-masivo', [AlumnoController::class, 'borrarMasivo'])->name('alumnos.borrarMasivo');
     Route::post('/alumnos/importar/preview', [AlumnoController::class, 'importarPreview'])->name('alumnos.importar.preview');
     Route::post('/alumnos/importar/confirmar', [AlumnoController::class, 'importarConfirmar'])->name('alumnos.importar.confirmar');
 });
 
+// Alumnos - eliminación permanente (irreversible): permiso aparte, no lo tiene Auxiliar por defecto
+Route::middleware(['auth', 'permission:alumnos.eliminar'])->prefix('admin')->name('admin.')->group(function () {
+    Route::delete('/alumnos/{id}/borrar', [AlumnoController::class, 'borrar'])->name('alumnos.borrar');
+    Route::post('/alumnos/borrar-masivo', [AlumnoController::class, 'borrarMasivo'])->name('alumnos.borrarMasivo');
+});
+
 // === Mesa de Partes - Gestión ===
-Route::middleware(['auth', 'role:Director,Administrador,MesaPartes'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'permission:mesa.admin'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/mesa-partes', [MesaPartesController::class, 'index'])->name('mesa.index');
 	Route::get('/mesa-partes/{id}', [MesaPartesController::class, 'show'])->name('mesa.show');
 	Route::post('/mesa-partes/{id}/estado', [MesaPartesController::class, 'updateEstado'])->name('mesa.estado');
@@ -179,7 +211,7 @@ Route::middleware(['auth', 'role:Director,Administrador,MesaPartes'])->prefix('a
 });
 
 // === Noticias - Gestión ===
-Route::middleware(['auth', 'role:Secretaria,Editor,Administrador,Director'])->group(function () {
+Route::middleware(['auth', 'permission:noticias.admin'])->group(function () {
 	Route::get('/noticias/create', [NoticiaController::class, 'create'])->name('noticias.create');
 	Route::post('/noticias', [NoticiaController::class, 'store'])->name('noticias.store');
 	Route::get('/noticias/{id}/edit', [NoticiaController::class, 'edit'])->whereNumber('id')->name('noticias.edit');

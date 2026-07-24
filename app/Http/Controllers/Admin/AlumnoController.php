@@ -3,15 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Exports\AlumnoExport;
+use App\Exports\AlumnoPlantillaExport;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AlumnoController extends Controller
 {
+
     public function index(Request $request)
     {
         $seccionId = $request->get('seccion_id');
@@ -60,6 +64,11 @@ class AlumnoController extends Controller
         return Excel::download(new AlumnoExport($alumnos, $meta), $nombre);
     }
 
+    public function plantilla()
+    {
+        return Excel::download(new AlumnoPlantillaExport(), 'plantilla_importar_alumnos.xlsx');
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -90,6 +99,8 @@ class AlumnoController extends Controller
                 $request->sexo,
                 bin2hex(random_bytes(16)),
             ]);
+
+            $this->registrarBitacora("Registró al alumno {$request->apellidos}, {$request->nombres} (DNI {$request->dni})");
 
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
@@ -133,6 +144,8 @@ class AlumnoController extends Controller
                 (int) $request->estado,
             ]);
 
+            $this->registrarBitacora("Actualizó al alumno {$request->apellidos}, {$request->nombres} (DNI {$request->dni})");
+
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
                 'año'        => $request->año ?? date('Y'),
@@ -150,7 +163,11 @@ class AlumnoController extends Controller
     public function destroy(Request $request, $id)
     {
         try {
+            $alumnoData = DB::select('CALL sp_Alumno_ObtenerPorId(?)', [(int) $id]);
+            $nombre     = isset($alumnoData[0]) ? "{$alumnoData[0]->apellidos}, {$alumnoData[0]->nombres}" : "alumno #{$id}";
+
             DB::statement('CALL sp_Alumno_Eliminar(?)', [(int) $id]);
+            $this->registrarBitacora("Desactivó al alumno {$nombre}");
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
                 'año'        => $request->año ?? date('Y'),
@@ -164,7 +181,11 @@ class AlumnoController extends Controller
     public function borrar(Request $request, $id)
     {
         try {
+            $alumnoData = DB::select('CALL sp_Alumno_ObtenerPorId(?)', [(int) $id]);
+            $nombre     = isset($alumnoData[0]) ? "{$alumnoData[0]->apellidos}, {$alumnoData[0]->nombres}" : "alumno #{$id}";
+
             DB::statement('CALL sp_Alumno_BorrarFisico(?)', [(int) $id]);
+            $this->registrarBitacora("Eliminó permanentemente al alumno {$nombre}");
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
                 'año'        => $request->año ?? date('Y'),
@@ -185,40 +206,44 @@ class AlumnoController extends Controller
             'año'     => 'required|integer|min:2020|max:2099',
         ]);
 
-        $handle = fopen($request->file('archivo')->getPathname(), 'r');
-        // Quitar BOM que agrega Excel al guardar CSV
-        $bom = fread($handle, 3);
-        if ($bom !== "\xEF\xBB\xBF") rewind($handle);
+        $archivo   = $request->file('archivo');
+        $extension = strtolower($archivo->getClientOriginalExtension());
+        $esExcel   = in_array($extension, ['xlsx', 'xls']);
 
-        // Auto-detectar separador: tab o punto y coma
-        $firstLine = fgets($handle);
-        rewind($handle);
-        if ($bom === "\xEF\xBB\xBF") fread($handle, 3);
-        $sep = str_contains($firstLine, "\t") ? "\t" : ';';
+        [$rawHeader, $dataRows] = $esExcel
+            ? ($this->leerFilasExcel($archivo->getPathname()) ?? [null, []])
+            : $this->leerFilasCsv($archivo->getPathname());
 
-        $rawHeader = fgetcsv($handle, 0, $sep);
         if (!$rawHeader) {
             return response()->json(['ok' => false, 'error' => 'El archivo está vacío o no es válido.'], 422);
         }
 
-        $header = array_map(fn($h) => mb_strtolower(trim($h)), $rawHeader);
+        $header = array_map(fn($h) => mb_strtolower(trim((string) $h)), $rawHeader);
         $aliases = [
             'apellido' => 'apellidos', 'apellidos' => 'apellidos',
             'nombre'   => 'nombres',   'nombres'   => 'nombres',
             'dni'      => 'dni',       'sexo'      => 'sexo',
-            'fecha_nacimiento' => 'fecha_nacimiento',
+            'fecha_nacimiento' => 'fecha_nacimiento', 'fecha de nacimiento' => 'fecha_nacimiento',
             'grado'    => 'grado',     'seccion'   => 'seccion', 'sección' => 'seccion',
         ];
         $normalizedHeader = array_map(fn($col) => $aliases[$col] ?? $col, $header);
+        $fechaIdx = array_search('fecha_nacimiento', $normalizedHeader, true);
 
         $known = ['grado', 'seccion', 'apellidos', 'nombres', 'dni', 'fecha_nacimiento', 'sexo'];
         $rows  = [];
-        while (($row = fgetcsv($handle, 0, $sep)) !== false) {
+        foreach ($dataRows as $row) {
             if (count($row) !== count($normalizedHeader)) continue;
+            if (count(array_filter($row, fn($v) => trim((string) ($v ?? '')) !== '')) === 0) continue;
+
+            if ($esExcel && $fechaIdx !== false && is_numeric($row[$fechaIdx] ?? null)) {
+                try {
+                    $row[$fechaIdx] = ExcelDate::excelToDateTimeObject($row[$fechaIdx])->format('d/m/Y');
+                } catch (\Exception $e) {}
+            }
+
             $mapped = array_combine($normalizedHeader, $row);
             $rows[] = array_intersect_key($mapped, array_flip($known));
         }
-        fclose($handle);
 
         if (empty($rows)) {
             return response()->json(['ok' => false, 'error' => 'No se encontraron filas de datos.'], 422);
@@ -240,6 +265,91 @@ class AlumnoController extends Controller
         ]);
     }
 
+    private function leerFilasCsv(string $path): array
+    {
+        $handle = fopen($path, 'r');
+        // Quitar BOM que agrega Excel al guardar CSV
+        $bom = fread($handle, 3);
+        if ($bom !== "\xEF\xBB\xBF") rewind($handle);
+
+        // Auto-detectar separador: tab o punto y coma
+        $firstLine = fgets($handle);
+        rewind($handle);
+        if ($bom === "\xEF\xBB\xBF") fread($handle, 3);
+        $sep = str_contains($firstLine, "\t") ? "\t" : ';';
+
+        $rawHeader = fgetcsv($handle, 0, $sep);
+        if (!$rawHeader) {
+            fclose($handle);
+            return [null, []];
+        }
+
+        $rows = [];
+        while (($row = fgetcsv($handle, 0, $sep)) !== false) {
+            $rows[] = $row;
+        }
+        fclose($handle);
+
+        return [$rawHeader, $rows];
+    }
+
+    private function leerFilasExcel(string $path): ?array
+    {
+        try {
+            $spreadsheet = IOFactory::load($path);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $data = $spreadsheet->getActiveSheet()->toArray(null, true, false, false);
+        $data = array_values(array_filter($data, fn($row) =>
+            count(array_filter($row, fn($v) => trim((string) ($v ?? '')) !== '')) > 0
+        ));
+
+        if (empty($data)) {
+            return null;
+        }
+
+        $rawHeader = array_map(fn($v) => (string) $v, array_shift($data));
+
+        return [$rawHeader, $data];
+    }
+
+    /**
+     * Convierte cualquier forma de escribir el grado (palabra completa,
+     * abreviatura, con/sin tilde, con "Primaria/Secundaria" al lado) al
+     * número de grado (1-6), para poder comparar el Excel importado
+     * contra el valor libre que el admin haya escrito en la tabla Grado.
+     */
+    private function normalizarGrado(?string $texto): ?int
+    {
+        $t = mb_strtolower(trim((string) $texto));
+        $t = strtr($t, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u']);
+
+        $palabras = [
+            'primero' => 1, '1ro' => 1, '1' => 1,
+            'segundo' => 2, '2do' => 2, '2' => 2,
+            'tercero' => 3, '3ro' => 3, '3' => 3,
+            'cuarto'  => 4, '4to' => 4, '4' => 4,
+            'quinto'  => 5, '5to' => 5, '5' => 5,
+            'sexto'   => 6, '6to' => 6, '6' => 6,
+        ];
+
+        if (isset($palabras[$t])) {
+            return $palabras[$t];
+        }
+
+        // Casos como "1° primaria", "1ro de primaria", "grado 1", etc.
+        if (preg_match('/(\d)/', $t, $m)) {
+            $n = (int) $m[1];
+            if ($n >= 1 && $n <= 6) {
+                return $n;
+            }
+        }
+
+        return null;
+    }
+
     public function importarConfirmar(Request $request)
     {
         $request->validate([
@@ -256,30 +366,22 @@ class AlumnoController extends Controller
 
         $secciones = collect(DB::select('CALL sp_Seccion_ListarActivas(?)', [$año]));
 
-        $gradoMap = [
-            'primero' => '1ro', 'segundo' => '2do', 'tercero' => '3ro',
-            'cuarto'  => '4to', 'quinto'  => '5to', 'sexto'   => '6to',
-            '1ro' => '1ro', '2do' => '2do', '3ro' => '3ro',
-            '4to' => '4to', '5to' => '5to', '6to' => '6to',
-        ];
-
         $inserted = 0;
         $skipped  = 0;
         $errors   = [];
 
         foreach ($rows as $i => $row) {
-            $gradoKey = mb_strtolower(trim($row['grado'] ?? ''));
-            $gradoDb  = $gradoMap[$gradoKey] ?? null;
+            $gradoNum     = $this->normalizarGrado($row['grado'] ?? '');
             $seccionLetra = mb_strtoupper(trim($row['seccion'] ?? ''));
 
-            if (!$gradoDb) {
+            if (!$gradoNum) {
                 $errors[] = "Fila " . ($i + 2) . ": grado '{$row['grado']}' no reconocido.";
                 continue;
             }
 
             $seccion = $secciones->first(fn($s) =>
-                mb_strtolower($s->grado) === mb_strtolower($gradoDb) &&
-                mb_strtoupper($s->seccion) === $seccionLetra
+                $this->normalizarGrado($s->grado) === $gradoNum &&
+                mb_strtoupper(trim($s->seccion)) === $seccionLetra
             );
 
             if (!$seccion) {
@@ -322,6 +424,10 @@ class AlumnoController extends Controller
                     $errors[] = "Fila " . ($i + 2) . " ({$apellidos}): " . $e->getMessage();
                 }
             }
+        }
+
+        if ($inserted > 0) {
+            $this->registrarBitacora("Importó {$inserted} alumno(s) desde Excel para el año {$año}");
         }
 
         return response()->json([
@@ -395,6 +501,7 @@ class AlumnoController extends Controller
                 }
             });
             $total = count($request->ids);
+            $this->registrarBitacora("Eliminó permanentemente {$total} alumno(s) en lote (IDs: " . implode(',', $request->ids) . ')');
             return redirect()->route('admin.alumnos.index', $params)
                 ->with('success', "{$total} alumno(s) eliminado(s) permanentemente.");
         } catch (\Exception $e) {

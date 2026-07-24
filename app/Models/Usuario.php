@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class Usuario extends Authenticatable
 {
@@ -57,8 +58,35 @@ class Usuario extends Authenticatable
 
     public function hasPermission(string $slug): bool
     {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         return $this->roles()
             ->whereHas('permisos', fn($q) => $q->where('slug', $slug)->where('estado', 'A'))
+            ->exists();
+    }
+
+    public function hasAnyPermission(array $slugs): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->roles()
+            ->whereHas('permisos', fn($q) => $q->whereIn('slug', $slugs)->where('estado', 'A'))
+            ->exists();
+    }
+
+    /**
+     * Director y Administrador siempre tienen acceso total, sin importar lo que
+     * esté marcado en Permisos por Rol. Evita que un error de configuración de
+     * permisos deje sin acceso a nadie (no hay SSH para corregirlo en el servidor).
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->roles()
+            ->whereIn(DB::raw('LOWER(TRIM(nombre))'), ['administrador', 'admin', 'director'])
             ->exists();
     }
 }

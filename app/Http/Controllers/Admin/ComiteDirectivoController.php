@@ -11,6 +11,30 @@ use Illuminate\Support\Facades\Log;
 
 class ComiteDirectivoController extends Controller
 {
+
+    /**
+     * Opciones fijas para los selects de Cargo y Grado a Cargo del comité directivo.
+     */
+    protected array $cargoOpciones = [
+        'Director General',
+        'Subdirector',
+        'Coordinador Académico',
+        'Coordinador de Tutoría',
+        'Docente',
+        'Auxiliar de Educación',
+        'Secretaria',
+        'Psicólogo(a)',
+        'Bibliotecario(a)',
+    ];
+
+    protected array $gradoOpciones = [
+        'Todos los grados',
+        'Nivel Primaria',
+        'Nivel Secundaria',
+        '1° Primaria', '2° Primaria', '3° Primaria', '4° Primaria', '5° Primaria', '6° Primaria',
+        '1° Secundaria', '2° Secundaria', '3° Secundaria', '4° Secundaria', '5° Secundaria',
+    ];
+
     /**
      * Display a listing of the resource (Admin).
      */
@@ -32,7 +56,10 @@ class ComiteDirectivoController extends Controller
      */
     public function create()
     {
-        return view('admin.comite-directivo.create');
+        return view('admin.comite-directivo.create', [
+            'cargoOpciones' => $this->cargoOpciones,
+            'gradoOpciones' => $this->gradoOpciones,
+        ]);
     }
 
     /**
@@ -97,6 +124,8 @@ class ComiteDirectivoController extends Controller
                 return back()->withInput()->with('error', "No se pudo guardar el directivo: $mensaje");
             }
 
+            $this->registrarBitacora("Registró al directivo {$request->input('nombre_completo')} ({$request->input('cargo')})");
+
             return redirect()
                 ->route('admin.comite-directivo.index')
                 ->with('success', 'Directivo registrado correctamente.');
@@ -125,7 +154,11 @@ class ComiteDirectivoController extends Controller
 
             $directivo = (object)$resultado[0];
 
-            return view('admin.comite-directivo.edit', compact('directivo'));
+            return view('admin.comite-directivo.edit', [
+                'directivo'     => $directivo,
+                'cargoOpciones' => $this->cargoOpciones,
+                'gradoOpciones' => $this->gradoOpciones,
+            ]);
         } catch (\Exception $e) {
             Log::error('Error al cargar directivo para editar: ' . $e->getMessage());
             return redirect()->route('admin.comite-directivo.index')->with('error', 'Error al cargar el directivo.');
@@ -206,6 +239,8 @@ class ComiteDirectivoController extends Controller
                 return back()->withInput()->with('error', "Error al actualizar: $mensaje");
             }
 
+            $this->registrarBitacora("Actualizó al directivo {$request->input('nombre_completo')} ({$request->input('cargo')})");
+
             return redirect()
                 ->route('admin.comite-directivo.index')
                 ->with('success', 'Directivo actualizado correctamente.');
@@ -226,6 +261,8 @@ class ComiteDirectivoController extends Controller
     public function destroy($id)
     {
         try {
+            $directivoActual = collect(DB::select('CALL sp_ComiteDirectivo_ObtenerPorId(?)', [(int)$id]))->first();
+
             // Inicializar variables de salida
             DB::statement('SET @resultado = 0, @mensaje = ""');
 
@@ -240,6 +277,9 @@ class ComiteDirectivoController extends Controller
             if ($resultado != 1) {
                 return redirect()->route('admin.comite-directivo.index')->with('error', "Error al desactivar: $mensaje");
             }
+
+            $nombre = $directivoActual->nombre_completo ?? "directivo #{$id}";
+            $this->registrarBitacora("Desactivó al directivo {$nombre}");
 
             return redirect()->route('admin.comite-directivo.index')->with('success', 'Directivo desactivado correctamente.');
 
@@ -286,13 +326,16 @@ class ComiteDirectivoController extends Controller
                 return response()->json(['success' => false, 'message' => 'El directivo no existe o no está inactivo.'], 422);
             }
 
-            $foto = $directivo[0]->foto ?? null;
+            $foto   = $directivo[0]->foto ?? null;
+            $nombre = $directivo[0]->nombre_completo ?? "directivo #{$id}";
 
             DB::statement('DELETE FROM Comite_Directivo WHERE directivo_id = ?', [(int)$id]);
 
             if ($foto && Storage::disk('public')->exists($foto)) {
                 Storage::disk('public')->delete($foto);
             }
+
+            $this->registrarBitacora("Eliminó permanentemente al directivo {$nombre}");
 
             return response()->json(['success' => true, 'message' => 'Directivo eliminado permanentemente.']);
 
@@ -322,6 +365,8 @@ class ComiteDirectivoController extends Controller
             if ($rowCount === 0) {
                 return redirect()->route('admin.comite-directivo.index')->with('error', 'El directivo no existe o ya está activo.');
             }
+
+            $this->registrarBitacora("Reactivó al directivo #{$id}");
 
             return redirect()->route('admin.comite-directivo.index')->with('success', 'Directivo reactivado correctamente.');
 

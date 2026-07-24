@@ -45,17 +45,23 @@
 
                         {{-- Cargo --}}
                         <div class="mb-3">
-                            <label for="cargo" class="form-label fw-semibold">
+                            <label for="cargo_select" class="form-label fw-semibold">
                                 Cargo <span class="text-danger">*</span>
                             </label>
+                            <select class="form-select @error('cargo') is-invalid @enderror" id="cargo_select" required>
+                                <option value="" {{ old('cargo') ? '' : 'selected' }} disabled>Seleccione un cargo...</option>
+                                @foreach ($cargoOpciones as $opcion)
+                                    <option value="{{ $opcion }}" {{ old('cargo') === $opcion ? 'selected' : '' }}>{{ $opcion }}</option>
+                                @endforeach
+                                <option value="__otro__" {{ old('cargo') && !in_array(old('cargo'), $cargoOpciones) ? 'selected' : '' }}>Otro (especificar)</option>
+                            </select>
                             <input type="text"
-                                   class="form-control @error('cargo') is-invalid @enderror"
+                                   class="form-control mt-2 @error('cargo') is-invalid @enderror d-none"
                                    id="cargo"
                                    name="cargo"
                                    value="{{ old('cargo') }}"
-                                   required
                                    maxlength="100"
-                                   placeholder="Ej: Director General">
+                                   placeholder="Especifica el cargo">
                             @error('cargo')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -63,16 +69,23 @@
 
                         {{-- Grado a Cargo --}}
                         <div class="mb-3">
-                            <label for="grado_cargo" class="form-label fw-semibold">
+                            <label for="grado_cargo_select" class="form-label fw-semibold">
                                 Grado a Cargo
                             </label>
+                            <select class="form-select @error('grado_cargo') is-invalid @enderror" id="grado_cargo_select">
+                                <option value="">Sin especificar</option>
+                                @foreach ($gradoOpciones as $opcion)
+                                    <option value="{{ $opcion }}" {{ old('grado_cargo') === $opcion ? 'selected' : '' }}>{{ $opcion }}</option>
+                                @endforeach
+                                <option value="__otro__" {{ old('grado_cargo') && !in_array(old('grado_cargo'), $gradoOpciones) ? 'selected' : '' }}>Otro / combinación de grados</option>
+                            </select>
                             <input type="text"
-                                   class="form-control @error('grado_cargo') is-invalid @enderror"
+                                   class="form-control mt-2 @error('grado_cargo') is-invalid @enderror d-none"
                                    id="grado_cargo"
                                    name="grado_cargo"
                                    value="{{ old('grado_cargo') }}"
                                    maxlength="100"
-                                   placeholder="Ej: 1° y 2° grado, Todos los grados">
+                                   placeholder="Ej: 1° y 2° grado">
                             @error('grado_cargo')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -172,4 +185,33 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+(function () {
+  function enlazarSelectOtro(selectId, inputId) {
+    var select = document.getElementById(selectId);
+    var input = document.getElementById(inputId);
+    if (!select || !input) return;
+
+    function sync() {
+      if (select.value === '__otro__') {
+        input.classList.remove('d-none');
+        input.required = true;
+      } else {
+        input.classList.add('d-none');
+        input.required = false;
+        input.value = select.value;
+      }
+    }
+
+    select.addEventListener('change', sync);
+    sync();
+  }
+
+  enlazarSelectOtro('cargo_select', 'cargo');
+  enlazarSelectOtro('grado_cargo_select', 'grado_cargo');
+})();
+</script>
+@endpush
 @endsection

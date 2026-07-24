@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class PersonaController extends Controller
 {
+
     public function index()
     {
         $personas = collect(DB::select('CALL sp_Persona_Listar()'));
@@ -45,6 +46,9 @@ class PersonaController extends Controller
         $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
 
         $ok = (int)($out[0]->resultado ?? 0) > 0;
+        if ($ok) {
+            $this->registrarBitacora("Registró a la persona {$data['apellidos']}, {$data['nombres']}");
+        }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
 
@@ -76,15 +80,23 @@ class PersonaController extends Controller
         ]);
 
         $ok = $affected > 0;
+        if ($ok) {
+            $this->registrarBitacora("Actualizó a la persona {$data['apellidos']}, {$data['nombres']}");
+        }
         return back()->with($ok ? 'success' : 'error', $ok ? 'Persona actualizada exitosamente' : 'Error al actualizar persona');
     }
 
     public function destroy($id)
     {
+        $persona = DB::table('Persona')->where('persona_id', (int)$id)->first();
+
         // Eliminar lógicamente (el SP aún no está creado)
         $affected = DB::table('Persona')->where('persona_id', (int)$id)->update(['estado' => 'I']);
 
         $ok = $affected > 0;
+        if ($ok && $persona) {
+            $this->registrarBitacora("Desactivó a la persona {$persona->apellidos}, {$persona->nombres}");
+        }
         return back()->with($ok ? 'success' : 'error', $ok ? 'Persona eliminada exitosamente' : 'Error al eliminar persona');
     }
 }

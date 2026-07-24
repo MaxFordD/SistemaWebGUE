@@ -4,8 +4,16 @@
   var input = document.getElementById('archivos');
   var preview = document.getElementById('archivos-preview');
   var form = document.getElementById('mesaForm');
+  var maxFileSize = 5 * 1024 * 1024; // 5MB
 
   if (!input || !preview) return;
+
+  function hayArchivoMuyGrande() {
+    if (!input.files) return false;
+    return Array.prototype.slice.call(input.files).some(function (file) {
+      return file.size > maxFileSize;
+    });
+  }
 
   // Preview mejorado de archivos con validación
   input.addEventListener('change', function () {
@@ -17,8 +25,7 @@
 
     Array.prototype.slice.call(this.files).forEach(function (file, index) {
       // Validar tamaño (5MB)
-      var maxSize = 5 * 1024 * 1024; // 5MB
-      var isValid = file.size <= maxSize;
+      var isValid = file.size <= maxFileSize;
       var sizeMB = (file.size / 1024 / 1024).toFixed(2);
       var sizeText = sizeMB < 1 ? (file.size / 1024).toFixed(1) + ' KB' : sizeMB + ' MB';
 
@@ -106,6 +113,15 @@
           // Mostrar mensaje de error
           showValidationMessage('Por favor, complete todos los campos obligatorios marcados con (*)', 'error');
         }
+        return;
+      }
+
+      // Bloquear envío si algún archivo supera el máximo permitido
+      if (hayArchivoMuyGrande()) {
+        e.preventDefault();
+        e.stopPropagation();
+        preview.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showValidationMessage('Uno o más archivos superan el tamaño máximo de 5MB. Quítalos o reemplázalos antes de enviar.', 'error');
         return;
       }
 

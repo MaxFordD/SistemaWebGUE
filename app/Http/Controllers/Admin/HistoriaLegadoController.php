@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class HistoriaLegadoController extends Controller
 {
+
     public function index()
     {
         $items = collect(DB::select('CALL sp_HistoriaLegado_Listar()'));
@@ -54,6 +55,7 @@ class HistoriaLegadoController extends Controller
             $ok  = (int)($out[0]->resultado ?? 0) > 0;
 
             if (!$ok && $archivo) Storage::disk('public')->delete($archivo);
+            if ($ok) $this->registrarBitacora("Agregó a Historia y Legado: \"{$request->titulo}\" ({$tipo})");
 
             return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Error');
         } catch (\Exception $e) {
@@ -104,6 +106,7 @@ class HistoriaLegadoController extends Controller
             ]);
             $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $ok  = (int)($out[0]->resultado ?? 0) === 1;
+            if ($ok) $this->registrarBitacora("Actualizó en Historia y Legado: \"{$request->titulo}\"");
             return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Error');
         } catch (\Exception $e) {
             Log::error('HistoriaLegado update: ' . $e->getMessage());
@@ -114,10 +117,16 @@ class HistoriaLegadoController extends Controller
     public function destroy($id)
     {
         try {
+            $actual = collect(DB::select('CALL sp_HistoriaLegado_ObtenerPorId(?)', [(int)$id]))->first();
+
             DB::statement('SET @resultado = 0, @mensaje = ""');
             DB::statement('CALL sp_HistoriaLegado_Eliminar(?, @resultado, @mensaje)', [(int)$id]);
             $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $ok  = (int)($out[0]->resultado ?? 0) === 1;
+            if ($ok) {
+                $titulo = $actual->titulo ?? "elemento #{$id}";
+                $this->registrarBitacora("Eliminó de Historia y Legado: \"{$titulo}\"");
+            }
             return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Error');
         } catch (\Exception $e) {
             Log::error('HistoriaLegado destroy: ' . $e->getMessage());

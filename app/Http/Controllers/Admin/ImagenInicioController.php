@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ImagenInicioController extends Controller
 {
+
     public function index()
     {
         $carousel = ImagenInicio::where('seccion', 'carousel')->orderBy('orden')->get();
@@ -57,6 +58,8 @@ class ImagenInicioController extends Controller
             'icono'       => $request->seccion === 'taller' ? $request->icono       : null,
             'activo'      => 1,
         ]);
+
+        $this->registrarBitacora("Agregó una imagen a " . ($request->seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
 
         return redirect()->route('admin.imagenes-inicio.index')
             ->with('success', 'Imagen agregada correctamente.');
@@ -107,6 +110,8 @@ class ImagenInicioController extends Controller
 
         $imagen->save();
 
+        $this->registrarBitacora("Actualizó una imagen de " . ($imagen->seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
+
         return redirect()->route('admin.imagenes-inicio.index')
             ->with('success', 'Imagen actualizada correctamente.');
     }
@@ -119,7 +124,10 @@ class ImagenInicioController extends Controller
             Storage::disk('public')->delete(str_replace('storage/', '', $imagen->ruta));
         }
 
+        $seccion = $imagen->seccion;
         $imagen->delete();
+
+        $this->registrarBitacora("Eliminó una imagen de " . ($seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
 
         return redirect()->route('admin.imagenes-inicio.index')
             ->with('success', 'Imagen eliminada correctamente.');

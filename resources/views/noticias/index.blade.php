@@ -14,11 +14,11 @@
         <h1 class="h2 fw-bold mb-0">
             <i class="bi bi-newspaper me-2 text-primary"></i>Noticias
         </h1>
-        @role('Editor','Administrador','Director')
+        @permission('noticias.admin')
             <a class="btn btn-sm btn-primary" href="{{ route('noticias.create') }}">
                 <i class="bi bi-plus-circle me-1"></i>Publicar
             </a>
-        @endrole
+        @endpermission
     </div>
 
     {{-- Buscador y filtro año --}}

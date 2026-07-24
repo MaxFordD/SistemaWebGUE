@@ -99,7 +99,7 @@
                 Leer más <i class="bi bi-arrow-right ms-1"></i>
             </a>
 
-            @role('Editor','Administrador','Director')
+            @permission('noticias.admin')
             <div class="d-flex gap-2 position-relative" style="z-index: 2;">
                 <a href="{{ route('noticias.edit', $n->noticia_id) }}"
                    class="btn btn-sm btn-warning"
@@ -118,7 +118,7 @@
                     </button>
                 </form>
             </div>
-            @endrole
+            @endpermission
         </div>
     </div>
 </article>

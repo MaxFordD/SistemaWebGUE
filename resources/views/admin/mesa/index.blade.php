@@ -55,14 +55,21 @@
                                 {{ \Carbon\Carbon::parse($d->fecha_envio)->format('d/m/Y H:i') }}
                             </td>
                             <td>
-                                <form action="{{ route('admin.mesa.estado', $d->documento_id) }}" method="POST" class="js-auto-submit-form">
-                                    @csrf
-                                    <select name="estado" class="form-select form-select-sm js-auto-submit">
-                                        @foreach($estados as $e)
-                                            <option value="{{ $e }}" {{ $d->estado === $e ? 'selected' : '' }}>{{ $e }}</option>
-                                        @endforeach
-                                    </select>
-                                </form>
+                                @php $resuelto = in_array($d->estado, ['Aceptado', 'Rechazado']); @endphp
+                                @if($resuelto && !auth()->user()->isSuperAdmin())
+                                    <span class="badge {{ $d->estado === 'Aceptado' ? 'bg-success' : 'bg-danger' }}" title="Decisión final. Solo Director/Administrador puede modificarla.">
+                                        {{ $d->estado }} <i class="bi bi-lock-fill ms-1"></i>
+                                    </span>
+                                @else
+                                    <form action="{{ route('admin.mesa.estado', $d->documento_id) }}" method="POST" class="js-auto-submit-form">
+                                        @csrf
+                                        <select name="estado" class="form-select form-select-sm js-auto-submit">
+                                            @foreach($estados as $e)
+                                                <option value="{{ $e }}" {{ $d->estado === $e ? 'selected' : '' }}>{{ $e }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                @endif
                             </td>
                             <td class="text-center">
                                 <div class="d-flex gap-1 justify-content-center">

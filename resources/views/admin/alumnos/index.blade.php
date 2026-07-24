@@ -29,7 +29,7 @@
             </a>
             @endif
             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalImportar">
-                <i class="bi bi-file-earmark-arrow-up me-2"></i>Importar CSV
+                <i class="bi bi-file-earmark-arrow-up me-2"></i>Importar Excel/CSV
             </button>
             @if($seccion)
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAlumno" onclick="modoCrear()">
@@ -109,10 +109,12 @@
                            oninput="filtrarAlumnos(this.value)">
                     <span class="badge bg-success">{{ $alumnos->where('estado', 1)->count() }} activos</span>
                     <span class="badge bg-secondary">{{ $alumnos->where('estado', 0)->count() }} inactivos</span>
+                    @permission('alumnos.eliminar')
                     <button type="button" id="btnBorrarSeleccionados" class="btn btn-sm btn-danger d-none"
                             onclick="confirmarBorrarMasivo()">
                         <i class="bi bi-trash me-1"></i>Eliminar seleccionados (<span id="cntSeleccionados">0</span>)
                     </button>
+                    @endpermission
                 </div>
             </div>
             <div class="card-body p-0">
@@ -185,10 +187,12 @@
                                             onclick="confirmarDesactivar({{ $a->alumno_id }}, '{{ addslashes($a->apellidos) }}, {{ addslashes($a->nombres) }}')">
                                             <i class="bi bi-x-circle"></i>
                                         </button>
+                                        @permission('alumnos.eliminar')
                                         <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar definitivamente"
                                             onclick="confirmarBorrar({{ $a->alumno_id }}, '{{ addslashes($a->apellidos) }}, {{ addslashes($a->nombres) }}')">
                                             <i class="bi bi-trash"></i>
                                         </button>
+                                        @endpermission
                                     </div>
                                     <form id="del-{{ $a->alumno_id }}"
                                           action="{{ route('admin.alumnos.destroy', $a->alumno_id) }}"
@@ -224,7 +228,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="modalImportarLabel">
-                    <i class="bi bi-file-earmark-arrow-up me-2"></i>Importar Alumnos desde CSV
+                    <i class="bi bi-file-earmark-arrow-up me-2"></i>Importar Alumnos desde Excel/CSV
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
@@ -233,9 +237,12 @@
                 <div id="importStep1">
                     <div class="alert alert-info small mb-3">
                         <i class="bi bi-info-circle me-1"></i>
-                        El archivo puede estar separado por <strong>tabulaciones</strong> (Excel) o <strong>punto y coma (;)</strong>.
+                        Puedes subir un archivo <strong>Excel (.xlsx/.xls)</strong> o <strong>CSV</strong> (separado por tabulaciones o punto y coma).
                         Columnas esperadas: <code>grado, seccion, apellido, nombre, dni, fecha_nacimiento</code>.
                         Si falta alguna columna requerida, el sistema te pedirá completarla.
+                        <a href="{{ route('admin.alumnos.plantilla') }}" class="d-inline-block mt-1 fw-semibold">
+                            <i class="bi bi-download me-1"></i>Descargar plantilla Excel
+                        </a>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-3">
@@ -244,8 +251,8 @@
                                    value="{{ $año }}" min="2020" max="2099">
                         </div>
                         <div class="col-md-9">
-                            <label class="form-label fw-semibold">Archivo CSV</label>
-                            <input type="file" id="importArchivo" accept=".csv,.txt" class="form-control">
+                            <label class="form-label fw-semibold">Archivo (Excel o CSV)</label>
+                            <input type="file" id="importArchivo" accept=".csv,.txt,.xlsx,.xls" class="form-control">
                         </div>
                     </div>
                 </div>
@@ -482,7 +489,7 @@ const CAMPO_LABELS = { sexo: 'Sexo', nombres: 'Nombres', apellidos: 'Apellidos',
 async function analizarCsv() {
     const file = document.getElementById('importArchivo').files[0];
     importAñoVal = document.getElementById('importAño').value;
-    if (!file)          { alert('Selecciona un archivo CSV primero.'); return; }
+    if (!file)          { alert('Selecciona un archivo primero.'); return; }
     if (!importAñoVal)  { alert('Ingresa el año lectivo.'); return; }
 
     showImportLoading('Analizando archivo...');

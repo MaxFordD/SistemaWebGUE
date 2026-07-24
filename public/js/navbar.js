@@ -311,15 +311,19 @@ class NavbarManager {
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
       form.addEventListener('submit', function(e) {
+        // Si otro handler (ej. confirm() de un botón eliminar) canceló el envío,
+        // no mostrar el spinner ni tocar el botón.
+        if (e.defaultPrevented) return;
+
         const submitBtn = this.querySelector('[type="submit"]');
         if (submitBtn && !submitBtn.disabled) {
           submitBtn.disabled = true;
-          submitBtn.dataset.originalText = submitBtn.textContent;
+          submitBtn.dataset.originalHtml = submitBtn.innerHTML;
           submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Enviando...';
-          
+
           setTimeout(() => {
             submitBtn.disabled = false;
-            submitBtn.textContent = submitBtn.dataset.originalText;
+            submitBtn.innerHTML = submitBtn.dataset.originalHtml;
           }, 10000);
         }
       });

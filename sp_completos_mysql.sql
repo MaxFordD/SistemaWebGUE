@@ -40,7 +40,7 @@ CREATE PROCEDURE sp_Rol_Listar()
 BEGIN
     SELECT rol_id, nombre, descripcion, estado
     FROM Rol
-    ORDER BY nombre;
+    ORDER BY rol_id;
 END$$
 
 
@@ -113,6 +113,45 @@ BEGIN
         UPDATE Rol SET estado = 'I' WHERE rol_id = p_rol_id;
         SET p_resultado = 1;
         SET p_mensaje = 'Rol eliminado exitosamente';
+    END IF;
+END$$
+
+
+DROP PROCEDURE IF EXISTS sp_Rol_EliminarFisico $$
+CREATE PROCEDURE sp_Rol_EliminarFisico(
+    IN p_rol_id INT,
+    OUT p_resultado TINYINT,
+    OUT p_mensaje VARCHAR(200)
+)
+BEGIN
+    DECLARE v_count  INT;
+    DECLARE v_estado CHAR(1);
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_resultado = 0;
+        SET p_mensaje = 'Error al eliminar rol';
+    END;
+
+    SELECT estado INTO v_estado FROM Rol WHERE rol_id = p_rol_id;
+
+    IF v_estado IS NULL THEN
+        SET p_resultado = 0;
+        SET p_mensaje = 'El rol no existe';
+    ELSEIF v_estado <> 'I' THEN
+        SET p_resultado = 0;
+        SET p_mensaje = 'El rol debe estar inactivo antes de eliminarlo definitivamente';
+    ELSE
+        SELECT COUNT(*) INTO v_count FROM UsuarioRol WHERE rol_id = p_rol_id;
+        IF v_count > 0 THEN
+            SET p_resultado = 0;
+            SET p_mensaje = 'No se puede eliminar: el rol tiene usuarios asignados';
+        ELSE
+            DELETE FROM RolPermiso WHERE rol_id = p_rol_id;
+            DELETE FROM Rol WHERE rol_id = p_rol_id;
+            SET p_resultado = 1;
+            SET p_mensaje = 'Rol eliminado permanentemente';
+        END IF;
     END IF;
 END$$
 
@@ -869,6 +908,7 @@ CREATE PROCEDURE sp_ComiteDirectivo_Insertar(
     IN p_foto VARCHAR(500),
     IN p_biografia TEXT,
     IN p_orden INT,
+    IN p_estado CHAR(1),
     OUT p_resultado INT,
     OUT p_mensaje VARCHAR(200)
 )
@@ -880,7 +920,7 @@ BEGIN
     END;
 
     INSERT INTO Comite_Directivo(nombre_completo, cargo, grado_cargo, foto, biografia, orden, estado)
-    VALUES(p_nombre_completo, p_cargo, p_grado_cargo, p_foto, p_biografia, p_orden, 'A');
+    VALUES(p_nombre_completo, p_cargo, p_grado_cargo, p_foto, p_biografia, p_orden, COALESCE(p_estado, 'A'));
 
     SET p_resultado = LAST_INSERT_ID();
     SET p_mensaje = 'Miembro del comité registrado exitosamente';
@@ -982,10 +1022,10 @@ DROP PROCEDURE IF EXISTS sp_Sistema_ObtenerEstadisticas $$
 CREATE PROCEDURE sp_Sistema_ObtenerEstadisticas()
 BEGIN
     SELECT
-        (SELECT COUNT(*) FROM Usuario WHERE estado = 'A')             AS total_usuarios,
-        (SELECT COUNT(*) FROM Persona WHERE estado = 'A')             AS total_personas,
-        (SELECT COUNT(*) FROM Rol WHERE estado = 'A')                 AS total_roles,
-        (SELECT COUNT(*) FROM Noticia WHERE estado = 'A')             AS total_noticias,
+        (SELECT COUNT(*) FROM Usuario WHERE estado = 'A')             AS usuarios_activos,
+        (SELECT COUNT(*) FROM Persona WHERE estado = 'A')             AS personas_activas,
+        (SELECT COUNT(*) FROM Rol WHERE estado = 'A')                 AS roles_activos,
+        (SELECT COUNT(*) FROM Noticia WHERE estado = 'A')             AS noticias_activas,
         (SELECT COUNT(*) FROM Mesa_Partes WHERE estado = 'Pendiente') AS mesa_pendientes,
         (SELECT COUNT(*) FROM Mesa_Partes WHERE estado = 'Revisado')  AS mesa_revisados;
 END$$
@@ -1149,13 +1189,25 @@ END$$
 DROP PROCEDURE IF EXISTS sp_Alumno_ObtenerPorId $$
 CREATE PROCEDURE sp_Alumno_ObtenerPorId(IN p_alumno_id INT)
 BEGIN
-    SELECT a.alumno_id, a.seccion_id, a.nombres, a.apellidos, a.dni,
+    SELECT a.alumno_id, a.seccion_id, a.nombres, a.apellidos, a.dni, a.codigo_qr,
            a.fecha_nacimiento, a.sexo, a.estado,
            s.nombre AS seccion, g.nombre AS grado, g.nivel
     FROM Alumno a
     INNER JOIN Seccion s ON s.seccion_id = a.seccion_id
     INNER JOIN Grado g ON g.grado_id = s.grado_id
     WHERE a.alumno_id = p_alumno_id;
+END$$
+
+DROP PROCEDURE IF EXISTS sp_Alumno_ObtenerPorCodigoQR $$
+CREATE PROCEDURE sp_Alumno_ObtenerPorCodigoQR(IN p_codigo_qr VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci)
+BEGIN
+    SELECT a.alumno_id, a.seccion_id, a.nombres, a.apellidos, a.dni, a.codigo_qr,
+           a.fecha_nacimiento, a.sexo, a.estado,
+           s.nombre AS seccion, g.nombre AS grado, g.nivel
+    FROM Alumno a
+    INNER JOIN Seccion s ON s.seccion_id = a.seccion_id
+    INNER JOIN Grado g ON g.grado_id = s.grado_id
+    WHERE a.codigo_qr = p_codigo_qr AND a.estado = 1;
 END$$
 
 DROP PROCEDURE IF EXISTS sp_Alumno_Insertar $$
@@ -1165,11 +1217,12 @@ CREATE PROCEDURE sp_Alumno_Insertar(
     IN p_apellidos       VARCHAR(100),
     IN p_dni             VARCHAR(8),
     IN p_fecha_nacimiento DATE,
-    IN p_sexo            ENUM('M','F')
+    IN p_sexo            ENUM('M','F'),
+    IN p_codigo_qr       VARCHAR(40)
 )
 BEGIN
-    INSERT INTO Alumno (seccion_id, nombres, apellidos, dni, fecha_nacimiento, sexo, estado)
-    VALUES (p_seccion_id, p_nombres, p_apellidos, p_dni, p_fecha_nacimiento, p_sexo, 1);
+    INSERT INTO Alumno (seccion_id, nombres, apellidos, dni, fecha_nacimiento, sexo, codigo_qr, estado)
+    VALUES (p_seccion_id, p_nombres, p_apellidos, p_dni, p_fecha_nacimiento, p_sexo, p_codigo_qr, 1);
     SELECT LAST_INSERT_ID() AS alumno_id;
 END$$
 
@@ -1211,19 +1264,25 @@ END$$
 
 DROP PROCEDURE IF EXISTS sp_Asistencia_RegistrarOActualizar $$
 CREATE PROCEDURE sp_Asistencia_RegistrarOActualizar(
-    IN p_alumno_id          INT,
-    IN p_usuario_id         INT,
-    IN p_fecha              DATE,
-    IN p_estado_asistencia  ENUM('Asistio','Falta','Tardanza'),
-    IN p_observacion        TEXT
+    IN p_alumno_id             INT,
+    IN p_usuario_id            INT,
+    IN p_fecha                 DATE,
+    IN p_estado_asistencia     ENUM('Asistio','Falta','Tardanza','Justificada'),
+    IN p_observacion           TEXT,
+    IN p_hora_registro         TIME,
+    IN p_motivo_justificacion  TEXT
 )
 BEGIN
-    INSERT INTO Asistencia (alumno_id, usuario_id, fecha, estado_asistencia, observacion)
-    VALUES (p_alumno_id, p_usuario_id, p_fecha, p_estado_asistencia, p_observacion)
+    INSERT INTO Asistencia
+        (alumno_id, usuario_id, fecha, estado_asistencia, observacion, hora_registro, motivo_justificacion)
+    VALUES
+        (p_alumno_id, p_usuario_id, p_fecha, p_estado_asistencia, p_observacion, p_hora_registro, p_motivo_justificacion)
     ON DUPLICATE KEY UPDATE
-        estado_asistencia = p_estado_asistencia,
-        observacion       = p_observacion,
-        usuario_id        = p_usuario_id;
+        estado_asistencia    = p_estado_asistencia,
+        observacion          = p_observacion,
+        usuario_id           = p_usuario_id,
+        hora_registro        = COALESCE(p_hora_registro, hora_registro),
+        motivo_justificacion = p_motivo_justificacion;
 END$$
 
 DROP PROCEDURE IF EXISTS sp_Asistencia_ObtenerPorSeccionYFecha $$
@@ -1235,7 +1294,9 @@ BEGIN
     SELECT a.alumno_id, a.nombres, a.apellidos, a.dni, a.sexo,
            ast.asistencia_id,
            COALESCE(ast.estado_asistencia, 'Falta') AS estado_asistencia,
-           ast.observacion
+           ast.observacion,
+           ast.hora_registro,
+           ast.motivo_justificacion
     FROM Alumno a
     LEFT JOIN Asistencia ast ON ast.alumno_id = a.alumno_id AND ast.fecha = p_fecha
     WHERE a.seccion_id = p_seccion_id AND a.estado = 1
@@ -1250,6 +1311,7 @@ CREATE PROCEDURE sp_Asistencia_HistorialPorAlumno(
 )
 BEGIN
     SELECT ast.asistencia_id, ast.fecha, ast.estado_asistencia, ast.observacion,
+           ast.hora_registro, ast.motivo_justificacion,
            u.nombre_usuario AS registrado_por
     FROM Asistencia ast
     INNER JOIN Usuario u ON u.usuario_id = ast.usuario_id
@@ -1267,9 +1329,10 @@ CREATE PROCEDURE sp_Asistencia_ResumenPorSeccion(
 )
 BEGIN
     SELECT a.alumno_id, a.apellidos, a.nombres,
-           COUNT(CASE WHEN ast.estado_asistencia = 'Asistio'  THEN 1 END) AS total_asistio,
-           COUNT(CASE WHEN ast.estado_asistencia = 'Falta'    THEN 1 END) AS total_faltas,
-           COUNT(CASE WHEN ast.estado_asistencia = 'Tardanza' THEN 1 END) AS total_tardanzas
+           COUNT(CASE WHEN ast.estado_asistencia = 'Asistio'     THEN 1 END) AS total_asistio,
+           COUNT(CASE WHEN ast.estado_asistencia = 'Falta'       THEN 1 END) AS total_faltas,
+           COUNT(CASE WHEN ast.estado_asistencia = 'Tardanza'    THEN 1 END) AS total_tardanzas,
+           COUNT(CASE WHEN ast.estado_asistencia = 'Justificada' THEN 1 END) AS total_justificadas
     FROM Alumno a
     LEFT JOIN Asistencia ast ON ast.alumno_id = a.alumno_id
         AND MONTH(ast.fecha) = p_mes
@@ -1277,6 +1340,111 @@ BEGIN
     WHERE a.seccion_id = p_seccion_id AND a.estado = 1
     GROUP BY a.alumno_id, a.apellidos, a.nombres
     ORDER BY a.apellidos, a.nombres;
+END$$
+
+-- =========================
+-- CONFIGURACION DE ASISTENCIA
+-- =========================
+
+DROP PROCEDURE IF EXISTS sp_AsistenciaConfiguracion_Obtener $$
+CREATE PROCEDURE sp_AsistenciaConfiguracion_Obtener()
+BEGIN
+    SELECT config_id, hora_apertura, hora_cierre, hora_limite_tardanza,
+           umbral_alertas_mes, dias_limite_edicion, actualizado_por, actualizado_en
+    FROM AsistenciaConfiguracion
+    LIMIT 1;
+END$$
+
+DROP PROCEDURE IF EXISTS sp_AsistenciaConfiguracion_Actualizar $$
+CREATE PROCEDURE sp_AsistenciaConfiguracion_Actualizar(
+    IN p_hora_apertura         TIME,
+    IN p_hora_cierre           TIME,
+    IN p_hora_limite_tardanza  TIME,
+    IN p_umbral_alertas_mes    TINYINT UNSIGNED,
+    IN p_dias_limite_edicion   TINYINT UNSIGNED,
+    IN p_usuario_id            INT
+)
+BEGIN
+    UPDATE AsistenciaConfiguracion
+    SET hora_apertura        = p_hora_apertura,
+        hora_cierre          = p_hora_cierre,
+        hora_limite_tardanza = p_hora_limite_tardanza,
+        umbral_alertas_mes   = p_umbral_alertas_mes,
+        dias_limite_edicion  = p_dias_limite_edicion,
+        actualizado_por      = p_usuario_id,
+        actualizado_en       = NOW();
+END$$
+
+-- =========================
+-- AUDITORIA DE ASISTENCIA
+-- =========================
+
+DROP PROCEDURE IF EXISTS sp_AsistenciaAuditoria_Registrar $$
+CREATE PROCEDURE sp_AsistenciaAuditoria_Registrar(
+    IN p_alumno_id             INT,
+    IN p_usuario_id            INT,
+    IN p_fecha_asistencia      DATE,
+    IN p_estado_anterior       VARCHAR(20),
+    IN p_estado_nuevo          VARCHAR(20),
+    IN p_observacion_anterior  TEXT,
+    IN p_observacion_nueva     TEXT
+)
+BEGIN
+    INSERT INTO AsistenciaAuditoria
+        (alumno_id, usuario_id, fecha_asistencia, estado_anterior, estado_nuevo,
+         observacion_anterior, observacion_nueva)
+    VALUES
+        (p_alumno_id, p_usuario_id, p_fecha_asistencia, p_estado_anterior, p_estado_nuevo,
+         p_observacion_anterior, p_observacion_nueva);
+END$$
+
+DROP PROCEDURE IF EXISTS sp_AsistenciaAuditoria_ListarPorAlumno $$
+CREATE PROCEDURE sp_AsistenciaAuditoria_ListarPorAlumno(IN p_alumno_id INT)
+BEGIN
+    SELECT au.auditoria_id, au.fecha_asistencia, au.estado_anterior, au.estado_nuevo,
+           au.observacion_anterior, au.observacion_nueva, au.created_at,
+           u.nombre_usuario AS editado_por
+    FROM AsistenciaAuditoria au
+    INNER JOIN Usuario u ON u.usuario_id = au.usuario_id
+    WHERE au.alumno_id = p_alumno_id
+    ORDER BY au.created_at DESC
+    LIMIT 100;
+END$$
+
+-- =========================
+-- DIAS NO HABILES
+-- =========================
+
+DROP PROCEDURE IF EXISTS sp_DiaNoHabil_Listar $$
+CREATE PROCEDURE sp_DiaNoHabil_Listar(IN p_año SMALLINT)
+BEGIN
+    SELECT dia_no_habil_id, fecha, motivo, usuario_id, created_at
+    FROM DiaNoHabil
+    WHERE p_año IS NULL OR YEAR(fecha) = p_año
+    ORDER BY fecha;
+END$$
+
+DROP PROCEDURE IF EXISTS sp_DiaNoHabil_Insertar $$
+CREATE PROCEDURE sp_DiaNoHabil_Insertar(
+    IN p_fecha      DATE,
+    IN p_motivo     VARCHAR(150),
+    IN p_usuario_id INT
+)
+BEGIN
+    INSERT INTO DiaNoHabil (fecha, motivo, usuario_id) VALUES (p_fecha, p_motivo, p_usuario_id);
+    SELECT LAST_INSERT_ID() AS dia_no_habil_id;
+END$$
+
+DROP PROCEDURE IF EXISTS sp_DiaNoHabil_Eliminar $$
+CREATE PROCEDURE sp_DiaNoHabil_Eliminar(IN p_dia_no_habil_id INT)
+BEGIN
+    DELETE FROM DiaNoHabil WHERE dia_no_habil_id = p_dia_no_habil_id;
+END$$
+
+DROP PROCEDURE IF EXISTS sp_DiaNoHabil_ExistePorFecha $$
+CREATE PROCEDURE sp_DiaNoHabil_ExistePorFecha(IN p_fecha DATE)
+BEGIN
+    SELECT COUNT(*) AS existe, MAX(motivo) AS motivo FROM DiaNoHabil WHERE fecha = p_fecha;
 END$$
 
 

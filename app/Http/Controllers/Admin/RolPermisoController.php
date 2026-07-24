@@ -25,9 +25,21 @@ class RolPermisoController extends Controller
         return view('admin.roles-permisos.index', compact('roles', 'permisos', 'rolPermisos'));
     }
 
+    /**
+     * Roles cuyos permisos no se pueden tocar salvo que quien edite ya sea
+     * superadmin — si no, cualquiera con acceso a esta pantalla podría
+     * vaciar los permisos de Administrador/Director (o copiárselos a su
+     * propio rol) sin ser uno de los dos.
+     */
+    protected array $rolesProtegidos = ['administrador', 'director'];
+
     public function update(Request $request, $rolId)
     {
         $rol = Rol::findOrFail($rolId);
+
+        if (in_array(mb_strtolower(trim($rol->nombre)), $this->rolesProtegidos) && !auth()->user()->isSuperAdmin()) {
+            return back()->with('error', "Solo Director o Administrador pueden modificar los permisos del rol \"{$rol->nombre}\".");
+        }
 
         $permisosSeleccionados = array_map('intval', (array)$request->input('permisos', []));
 

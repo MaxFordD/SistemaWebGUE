@@ -29,8 +29,10 @@
         @endforeach
     </ul>
 
+    @php $rolesProtegidos = ['administrador', 'director']; @endphp
     <div class="tab-content border border-top-0 rounded-bottom bg-white p-4 shadow-sm">
         @foreach($roles as $i => $rol)
+        @php $esProtegido = in_array(mb_strtolower(trim($rol->nombre)), $rolesProtegidos) && !auth()->user()->isSuperAdmin(); @endphp
         <div class="tab-pane fade {{ $i === 0 ? 'show active' : '' }}"
              id="panel-rol-{{ $rol->rol_id }}"
              role="tabpanel">
@@ -42,6 +44,9 @@
                         <small class="text-muted">{{ $rol->descripcion }}</small>
                     @endif
                 </div>
+                @if($esProtegido)
+                    <span class="badge bg-secondary"><i class="bi bi-shield-lock me-1"></i>Solo Director/Administrador puede editar esto</span>
+                @else
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-sm btn-outline-success"
                             onclick="marcarTodos({{ $rol->rol_id }}, true)">
@@ -52,6 +57,7 @@
                         <i class="bi bi-x-lg me-1"></i>Desmarcar todo
                     </button>
                 </div>
+                @endif
             </div>
 
             <form action="{{ route('admin.roles-permisos.update', $rol->rol_id) }}" method="POST">
@@ -62,7 +68,7 @@
                     @foreach($permisos as $modulo => $permisosModulo)
                     <div class="col-md-6 col-lg-4">
                         <div class="card h-100 border-0 bg-light">
-                            <div class="card-header border-0 py-2" style="background-color:#7B1C3A;">
+                            <div class="card-header border-0 py-2" style="background-color:#7B1C3A !important;">
                                 <h6 class="mb-0 fw-semibold text-white">
                                     <i class="bi bi-grid-3x3-gap me-1"></i>{{ $modulo }}
                                 </h6>
@@ -75,7 +81,8 @@
                                            name="permisos[]"
                                            value="{{ $permiso->permiso_id }}"
                                            id="perm_{{ $rol->rol_id }}_{{ $permiso->permiso_id }}"
-                                           {{ in_array($permiso->permiso_id, $rolPermisos[$rol->rol_id] ?? []) ? 'checked' : '' }}>
+                                           {{ in_array($permiso->permiso_id, $rolPermisos[$rol->rol_id] ?? []) ? 'checked' : '' }}
+                                           {{ $esProtegido ? 'disabled' : '' }}>
                                     <label class="form-check-label small" for="perm_{{ $rol->rol_id }}_{{ $permiso->permiso_id }}">
                                         <span class="fw-semibold">{{ $permiso->nombre }}</span>
                                         @if($permiso->descripcion)
@@ -90,11 +97,13 @@
                     @endforeach
                 </div>
 
+                @unless($esProtegido)
                 <div class="mt-4 d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-floppy me-1"></i>Guardar permisos de "{{ $rol->nombre }}"
                     </button>
                 </div>
+                @endunless
             </form>
         </div>
         @endforeach

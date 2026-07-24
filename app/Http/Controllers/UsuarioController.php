@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 class UsuarioController extends Controller
 {
+
     public function index()
     {
         $usuarios = collect(DB::select('CALL sp_Usuario_Listar()'));
@@ -53,6 +54,7 @@ class UsuarioController extends Controller
         $ok = (int)($out[0]->resultado ?? 0) > 0;
 
         if ($ok) {
+            $this->registrarBitacora("Creó el usuario \"{$data['nombre_usuario']}\"");
             return redirect()->route('admin.usuarios.index')->with('success', $out[0]->mensaje ?? 'Usuario creado exitosamente');
         }
 
@@ -93,11 +95,16 @@ class UsuarioController extends Controller
         $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
 
         $ok = (int)($out[0]->resultado ?? 0) === 1;
+        if ($ok) {
+            $this->registrarBitacora("Actualizó el usuario \"{$data['nombre_usuario']}\" (estado: {$data['estado']})");
+        }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
 
     public function destroy($id)
     {
+        $usuarioObjetivo = collect(DB::select('CALL sp_Usuario_ObtenerPorId(?)', [(int)$id]))->first();
+
         // Inicializar variables de salida
         DB::statement('SET @resultado = 0, @mensaje = ""');
 
@@ -108,6 +115,10 @@ class UsuarioController extends Controller
         $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
 
         $ok = (int)($out[0]->resultado ?? 0) === 1;
+        if ($ok) {
+            $nombre = $usuarioObjetivo->nombre_usuario ?? "usuario #{$id}";
+            $this->registrarBitacora("Eliminó el usuario \"{$nombre}\"");
+        }
         return redirect()->route('admin.usuarios.index')->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
 
@@ -154,26 +165,21 @@ class UsuarioController extends Controller
 
     public function updatePassword($id, Request $request)
     {
+        // Esta pantalla la usa un Administrador para resetear la contraseña de OTRO
+        // usuario (típicamente porque la olvidó) — no tiene sentido pedirle la
+        // contraseña actual de ese usuario, nadie la recordaría.
         $data = $request->validate([
-            'contrasena_actual' => 'required|string',
-            'contrasena_nueva'  => 'required|string|min:6|confirmed',
+            'contrasena_nueva' => 'required|string|min:6|confirmed',
         ], [
-            'contrasena_actual.required'  => 'La contraseña actual es obligatoria',
             'contrasena_nueva.required'   => 'La contraseña nueva es obligatoria',
             'contrasena_nueva.min'        => 'La contraseña debe tener al menos 6 caracteres',
             'contrasena_nueva.confirmed'  => 'Las contraseñas no coinciden',
         ]);
 
-        // Obtener el usuario actual para verificar la contraseña
         $usuario = collect(DB::select('CALL sp_Usuario_ObtenerPorId(?)', [(int)$id]))->first();
 
         if (!$usuario) {
             return back()->with('error', 'Usuario no encontrado');
-        }
-
-        // Verificar que la contraseña actual sea correcta
-        if (!Hash::check($data['contrasena_actual'], $usuario->contrasena)) {
-            return back()->with('error', 'La contraseña actual es incorrecta');
         }
 
         // Hashear la nueva contraseña
@@ -181,6 +187,8 @@ class UsuarioController extends Controller
 
         // Actualizar contraseña directamente (ya validamos la contraseña actual en Laravel)
         DB::table('Usuario')->where('usuario_id', (int)$id)->update(['contrasena' => $hashedNueva]);
+
+        $this->registrarBitacora("Cambió la contraseña del usuario \"{$usuario->nombre_usuario}\"");
 
         $out = [(object)['resultado' => 1, 'mensaje' => 'Contraseña actualizada exitosamente']];
 

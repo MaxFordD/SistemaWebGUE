@@ -27,13 +27,6 @@
                 @csrf
                 <div class="row">
                     <div class="col-12 col-md-6 mb-3">
-                        <label class="form-label">Contraseña Actual *</label>
-                        <input type="password" name="contrasena_actual" class="form-control" required>
-                    </div>
-
-                    <div class="col-12"></div>
-
-                    <div class="col-12 col-md-6 mb-3">
                         <label class="form-label">Contraseña Nueva *</label>
                         <input type="password" name="contrasena_nueva" class="form-control" minlength="6" required>
                         <small class="text-muted">Mínimo 6 caracteres</small>

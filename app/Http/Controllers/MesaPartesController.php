@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class MesaPartesController extends Controller
 {
+
     protected $archivoService;
 
     public function __construct(ArchivoService $archivoService)
@@ -133,6 +134,19 @@ class MesaPartesController extends Controller
     {
         $request->validate(['estado' => 'required|string|max:50']);
 
+        // Una vez que el documento ya tiene una decisión final (Aceptado/Rechazado),
+        // solo Director/Administrador pueden volver a cambiarlo — evita que se
+        // reabra o se pise una decisión ya tomada sin dejar rastro.
+        $actual = DB::select('CALL sp_MesaPartes_ObtenerPorId(?)', [$id]);
+        if (!empty($actual)) {
+            $estadoActual = $actual[0]->estado ?? null;
+            $yaResuelto   = in_array($estadoActual, ['Aceptado', 'Rechazado']);
+            if ($yaResuelto && !auth()->user()->isSuperAdmin()) {
+                return redirect()->route('admin.mesa.index')
+                    ->with('error', 'Este documento ya tiene una decisión final ("' . $estadoActual . '"). Solo Director o Administrador pueden modificarlo.');
+            }
+        }
+
         // Inicializar variables de salida
         DB::statement('SET @resultado = 0, @mensaje = ""');
 
@@ -144,6 +158,11 @@ class MesaPartesController extends Controller
         // Obtener resultados
         $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
         $ok = (int)($out[0]->resultado ?? 0) === 1;
+
+        if ($ok) {
+            $asunto = $actual[0]->asunto ?? "documento #{$id}";
+            $this->registrarBitacora("Cambió el estado de \"{$asunto}\" a {$request->estado} en Mesa de Partes");
+        }
 
         return redirect()->route('admin.mesa.index')
             ->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada.');
@@ -157,6 +176,7 @@ class MesaPartesController extends Controller
         try {
             // Intentar obtener el documento para eliminar archivos físicos
             $documento = DB::select('CALL sp_MesaPartes_ObtenerPorId(?)', [$id]);
+            $asunto    = $documento[0]->asunto ?? "documento #{$id}";
 
             if (!empty($documento) && !empty($documento[0]->archivo)) {
                 // Usar servicio para eliminar archivos físicos
@@ -177,6 +197,7 @@ class MesaPartesController extends Controller
                 $mensaje = $out[0]->mensaje ?? 'Documento eliminado correctamente';
 
                 if ($resultado === 1) {
+                    $this->registrarBitacora("Eliminó el documento \"{$asunto}\" de Mesa de Partes");
                     return redirect()->route('admin.mesa.index')->with('success', $mensaje);
                 } else {
                     return redirect()->route('admin.mesa.index')->with('error', $mensaje);
@@ -186,6 +207,7 @@ class MesaPartesController extends Controller
                 $mesaParte = MesaParte::find($id);
                 if ($mesaParte) {
                     $mesaParte->delete();
+                    $this->registrarBitacora("Eliminó el documento \"{$asunto}\" de Mesa de Partes");
                     return redirect()->route('admin.mesa.index')->with('success', 'Documento eliminado correctamente');
                 } else {
                     return redirect()->route('admin.mesa.index')->with('error', 'Documento no encontrado');

@@ -6,9 +6,10 @@
 <style>
 .asistencia-row { transition: background .15s; }
 .asistencia-row:hover { background: #f8f9fa; }
-.estado-btn-group .btn-check:checked + .btn-asistio  { background:#198754; color:#fff; border-color:#198754; }
-.estado-btn-group .btn-check:checked + .btn-falta    { background:#dc3545; color:#fff; border-color:#dc3545; }
-.estado-btn-group .btn-check:checked + .btn-tardanza { background:#fd7e14; color:#fff; border-color:#fd7e14; }
+.estado-btn-group .btn-check:checked + .btn-asistio     { background:#198754; color:#fff; border-color:#198754; }
+.estado-btn-group .btn-check:checked + .btn-falta       { background:#dc3545; color:#fff; border-color:#dc3545; }
+.estado-btn-group .btn-check:checked + .btn-tardanza    { background:#fd7e14; color:#fff; border-color:#fd7e14; }
+.estado-btn-group .btn-check:checked + .btn-justificada { background:#0dcaf0; color:#000; border-color:#0dcaf0; }
 .obs-input { border: none; border-bottom: 1px solid #dee2e6; border-radius: 0; padding: 2px 4px; font-size:.85rem; background: transparent; }
 .obs-input:focus { outline: none; border-bottom-color: #0d6efd; background: transparent; box-shadow: none; }
 .sticky-header { position: sticky; top: 0; z-index: 10; }
@@ -27,6 +28,15 @@
         <h1 class="h3 mb-1 fw-bold"><i class="bi bi-calendar-check me-2 text-primary"></i>Registro de Asistencia</h1>
         <p class="text-muted mb-0">Registra la asistencia diaria de alumnos por sección</p>
     </div>
+
+    @if($esDiaNoHabil ?? false)
+    <div class="alert alert-warning">
+        <i class="bi bi-calendar-x me-2"></i>
+        <strong>{{ \Carbon\Carbon::parse($fecha)->format('d/m/Y') }}</strong> está marcado como día no hábil
+        ({{ $diaNoHabil->motivo }}). No se puede registrar asistencia en esta fecha.
+        <a href="{{ route('admin.asistencia.dias-no-habiles.index') }}" class="alert-link">Administrar días no hábiles</a>
+    </div>
+    @endif
 
     @php
         // Si la página se cargó desde el formulario de filtros (físico), mantener esa pestaña activa
@@ -55,8 +65,10 @@
         <div class="tab-pane fade {{ $modoFisico ? '' : 'show active' }}" id="tabQr" role="tabpanel" aria-labelledby="tab-qr-btn">
             <div class="alert alert-info small mb-3">
                 <i class="bi bi-info-circle me-1"></i>
-                Escanea el carnet QR del alumno para registrar su asistencia al instante. Se usa la fecha y hora
-                actuales; antes de las {{ \Carbon\Carbon::createFromFormat('H:i', '08:00')->format('g:i A') }}
+                Escanea el carnet QR del alumno para registrar su asistencia al instante. Solo se acepta entre las
+                {{ \Carbon\Carbon::createFromFormat('H:i:s', $config->hora_apertura)->format('g:i A') }} y las
+                {{ \Carbon\Carbon::createFromFormat('H:i:s', $config->hora_cierre)->format('g:i A') }};
+                antes de las {{ \Carbon\Carbon::createFromFormat('H:i:s', $config->hora_limite_tardanza)->format('g:i A') }}
                 se marca <strong>Asistió</strong>, después <strong>Tardanza</strong>.
             </div>
             <div class="row g-4">
@@ -139,6 +151,7 @@
                         <span class="badge bg-success contador-badge text-center" id="cntAsistio">0 ✓</span>
                         <span class="badge bg-danger contador-badge text-center" id="cntFalta">0 ✗</span>
                         <span class="badge bg-warning text-dark contador-badge text-center" id="cntTardanza">0 ⏰</span>
+                        <span class="badge bg-info text-dark contador-badge text-center" id="cntJustificada">0 📄</span>
                     </div>
                 </div>
 
@@ -172,8 +185,8 @@
                                             <th width="45" class="text-center">#</th>
                                             <th>Apellidos y Nombres</th>
                                             <th width="80" class="text-center small">DNI</th>
-                                            <th width="260" class="text-center">Estado de Asistencia</th>
-                                            <th>Observación</th>
+                                            <th width="330" class="text-center">Estado de Asistencia</th>
+                                            <th>Observación / Motivo de justificación</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -197,7 +210,7 @@
                                                         id="a{{ $a->alumno_id }}_A"
                                                         value="Asistio"
                                                         {{ $a->estado_asistencia === 'Asistio' ? 'checked' : '' }}
-                                                        onchange="actualizarContadores()">
+                                                        onchange="actualizarContadores(); toggleMotivo({{ $a->alumno_id }})">
                                                     <label class="btn btn-sm btn-outline-success btn-asistio px-2" for="a{{ $a->alumno_id }}_A" title="Asistió">
                                                         <i class="bi bi-check-lg"></i> Asistió
                                                     </label>
@@ -208,7 +221,7 @@
                                                         id="a{{ $a->alumno_id }}_F"
                                                         value="Falta"
                                                         {{ $a->estado_asistencia === 'Falta' ? 'checked' : '' }}
-                                                        onchange="actualizarContadores()">
+                                                        onchange="actualizarContadores(); toggleMotivo({{ $a->alumno_id }})">
                                                     <label class="btn btn-sm btn-outline-danger btn-falta px-2" for="a{{ $a->alumno_id }}_F" title="Falta">
                                                         <i class="bi bi-x-lg"></i> Falta
                                                     </label>
@@ -219,18 +232,36 @@
                                                         id="a{{ $a->alumno_id }}_T"
                                                         value="Tardanza"
                                                         {{ $a->estado_asistencia === 'Tardanza' ? 'checked' : '' }}
-                                                        onchange="actualizarContadores()">
+                                                        onchange="actualizarContadores(); toggleMotivo({{ $a->alumno_id }})">
                                                     <label class="btn btn-sm btn-outline-warning btn-tardanza px-2" for="a{{ $a->alumno_id }}_T" title="Tardanza">
                                                         <i class="bi bi-clock"></i> Tardanza
+                                                    </label>
+
+                                                    {{-- Justificada --}}
+                                                    <input class="btn-check" type="radio"
+                                                        name="asistencia[{{ $a->alumno_id }}][estado]"
+                                                        id="a{{ $a->alumno_id }}_J"
+                                                        value="Justificada"
+                                                        {{ $a->estado_asistencia === 'Justificada' ? 'checked' : '' }}
+                                                        onchange="actualizarContadores(); toggleMotivo({{ $a->alumno_id }})">
+                                                    <label class="btn btn-sm btn-outline-info btn-justificada px-2" for="a{{ $a->alumno_id }}_J" title="Justificada">
+                                                        <i class="bi bi-file-earmark-check"></i> Justif.
                                                     </label>
                                                 </div>
                                             </td>
                                             <td>
                                                 <input type="text"
-                                                    class="form-control obs-input w-100"
+                                                    class="form-control obs-input w-100 mb-1"
                                                     name="asistencia[{{ $a->alumno_id }}][observacion]"
                                                     value="{{ old("asistencia.{$a->alumno_id}.observacion", $a->observacion ?? '') }}"
                                                     placeholder="Observación opcional…"
+                                                    maxlength="255">
+                                                <input type="text"
+                                                    class="form-control obs-input w-100 motivo-just {{ $a->estado_asistencia === 'Justificada' ? '' : 'd-none' }}"
+                                                    id="motivo_{{ $a->alumno_id }}"
+                                                    name="asistencia[{{ $a->alumno_id }}][motivo_justificacion]"
+                                                    value="{{ old("asistencia.{$a->alumno_id}.motivo_justificacion", $a->motivo_justificacion ?? '') }}"
+                                                    placeholder="Motivo de la justificación…"
                                                     maxlength="255">
                                             </td>
                                         </tr>
@@ -274,15 +305,24 @@ function actualizarContadores() {
     const cntAsistio = document.getElementById('cntAsistio');
     if (!cntAsistio) return; // no hay sección/alumnos cargados todavía
 
-    let asistio = 0, falta = 0, tardanza = 0;
+    let asistio = 0, falta = 0, tardanza = 0, justificada = 0;
     document.querySelectorAll('input[type="radio"]:checked').forEach(r => {
-        if (r.value === 'Asistio')  asistio++;
-        if (r.value === 'Falta')    falta++;
-        if (r.value === 'Tardanza') tardanza++;
+        if (r.value === 'Asistio')     asistio++;
+        if (r.value === 'Falta')       falta++;
+        if (r.value === 'Tardanza')    tardanza++;
+        if (r.value === 'Justificada') justificada++;
     });
     cntAsistio.textContent = asistio + ' ✓';
-    document.getElementById('cntFalta').textContent    = falta    + ' ✗';
-    document.getElementById('cntTardanza').textContent = tardanza + ' ⏰';
+    document.getElementById('cntFalta').textContent       = falta       + ' ✗';
+    document.getElementById('cntTardanza').textContent    = tardanza    + ' ⏰';
+    document.getElementById('cntJustificada').textContent = justificada + ' 📄';
+}
+
+function toggleMotivo(alumnoId) {
+    const campo = document.getElementById('motivo_' + alumnoId);
+    if (!campo) return;
+    const marcado = document.querySelector(`input[name="asistencia[${alumnoId}][estado]"]:checked`);
+    campo.classList.toggle('d-none', !marcado || marcado.value !== 'Justificada');
 }
 
 function marcarTodos(estado) {

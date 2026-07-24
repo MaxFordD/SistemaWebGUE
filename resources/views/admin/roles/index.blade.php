@@ -6,10 +6,7 @@
 <div class="py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0">Roles</h1>
-        <div class="btn-group">
-            <a href="{{ route('admin.roles.assign') }}" class="btn btn-sm btn-outline-primary">Asignar rol</a>
-            <a href="{{ route('admin.roles.users') }}" class="btn btn-sm btn-outline-secondary">Usuarios con roles</a>
-        </div>
+        <a href="{{ route('admin.usuario-rol.index') }}" class="btn btn-sm btn-outline-primary">Asignar Roles a Usuarios</a>
     </div>
 
     @if ($errors->any())
@@ -53,25 +50,34 @@
                         </tr>
                     </thead>
                     <tbody>
+                    @php $rolesProtegidos = ['administrador', 'director']; @endphp
                     @forelse($roles as $r)
-                        <tr>
+                        @php $esProtegido = in_array(mb_strtolower(trim($r->nombre)), $rolesProtegidos); @endphp
+                        <tr class="{{ $r->estado === 'I' ? 'text-muted' : '' }}">
                             <td>{{ $r->rol_id }}</td>
                             <td>
                                 <form action="{{ route('admin.roles.update', $r->rol_id) }}" method="POST" class="row g-1">
                                     @csrf
                                     <div class="col-12 col-md-5">
-                                        <input name="nombre" class="form-control form-control-sm" value="{{ $r->nombre }}" maxlength="50" required>
+                                        <input name="nombre" class="form-control form-control-sm" value="{{ $r->nombre }}" maxlength="50" required {{ $esProtegido ? 'readonly title=Este rol no se puede renombrar' : '' }}>
                                     </div>
                                     <div class="col-12 col-md-5">
                                         <input name="descripcion" class="form-control form-control-sm" value="{{ $r->descripcion }}" maxlength="200">
                                     </div>
                                     <div class="col-12 col-md-2">
-                                        <select name="estado" class="form-select form-select-sm">
+                                        <select name="estado" class="form-select form-select-sm" {{ $esProtegido ? 'disabled' : '' }}>
                                             <option value="A" {{ $r->estado === 'A' ? 'selected' : '' }}>Activo</option>
                                             <option value="I" {{ $r->estado === 'I' ? 'selected' : '' }}>Inactivo</option>
                                         </select>
+                                        @if($esProtegido)
+                                            {{-- El select va deshabilitado (no se envía); se manda el valor real igual --}}
+                                            <input type="hidden" name="estado" value="{{ $r->estado }}">
+                                        @endif
                                     </div>
                                     <div class="col-12 mt-2">
+                                        <span class="badge {{ $r->estado === 'A' ? 'bg-success' : 'bg-secondary' }}">
+                                            {{ $r->estado === 'A' ? 'Activo' : 'Inactivo' }}
+                                        </span>
                                         <button class="btn btn-sm btn-outline-primary">Guardar</button>
                                     </div>
                                 </form>
@@ -79,10 +85,23 @@
                             <td class="d-none d-md-table-cell"></td>
                             <td class="d-none d-md-table-cell"></td>
                             <td>
-                                <form action="{{ route('admin.roles.destroy', $r->rol_id) }}" method="POST" onsubmit="return confirm('¿Eliminar (lógico) este rol?');">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger">Eliminar</button>
-                                </form>
+                                @if($esProtegido)
+                                    <span class="text-muted small" title="Este rol es necesario para el funcionamiento del sistema">
+                                        <i class="bi bi-shield-lock"></i> Protegido
+                                    </span>
+                                @elseif($r->estado === 'I')
+                                    <form action="{{ route('admin.roles.force-destroy', $r->rol_id) }}" method="POST" onsubmit="return confirm('Esto borra el rol \'{{ addslashes($r->nombre) }}\' de forma DEFINITIVA (no se puede deshacer). Solo funciona si nadie lo usa. ¿Continuar?');">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-sm btn-danger" title="Eliminar definitivamente">
+                                            <i class="bi bi-trash-fill"></i> Eliminar
+                                        </button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('admin.roles.destroy', $r->rol_id) }}" method="POST" onsubmit="return confirm('Esto desactiva el rol \'{{ addslashes($r->nombre) }}\' (no lo borra de la base de datos, solo deja de poder usarse). Si tiene usuarios asignados, no se podrá desactivar hasta quitárselo a todos. ¿Continuar?');">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-sm btn-outline-danger">Desactivar</button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @empty
