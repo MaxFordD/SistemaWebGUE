@@ -412,6 +412,22 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
       </div>
       @endif
+      @if($errors->any())
+      <div class="alert alert-danger alert-dismissible fade show modern-alert shadow-sm" role="alert">
+        <div class="d-flex align-items-start">
+          <i class="bi bi-exclamation-circle-fill fs-4 me-3"></i>
+          <div class="flex-grow-1">
+            <strong>Revisa lo siguiente:</strong>
+            <ul class="mb-0 mt-1">
+              @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+      @endif
       @if(session('warning'))
       <div class="alert alert-warning alert-dismissible fade show modern-alert shadow-sm" role="alert">
         <div class="d-flex align-items-center">
