@@ -19,17 +19,6 @@
         </div>
     </div>
 
-    @if ($errors->any())
-        <div class="alert alert-danger rounded-4 shadow-sm mb-3">
-            <strong><i class="bi bi-exclamation-circle-fill me-2"></i>Revisa lo siguiente:</strong>
-            <ul class="mb-0 mt-2">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     <div class="card border-0 shadow-sm rounded-4 mesa-form-card">
         <div class="card-body p-3 p-md-4">
             <p class="text-muted mb-4">

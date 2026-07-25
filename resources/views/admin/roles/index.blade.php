@@ -9,12 +9,6 @@
         <a href="{{ route('admin.usuario-rol.index') }}" class="btn btn-sm btn-outline-primary">Asignar Roles a Usuarios</a>
     </div>
 
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-        </div>
-    @endif
-
     <div class="card mb-4">
         <div class="card-header bg-white"><strong>Nuevo rol</strong></div>
         <div class="card-body">

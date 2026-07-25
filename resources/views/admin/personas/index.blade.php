@@ -19,12 +19,6 @@
         <h1 class="h4 mb-0">Gestión de Personas</h1>
     </div>
 
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-        </div>
-    @endif
-
     <div class="card mb-4">
         <div class="card-header bg-white"><strong>Nueva Persona</strong></div>
         <div class="card-body">
