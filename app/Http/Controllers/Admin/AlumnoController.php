@@ -71,6 +71,8 @@ class AlumnoController extends Controller
 
     public function store(Request $request)
     {
+        $this->normalizarNombrePropio($request, ['nombres', 'apellidos']);
+
         $request->validate([
             'seccion_id'       => 'required|integer',
             'nombres'          => 'required|string|max:100',
@@ -119,6 +121,8 @@ class AlumnoController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->normalizarNombrePropio($request, ['nombres', 'apellidos']);
+
         $request->validate([
             'seccion_id'       => 'required|integer',
             'nombres'          => 'required|string|max:100',

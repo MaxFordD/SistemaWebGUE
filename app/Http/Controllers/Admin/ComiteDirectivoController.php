@@ -67,6 +67,8 @@ class ComiteDirectivoController extends Controller
      */
     public function store(Request $request)
     {
+        $this->normalizarNombrePropio($request, ['nombre_completo', 'cargo']);
+
         $request->validate([
             'nombre_completo' => 'required|string|max:200',
             'cargo'           => 'required|string|max:100',
@@ -170,6 +172,8 @@ class ComiteDirectivoController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->normalizarNombrePropio($request, ['nombre_completo', 'cargo']);
+
         $request->validate([
             'nombre_completo' => 'required|string|max:200',
             'cargo'           => 'required|string|max:100',

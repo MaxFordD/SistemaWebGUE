@@ -16,6 +16,8 @@ class PersonaController extends Controller
 
     public function store(Request $request)
     {
+        $this->normalizarNombrePropio($request, ['nombres', 'apellidos']);
+
         $data = $request->validate([
             'nombres'    => 'required|string|max:100',
             'apellidos'  => 'required|string|max:100',
@@ -54,6 +56,8 @@ class PersonaController extends Controller
 
     public function update($id, Request $request)
     {
+        $this->normalizarNombrePropio($request, ['nombres', 'apellidos']);
+
         $data = $request->validate([
             'nombres'    => 'required|string|max:100',
             'apellidos'  => 'required|string|max:100',
