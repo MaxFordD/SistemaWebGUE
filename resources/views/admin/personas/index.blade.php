@@ -26,23 +26,23 @@
                 @csrf
                 <div class="col-12 col-md-3">
                     <label class="form-label">Nombres *</label>
-                    <input type="text" name="nombres" class="form-control" maxlength="100" required>
+                    <input type="text" name="nombres" value="{{ old('nombres') }}" class="form-control" maxlength="100" required>
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label">Apellidos *</label>
-                    <input type="text" name="apellidos" class="form-control" maxlength="100" required>
+                    <input type="text" name="apellidos" value="{{ old('apellidos') }}" class="form-control" maxlength="100" required>
                 </div>
                 <div class="col-12 col-md-2">
                     <label class="form-label">DNI</label>
-                    <input type="text" name="dni" class="form-control" maxlength="8" pattern="[0-9]{8}">
+                    <input type="text" name="dni" value="{{ old('dni') }}" class="form-control" maxlength="8" pattern="[0-9]{8}">
                 </div>
                 <div class="col-12 col-md-2">
                     <label class="form-label">Teléfono</label>
-                    <input type="text" name="telefono" class="form-control" maxlength="9" pattern="[0-9]{9}">
+                    <input type="text" name="telefono" value="{{ old('telefono') }}" class="form-control" maxlength="9" pattern="[0-9]{9}">
                 </div>
                 <div class="col-12 col-md-4">
                     <label class="form-label">Correo</label>
-                    <input type="email" name="correo" class="form-control" maxlength="100">
+                    <input type="email" name="correo" value="{{ old('correo') }}" class="form-control" maxlength="100">
                 </div>
                 <div class="col-12 col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100">

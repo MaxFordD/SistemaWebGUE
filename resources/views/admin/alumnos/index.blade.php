@@ -323,35 +323,35 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="apellidos" class="form-label fw-semibold">Apellidos <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control text-uppercase" id="apellidos" name="apellidos"
+                            <input type="text" class="form-control text-uppercase" id="apellidos" name="apellidos" value="{{ old('apellidos') }}"
                                    placeholder="APELLIDO PATERNO MATERNO" maxlength="100" required>
                         </div>
                         <div class="col-md-6">
                             <label for="nombres" class="form-label fw-semibold">Nombres <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control text-uppercase" id="nombres" name="nombres"
+                            <input type="text" class="form-control text-uppercase" id="nombres" name="nombres" value="{{ old('nombres') }}"
                                    placeholder="NOMBRE(S)" maxlength="100" required>
                         </div>
                         <div class="col-md-4">
                             <label for="dni" class="form-label fw-semibold">DNI <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control font-monospace" id="dni" name="dni"
+                            <input type="text" class="form-control font-monospace" id="dni" name="dni" value="{{ old('dni') }}"
                                    placeholder="12345678" maxlength="8" pattern="[0-9]{8}" required>
                             <div class="form-text">8 dígitos numéricos</div>
                         </div>
                         <div class="col-md-4">
                             <label for="fecha_nacimiento" class="form-label fw-semibold">Fecha de Nacimiento</label>
-                            <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento">
+                            <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ old('fecha_nacimiento') }}">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Sexo <span class="text-danger">*</span></label>
                             <div class="d-flex gap-3 mt-1">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="sexo" id="sexoM" value="M" required>
+                                    <input class="form-check-input" type="radio" name="sexo" id="sexoM" value="M" required {{ old('sexo') === 'M' ? 'checked' : '' }}>
                                     <label class="form-check-label" for="sexoM">
                                         <i class="bi bi-gender-male text-info me-1"></i>Masculino
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="sexo" id="sexoF" value="F">
+                                    <input class="form-check-input" type="radio" name="sexo" id="sexoF" value="F" {{ old('sexo') === 'F' ? 'checked' : '' }}>
                                     <label class="form-check-label" for="sexoF">
                                         <i class="bi bi-gender-female me-1" style="color:#e91e8c"></i>Femenino
                                     </label>
@@ -391,17 +391,26 @@ const form     = document.getElementById('formAlumno');
 const storeUrl = '{{ route("admin.alumnos.store") }}';
 const baseEditUrl = '{{ url("admin/alumnos") }}';
 
-function modoCrear() {
+function modoCrear(preservarValores = false) {
     document.getElementById('tituloModal').textContent = 'Nuevo Alumno';
     form.action = storeUrl;
     document.getElementById('formMethod').value = 'POST';
-    form.apellidos.value = '';
-    form.nombres.value   = '';
-    form.dni.value       = '';
-    form.fecha_nacimiento.value = '';
-    document.querySelectorAll('input[name="sexo"]').forEach(r => r.checked = false);
+    if (!preservarValores) {
+        form.apellidos.value = '';
+        form.nombres.value   = '';
+        form.dni.value       = '';
+        form.fecha_nacimiento.value = '';
+        document.querySelectorAll('input[name="sexo"]').forEach(r => r.checked = false);
+    }
     document.getElementById('campoEstado').classList.add('d-none');
 }
+
+@if ($errors->any() && old('_method', 'POST') !== 'PUT')
+    // Si el registro de un alumno nuevo fallo la validacion, reabrir el modal
+    // con lo que el usuario ya habia escrito en vez de dejarlo en blanco.
+    modoCrear(true);
+    new bootstrap.Modal(document.getElementById('modalAlumno')).show();
+@endif
 
 function modoEditar(id, seccionId, nombres, apellidos, dni, fechaNac, sexo, estado) {
     document.getElementById('tituloModal').textContent = 'Editar Alumno';

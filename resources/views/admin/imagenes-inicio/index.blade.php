@@ -278,16 +278,16 @@
           </div>
           <div class="mb-3">
             <label class="form-label fw-semibold">Texto alternativo <span class="text-danger">*</span></label>
-            <input type="text" name="alt" id="agregarAlt" class="form-control" maxlength="255" required>
+            <input type="text" name="alt" id="agregarAlt" value="{{ old('alt') }}" class="form-control" maxlength="255" required>
           </div>
           <div id="agregarCamposTaller">
             <div class="mb-3">
               <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
-              <input type="text" name="titulo" id="agregarTitulo" class="form-control" maxlength="100">
+              <input type="text" name="titulo" id="agregarTitulo" value="{{ old('titulo') }}" class="form-control" maxlength="100">
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold">Descripción <span class="text-danger">*</span></label>
-              <input type="text" name="descripcion" id="agregarDescripcion" class="form-control" maxlength="255">
+              <input type="text" name="descripcion" id="agregarDescripcion" value="{{ old('descripcion') }}" class="form-control" maxlength="255">
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold">Ícono <span class="text-danger">*</span></label>
@@ -515,9 +515,13 @@
   // ════════════════════════════════════════════
   //  MODAL AGREGAR
   // ════════════════════════════════════════════
+  // Si el envio anterior fallo la validacion, se restauran los valores que
+  // el usuario ya habia escrito la primera vez que se reabra el modal.
+  let restaurarValoresAgregar = @json($errors->any() && old('seccion') ? true : false);
+
   const modalAgregar = document.getElementById('modalAgregar');
   modalAgregar.addEventListener('show.bs.modal', function (e) {
-    const seccion = e.relatedTarget.dataset.seccion;
+    const seccion = restaurarValoresAgregar ? @json(old('seccion')) : e.relatedTarget.dataset.seccion;
     document.getElementById('agregarSeccion').value = seccion;
 
     const esTaller = seccion === 'taller';
@@ -525,14 +529,19 @@
     document.getElementById('agregarCamposTaller').style.display = esTaller ? '' : 'none';
     ['agregarTitulo','agregarDescripcion'].forEach(id => {
       document.getElementById(id).required = esTaller;
-      document.getElementById(id).value    = '';
+      if (!restaurarValoresAgregar) document.getElementById(id).value = '';
     });
 
     document.getElementById('agregarFoto').value = '';
-    document.getElementById('agregarAlt').value  = '';
+    if (!restaurarValoresAgregar) document.getElementById('agregarAlt').value = '';
     document.getElementById('agregarPreviewWrap').style.display = 'none';
     setIcon('agregarIcono', '');
+    restaurarValoresAgregar = false;
   });
+
+  @if ($errors->any() && old('seccion'))
+    new bootstrap.Modal(modalAgregar).show();
+  @endif
 
   document.getElementById('agregarFoto').addEventListener('change', function () {
     if (this.files[0]) {

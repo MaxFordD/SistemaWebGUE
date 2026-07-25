@@ -125,14 +125,14 @@
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
                             <select name="tipo" class="form-select" id="tipoAgregar" onchange="toggleCampos('agregar')">
-                                <option value="foto">Fotografía</option>
-                                <option value="texto">Texto</option>
-                                <option value="video">Video</option>
+                                <option value="foto" {{ old('tipo') == 'foto' ? 'selected' : '' }}>Fotografía</option>
+                                <option value="texto" {{ old('tipo') == 'texto' ? 'selected' : '' }}>Texto</option>
+                                <option value="video" {{ old('tipo') == 'video' ? 'selected' : '' }}>Video</option>
                             </select>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
-                            <input type="text" name="titulo" class="form-control" maxlength="200" required>
+                            <input type="text" name="titulo" value="{{ old('titulo') }}" class="form-control" maxlength="200" required>
                         </div>
                     </div>
 
@@ -142,23 +142,23 @@
                         <input type="file" name="foto" class="form-control" accept="image/jpeg,image/jpg,image/png,image/webp">
                         <small class="text-muted">JPG, PNG o WebP · máx 4 MB</small>
                         <label class="form-label fw-semibold mt-3">Descripción <small class="text-muted fw-normal">(opcional)</small></label>
-                        <textarea name="contenido" class="form-control" rows="3" placeholder="Cuéntanos sobre esta foto, año, contexto histórico..."></textarea>
+                        <textarea name="contenido" class="form-control" rows="3" placeholder="Cuéntanos sobre esta foto, año, contexto histórico...">{{ old('contenido') }}</textarea>
                     </div>
 
                     {{-- Campo contenido --}}
                     <div id="campoTextoAgregar" class="mt-3" style="display:none">
                         <label class="form-label fw-semibold">Contenido <span class="text-danger">*</span></label>
-                        <textarea name="contenido" class="form-control" rows="8" placeholder="Escribe aquí el texto histórico..."></textarea>
+                        <textarea name="contenido" class="form-control" rows="8" placeholder="Escribe aquí el texto histórico...">{{ old('contenido') }}</textarea>
                     </div>
 
                     {{-- Campo video --}}
                     <div id="campoVideoAgregar" class="mt-3" style="display:none">
                         <label class="form-label fw-semibold">Enlace del video <span class="text-danger">*</span></label>
-                        <input type="url" name="url_video" class="form-control"
+                        <input type="url" name="url_video" value="{{ old('url_video') }}" class="form-control"
                                placeholder="https://www.youtube.com/watch?v=...  o  https://youtu.be/...">
                         <small class="text-muted">YouTube o Vimeo — se convierte automáticamente.</small>
                         <label class="form-label fw-semibold mt-3">Descripción <small class="text-muted fw-normal">(opcional)</small></label>
-                        <textarea name="contenido" class="form-control" rows="3" placeholder="Contexto del video, año, evento..."></textarea>
+                        <textarea name="contenido" class="form-control" rows="3" placeholder="Contexto del video, año, evento...">{{ old('contenido') }}</textarea>
                     </div>
 
                 </div>
@@ -281,6 +281,10 @@ function abrirEditar(item) {
 document.addEventListener('DOMContentLoaded', () => {
     toggleCampos('agregar');
     toggleCampos('editar');
+
+    @if ($errors->any() && old('_method', 'POST') !== 'PUT' && old('titulo'))
+        new bootstrap.Modal(document.getElementById('modalAgregar')).show();
+    @endif
 });
 </script>
 @endpush
