@@ -54,7 +54,7 @@ class UsuarioController extends Controller
         $ok = (int)($out[0]->resultado ?? 0) > 0;
 
         if ($ok) {
-            $this->registrarBitacora("Creó el usuario \"{$data['nombre_usuario']}\"");
+            $this->registrarBitacora('usuarios', "Creó el usuario \"{$data['nombre_usuario']}\"");
             return redirect()->route('admin.usuarios.index')->with('success', $out[0]->mensaje ?? 'Usuario creado exitosamente');
         }
 
@@ -96,7 +96,7 @@ class UsuarioController extends Controller
 
         $ok = (int)($out[0]->resultado ?? 0) === 1;
         if ($ok) {
-            $this->registrarBitacora("Actualizó el usuario \"{$data['nombre_usuario']}\" (estado: {$data['estado']})");
+            $this->registrarBitacora('usuarios', "Actualizó el usuario \"{$data['nombre_usuario']}\" (estado: {$data['estado']})");
         }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
@@ -117,7 +117,7 @@ class UsuarioController extends Controller
         $ok = (int)($out[0]->resultado ?? 0) === 1;
         if ($ok) {
             $nombre = $usuarioObjetivo->nombre_usuario ?? "usuario #{$id}";
-            $this->registrarBitacora("Eliminó el usuario \"{$nombre}\"");
+            $this->registrarBitacora('usuarios', "Eliminó el usuario \"{$nombre}\"");
         }
         return redirect()->route('admin.usuarios.index')->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
@@ -188,7 +188,7 @@ class UsuarioController extends Controller
         // Actualizar contraseña directamente (ya validamos la contraseña actual en Laravel)
         DB::table('Usuario')->where('usuario_id', (int)$id)->update(['contrasena' => $hashedNueva]);
 
-        $this->registrarBitacora("Cambió la contraseña del usuario \"{$usuario->nombre_usuario}\"");
+        $this->registrarBitacora('usuarios', "Cambió la contraseña del usuario \"{$usuario->nombre_usuario}\"");
 
         $out = [(object)['resultado' => 1, 'mensaje' => 'Contraseña actualizada exitosamente']];
 

@@ -124,7 +124,7 @@ class ComiteDirectivoController extends Controller
                 return back()->withInput()->with('error', "No se pudo guardar el directivo: $mensaje");
             }
 
-            $this->registrarBitacora("Registró al directivo {$request->input('nombre_completo')} ({$request->input('cargo')})");
+            $this->registrarBitacora('comite_directivo', "Registró al directivo {$request->input('nombre_completo')} ({$request->input('cargo')})");
 
             return redirect()
                 ->route('admin.comite-directivo.index')
@@ -239,7 +239,7 @@ class ComiteDirectivoController extends Controller
                 return back()->withInput()->with('error', "Error al actualizar: $mensaje");
             }
 
-            $this->registrarBitacora("Actualizó al directivo {$request->input('nombre_completo')} ({$request->input('cargo')})");
+            $this->registrarBitacora('comite_directivo', "Actualizó al directivo {$request->input('nombre_completo')} ({$request->input('cargo')})");
 
             return redirect()
                 ->route('admin.comite-directivo.index')
@@ -279,7 +279,7 @@ class ComiteDirectivoController extends Controller
             }
 
             $nombre = $directivoActual->nombre_completo ?? "directivo #{$id}";
-            $this->registrarBitacora("Desactivó al directivo {$nombre}");
+            $this->registrarBitacora('comite_directivo', "Desactivó al directivo {$nombre}");
 
             return redirect()->route('admin.comite-directivo.index')->with('success', 'Directivo desactivado correctamente.');
 
@@ -335,7 +335,7 @@ class ComiteDirectivoController extends Controller
                 Storage::disk('public')->delete($foto);
             }
 
-            $this->registrarBitacora("Eliminó permanentemente al directivo {$nombre}");
+            $this->registrarBitacora('comite_directivo', "Eliminó permanentemente al directivo {$nombre}");
 
             return response()->json(['success' => true, 'message' => 'Directivo eliminado permanentemente.']);
 
@@ -366,7 +366,7 @@ class ComiteDirectivoController extends Controller
                 return redirect()->route('admin.comite-directivo.index')->with('error', 'El directivo no existe o ya está activo.');
             }
 
-            $this->registrarBitacora("Reactivó al directivo #{$id}");
+            $this->registrarBitacora('comite_directivo', "Reactivó al directivo #{$id}");
 
             return redirect()->route('admin.comite-directivo.index')->with('success', 'Directivo reactivado correctamente.');
 

@@ -46,19 +46,7 @@ class RolPermisoController extends Controller
         try {
             $rol->permisos()->sync($permisosSeleccionados);
 
-            $user      = auth()->user();
-            $usuarioId = $user->usuario_id ?? $user->id ?? null;
-            if ($usuarioId) {
-                try {
-                    DB::statement('SET @res = 0, @msg = ""');
-                    DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [
-                        $usuarioId,
-                        "Actualizó permisos del rol: {$rol->nombre}"
-                    ]);
-                } catch (\Exception $e) {
-                    Log::warning('Bitácora error: ' . $e->getMessage());
-                }
-            }
+            $this->registrarBitacora('permisos', "Actualizó permisos del rol: {$rol->nombre}");
 
             return back()->with('success', "Permisos del rol \"{$rol->nombre}\" actualizados correctamente.");
         } catch (\Exception $e) {

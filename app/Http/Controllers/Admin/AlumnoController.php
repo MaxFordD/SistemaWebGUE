@@ -100,7 +100,7 @@ class AlumnoController extends Controller
                 bin2hex(random_bytes(16)),
             ]);
 
-            $this->registrarBitacora("Registró al alumno {$request->apellidos}, {$request->nombres} (DNI {$request->dni})");
+            $this->registrarBitacora('alumnos', "Registró al alumno {$request->apellidos}, {$request->nombres} (DNI {$request->dni})");
 
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
@@ -144,7 +144,7 @@ class AlumnoController extends Controller
                 (int) $request->estado,
             ]);
 
-            $this->registrarBitacora("Actualizó al alumno {$request->apellidos}, {$request->nombres} (DNI {$request->dni})");
+            $this->registrarBitacora('alumnos', "Actualizó al alumno {$request->apellidos}, {$request->nombres} (DNI {$request->dni})");
 
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
@@ -167,7 +167,7 @@ class AlumnoController extends Controller
             $nombre     = isset($alumnoData[0]) ? "{$alumnoData[0]->apellidos}, {$alumnoData[0]->nombres}" : "alumno #{$id}";
 
             DB::statement('CALL sp_Alumno_Eliminar(?)', [(int) $id]);
-            $this->registrarBitacora("Desactivó al alumno {$nombre}");
+            $this->registrarBitacora('alumnos', "Desactivó al alumno {$nombre}");
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
                 'año'        => $request->año ?? date('Y'),
@@ -185,7 +185,7 @@ class AlumnoController extends Controller
             $nombre     = isset($alumnoData[0]) ? "{$alumnoData[0]->apellidos}, {$alumnoData[0]->nombres}" : "alumno #{$id}";
 
             DB::statement('CALL sp_Alumno_BorrarFisico(?)', [(int) $id]);
-            $this->registrarBitacora("Eliminó permanentemente al alumno {$nombre}");
+            $this->registrarBitacora('alumnos', "Eliminó permanentemente al alumno {$nombre}");
             return redirect()->route('admin.alumnos.index', [
                 'seccion_id' => $request->seccion_id,
                 'año'        => $request->año ?? date('Y'),
@@ -427,7 +427,7 @@ class AlumnoController extends Controller
         }
 
         if ($inserted > 0) {
-            $this->registrarBitacora("Importó {$inserted} alumno(s) desde Excel para el año {$año}");
+            $this->registrarBitacora('alumnos', "Importó {$inserted} alumno(s) desde Excel para el año {$año}");
         }
 
         return response()->json([
@@ -501,7 +501,7 @@ class AlumnoController extends Controller
                 }
             });
             $total = count($request->ids);
-            $this->registrarBitacora("Eliminó permanentemente {$total} alumno(s) en lote (IDs: " . implode(',', $request->ids) . ')');
+            $this->registrarBitacora('alumnos', "Eliminó permanentemente {$total} alumno(s) en lote (IDs: " . implode(',', $request->ids) . ')');
             return redirect()->route('admin.alumnos.index', $params)
                 ->with('success', "{$total} alumno(s) eliminado(s) permanentemente.");
         } catch (\Exception $e) {

@@ -47,7 +47,7 @@ class PersonaController extends Controller
 
         $ok = (int)($out[0]->resultado ?? 0) > 0;
         if ($ok) {
-            $this->registrarBitacora("Registró a la persona {$data['apellidos']}, {$data['nombres']}");
+            $this->registrarBitacora('personas', "Registró a la persona {$data['apellidos']}, {$data['nombres']}");
         }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
@@ -81,7 +81,7 @@ class PersonaController extends Controller
 
         $ok = $affected > 0;
         if ($ok) {
-            $this->registrarBitacora("Actualizó a la persona {$data['apellidos']}, {$data['nombres']}");
+            $this->registrarBitacora('personas', "Actualizó a la persona {$data['apellidos']}, {$data['nombres']}");
         }
         return back()->with($ok ? 'success' : 'error', $ok ? 'Persona actualizada exitosamente' : 'Error al actualizar persona');
     }
@@ -95,7 +95,7 @@ class PersonaController extends Controller
 
         $ok = $affected > 0;
         if ($ok && $persona) {
-            $this->registrarBitacora("Desactivó a la persona {$persona->apellidos}, {$persona->nombres}");
+            $this->registrarBitacora('personas', "Desactivó a la persona {$persona->apellidos}, {$persona->nombres}");
         }
         return back()->with($ok ? 'success' : 'error', $ok ? 'Persona eliminada exitosamente' : 'Error al eliminar persona');
     }

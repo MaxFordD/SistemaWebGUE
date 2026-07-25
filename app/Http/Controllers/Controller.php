@@ -18,7 +18,7 @@ class Controller extends BaseController
      * autenticado actual. Disponible para todos los controladores admin
      * ya que todos heredan de esta clase base.
      */
-    protected function registrarBitacora(string $accion): void
+    protected function registrarBitacora(string $modulo, string $accion): void
     {
         try {
             $user      = auth()->user();
@@ -29,7 +29,7 @@ class Controller extends BaseController
             }
 
             DB::statement('SET @res = 0, @msg = ""');
-            DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [$usuarioId, $accion]);
+            DB::statement('CALL sp_Bitacora_Insertar(?, ?, ?, @res, @msg)', [$usuarioId, $modulo, $accion]);
         } catch (\Exception $e) {
             Log::warning('Error al registrar en bitácora: ' . $e->getMessage());
         }

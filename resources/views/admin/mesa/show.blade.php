@@ -21,6 +21,20 @@
             <p><strong>Tipo:</strong> {{ $doc->tipo_documento }}</p>
             <p><strong>Estado:</strong> {{ $doc->estado }}</p>
             <p><strong>Fecha de Envío:</strong> {{ \Carbon\Carbon::parse($doc->fecha_envio)->format('d/m/Y H:i') }}</p>
+            <p>
+                <strong>Notificación por correo:</strong>
+                @php $notif = $doc->notificacion_estado ?? 'Pendiente'; @endphp
+                @if($notif === 'Enviado')
+                    <span class="badge bg-success">Enviado correctamente</span>
+                @elseif($notif === 'Error')
+                    <span class="badge bg-danger">Error al enviar</span>
+                    @if($doc->notificacion_error)
+                        <br><small class="text-muted">{{ $doc->notificacion_error }}</small>
+                    @endif
+                @else
+                    <span class="badge bg-secondary">Pendiente</span>
+                @endif
+            </p>
 
             @if ($doc->archivo)
                 <p><strong>Archivos adjuntos:</strong></p>

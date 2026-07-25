@@ -59,7 +59,7 @@ class ImagenInicioController extends Controller
             'activo'      => 1,
         ]);
 
-        $this->registrarBitacora("Agregó una imagen a " . ($request->seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
+        $this->registrarBitacora('imagenes_inicio', "Agregó una imagen a " . ($request->seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
 
         return redirect()->route('admin.imagenes-inicio.index')
             ->with('success', 'Imagen agregada correctamente.');
@@ -110,7 +110,7 @@ class ImagenInicioController extends Controller
 
         $imagen->save();
 
-        $this->registrarBitacora("Actualizó una imagen de " . ($imagen->seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
+        $this->registrarBitacora('imagenes_inicio', "Actualizó una imagen de " . ($imagen->seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
 
         return redirect()->route('admin.imagenes-inicio.index')
             ->with('success', 'Imagen actualizada correctamente.');
@@ -127,7 +127,7 @@ class ImagenInicioController extends Controller
         $seccion = $imagen->seccion;
         $imagen->delete();
 
-        $this->registrarBitacora("Eliminó una imagen de " . ($seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
+        $this->registrarBitacora('imagenes_inicio', "Eliminó una imagen de " . ($seccion === 'taller' ? 'Talleres' : 'el carrusel') . " del inicio");
 
         return redirect()->route('admin.imagenes-inicio.index')
             ->with('success', 'Imagen eliminada correctamente.');

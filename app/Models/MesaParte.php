@@ -12,6 +12,7 @@ class MesaParte extends Model
     protected $fillable = [
         'remitente', 'dni', 'correo', 'asunto', 'detalle',
         'archivo', 'tipo_documento_id', 'fecha_envio', 'estado',
+        'notificacion_estado', 'notificacion_error',
     ];
 
     public function tipoDocumento()

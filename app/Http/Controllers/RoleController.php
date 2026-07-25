@@ -35,7 +35,7 @@ class RoleController extends Controller
 
         $ok  = (int)($out[0]->resultado ?? 0) > 0;
         if ($ok) {
-            $this->registrarBitacora("Creó el rol \"{$data['nombre']}\"");
+            $this->registrarBitacora('roles', "Creó el rol \"{$data['nombre']}\"");
         }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
@@ -81,7 +81,7 @@ class RoleController extends Controller
 
         $ok  = (int)($out[0]->resultado ?? 0) === 1;
         if ($ok) {
-            $this->registrarBitacora("Actualizó el rol \"{$data['nombre']}\" (estado: {$data['estado']})");
+            $this->registrarBitacora('roles', "Actualizó el rol \"{$data['nombre']}\" (estado: {$data['estado']})");
         }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
@@ -104,7 +104,7 @@ class RoleController extends Controller
 
         $ok  = (int)($out[0]->resultado ?? 0) === 1;
         if ($ok && $rolActual) {
-            $this->registrarBitacora("Desactivó el rol \"{$rolActual->nombre}\"");
+            $this->registrarBitacora('roles', "Desactivó el rol \"{$rolActual->nombre}\"");
         }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }
@@ -136,7 +136,7 @@ class RoleController extends Controller
 
         $ok = (int)($out[0]->resultado ?? 0) === 1;
         if ($ok) {
-            $this->registrarBitacora("Eliminó permanentemente el rol \"{$rolActual->nombre}\"");
+            $this->registrarBitacora('roles', "Eliminó permanentemente el rol \"{$rolActual->nombre}\"");
         }
         return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Operación finalizada');
     }

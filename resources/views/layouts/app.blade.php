@@ -180,7 +180,7 @@
               $puedeNosotros       = $hasP('nosotros.admin');
               $puedeMesaPartes     = $hasP('mesa.admin');
               $puedeAlumnos        = $hasP('alumnos.admin');
-              $puedeBitacora       = $hasP('bitacora.ver');
+              $puedeBitacora       = $hasP('bitacora.ver') || $hasP('bitacora.ver_mesa_partes');
               $puedeGrados         = $hasP('grados.admin');
               $puedeSecciones      = $hasP('secciones.admin');
               $puedeRegistrar      = $hasP('asistencia.registrar');

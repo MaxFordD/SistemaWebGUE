@@ -60,8 +60,19 @@ class EnviarNotificacionMesaPartes implements ShouldQueue
             // 2. Enviar correo al administrador
             $this->enviarCorreoAdministrador();
 
+            $this->mesa->update([
+                'notificacion_estado' => 'Enviado',
+                'notificacion_error'  => null,
+            ]);
+
         } catch (\Exception $e) {
             Log::error('Error al enviar correos de Mesa de Partes: ' . $e->getMessage());
+
+            $this->mesa->update([
+                'notificacion_estado' => 'Error',
+                'notificacion_error'  => $e->getMessage(),
+            ]);
+
             throw $e; // Re-lanzar para que el job sea reintentado
         }
     }
@@ -134,6 +145,11 @@ class EnviarNotificacionMesaPartes implements ShouldQueue
         Log::error('Job EnviarNotificacionMesaPartes falló para documento ID: ' . $this->mesa->documento_id, [
             'error' => $exception->getMessage(),
             'trace' => $exception->getTraceAsString()
+        ]);
+
+        $this->mesa->update([
+            'notificacion_estado' => 'Error',
+            'notificacion_error'  => $exception->getMessage(),
         ]);
     }
 }

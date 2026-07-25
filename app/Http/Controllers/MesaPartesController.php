@@ -161,7 +161,7 @@ class MesaPartesController extends Controller
 
         if ($ok) {
             $asunto = $actual[0]->asunto ?? "documento #{$id}";
-            $this->registrarBitacora("Cambió el estado de \"{$asunto}\" a {$request->estado} en Mesa de Partes");
+            $this->registrarBitacora('mesa_partes', "Cambió el estado de \"{$asunto}\" a {$request->estado} en Mesa de Partes");
         }
 
         return redirect()->route('admin.mesa.index')
@@ -197,7 +197,7 @@ class MesaPartesController extends Controller
                 $mensaje = $out[0]->mensaje ?? 'Documento eliminado correctamente';
 
                 if ($resultado === 1) {
-                    $this->registrarBitacora("Eliminó el documento \"{$asunto}\" de Mesa de Partes");
+                    $this->registrarBitacora('mesa_partes', "Eliminó el documento \"{$asunto}\" de Mesa de Partes");
                     return redirect()->route('admin.mesa.index')->with('success', $mensaje);
                 } else {
                     return redirect()->route('admin.mesa.index')->with('error', $mensaje);
@@ -207,7 +207,7 @@ class MesaPartesController extends Controller
                 $mesaParte = MesaParte::find($id);
                 if ($mesaParte) {
                     $mesaParte->delete();
-                    $this->registrarBitacora("Eliminó el documento \"{$asunto}\" de Mesa de Partes");
+                    $this->registrarBitacora('mesa_partes', "Eliminó el documento \"{$asunto}\" de Mesa de Partes");
                     return redirect()->route('admin.mesa.index')->with('success', 'Documento eliminado correctamente');
                 } else {
                     return redirect()->route('admin.mesa.index')->with('error', 'Documento no encontrado');

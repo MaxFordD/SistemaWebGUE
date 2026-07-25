@@ -43,17 +43,39 @@
                         <tr>
                             <th width="60" class="text-center">#</th>
                             <th width="160">Usuario</th>
+                            <th width="150">Módulo</th>
                             <th>Acción</th>
                             <th width="170">Fecha y hora</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            $modulosNombres = [
+                                'mesa_partes'      => 'Mesa de Partes',
+                                'alumnos'          => 'Alumnos',
+                                'roles'            => 'Roles',
+                                'usuarios'         => 'Usuarios',
+                                'permisos'         => 'Permisos',
+                                'noticias'         => 'Noticias',
+                                'comite_directivo' => 'Comité Directivo',
+                                'historia_legado'  => 'Historia y Legado',
+                                'imagenes_inicio'  => 'Imágenes del Inicio',
+                                'personas'         => 'Personas',
+                                'asistencia'       => 'Asistencia',
+                                'general'          => 'General',
+                            ];
+                        @endphp
                         @forelse($bitacora as $i => $reg)
                         <tr>
                             <td class="text-center text-muted small">{{ $bitacora->firstItem() + $i }}</td>
                             <td>
                                 <span class="badge bg-secondary">
                                     <i class="bi bi-person me-1"></i>{{ $reg->nombre_usuario }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+                                    {{ $modulosNombres[$reg->modulo] ?? $reg->modulo }}
                                 </span>
                             </td>
                             <td>{{ $reg->accion }}</td>
@@ -63,7 +85,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">
+                            <td colspan="5" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox display-6 d-block mb-2"></i>
                                 No hay registros en la bitácora.
                             </td>

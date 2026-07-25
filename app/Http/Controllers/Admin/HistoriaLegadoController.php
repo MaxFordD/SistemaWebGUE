@@ -55,7 +55,7 @@ class HistoriaLegadoController extends Controller
             $ok  = (int)($out[0]->resultado ?? 0) > 0;
 
             if (!$ok && $archivo) Storage::disk('public')->delete($archivo);
-            if ($ok) $this->registrarBitacora("Agregó a Historia y Legado: \"{$request->titulo}\" ({$tipo})");
+            if ($ok) $this->registrarBitacora('historia_legado', "Agregó a Historia y Legado: \"{$request->titulo}\" ({$tipo})");
 
             return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Error');
         } catch (\Exception $e) {
@@ -106,7 +106,7 @@ class HistoriaLegadoController extends Controller
             ]);
             $out = DB::select('SELECT @resultado as resultado, @mensaje as mensaje');
             $ok  = (int)($out[0]->resultado ?? 0) === 1;
-            if ($ok) $this->registrarBitacora("Actualizó en Historia y Legado: \"{$request->titulo}\"");
+            if ($ok) $this->registrarBitacora('historia_legado', "Actualizó en Historia y Legado: \"{$request->titulo}\"");
             return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Error');
         } catch (\Exception $e) {
             Log::error('HistoriaLegado update: ' . $e->getMessage());
@@ -125,7 +125,7 @@ class HistoriaLegadoController extends Controller
             $ok  = (int)($out[0]->resultado ?? 0) === 1;
             if ($ok) {
                 $titulo = $actual->titulo ?? "elemento #{$id}";
-                $this->registrarBitacora("Eliminó de Historia y Legado: \"{$titulo}\"");
+                $this->registrarBitacora('historia_legado', "Eliminó de Historia y Legado: \"{$titulo}\"");
             }
             return back()->with($ok ? 'success' : 'error', $out[0]->mensaje ?? 'Error');
         } catch (\Exception $e) {

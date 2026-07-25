@@ -42,15 +42,7 @@ class AsistenciaConfiguracionController extends Controller
                 (int) $usuarioId,
             ]);
 
-            try {
-                DB::statement('SET @res = 0, @msg = ""');
-                DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [
-                    $usuarioId,
-                    'Actualizó la configuración de horarios de asistencia',
-                ]);
-            } catch (\Exception $e) {
-                Log::warning('Bitácora error: ' . $e->getMessage());
-            }
+            $this->registrarBitacora('asistencia', 'Actualizó la configuración de horarios de asistencia');
 
             return redirect()->route('admin.asistencia.configuracion.index')
                 ->with('success', 'Configuración de asistencia actualizada correctamente.');

@@ -17,8 +17,14 @@ class BitacoraController extends Controller
 
         $query = DB::table('Bitacora as b')
             ->join('Usuario as u', 'u.usuario_id', '=', 'b.usuario_id')
-            ->select('b.bitacora_id', 'b.accion', 'b.fecha', 'u.nombre_usuario')
+            ->select('b.bitacora_id', 'b.modulo', 'b.accion', 'b.fecha', 'u.nombre_usuario')
             ->orderByDesc('b.fecha');
+
+        // Quien solo tiene el permiso acotado (ej. Mesa de Partes) ve únicamente
+        // su propio módulo; bitacora.ver (o superadmin) ve todo.
+        if (!auth()->user()->hasPermission('bitacora.ver')) {
+            $query->where('b.modulo', 'mesa_partes');
+        }
 
         if ($buscar !== '') {
             $query->where(function ($q) use ($buscar) {

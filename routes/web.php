@@ -101,7 +101,7 @@ Route::middleware(['auth', 'permission:usuarios.admin'])->prefix('admin')->name(
 });
 
 // Bitácora
-Route::middleware(['auth', 'permission:bitacora.ver'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'permission:bitacora.ver,bitacora.ver_mesa_partes'])->prefix('admin')->name('admin.')->group(function () {
 	Route::get('/bitacora', [\App\Http\Controllers\Admin\BitacoraController::class, 'index'])->name('bitacora.index');
 });
 

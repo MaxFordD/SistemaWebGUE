@@ -41,6 +41,7 @@
                             <th width="120">Tipo</th>
                             <th width="140">Fecha</th>
                             <th width="160">Estado</th>
+                            <th width="110" class="text-center">Notificación</th>
                             <th width="100" class="text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -72,6 +73,22 @@
                                 @endif
                             </td>
                             <td class="text-center">
+                                @php $notif = $d->notificacion_estado ?? 'Pendiente'; @endphp
+                                @if($notif === 'Enviado')
+                                    <span class="badge bg-success" title="Correos de confirmación enviados">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </span>
+                                @elseif($notif === 'Error')
+                                    <span class="badge bg-danger" title="{{ $d->notificacion_error ?? 'Error al enviar el correo' }}">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary" title="Aún no se ha enviado">
+                                        <i class="bi bi-hourglass-split"></i>
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="text-center">
                                 <div class="d-flex gap-1 justify-content-center">
                                     <a href="{{ route('admin.mesa.show', $d->documento_id) }}"
                                        class="btn btn-sm btn-outline-info" title="Ver detalles">
@@ -91,7 +108,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox display-6 d-block mb-2"></i>
                                 No hay documentos{{ $estado ? ' con estado "'.$estado.'"' : '' }}.
                             </td>

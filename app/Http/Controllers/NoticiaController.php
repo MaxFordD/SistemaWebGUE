@@ -218,16 +218,9 @@ class NoticiaController extends Controller
             $noticiaId = $resultado;
 
             // Registrar en Bitácora
-            try {
-                $cantidadArchivos = count($rutasArchivos);
-                $accion = "Creó la noticia ID {$noticiaId}" . ($cantidadArchivos > 0 ? " con {$cantidadArchivos} archivo(s)" : "");
-
-                DB::statement('SET @res = 0, @msg = ""');
-                DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [$usuarioId, $accion]);
-            } catch (\Exception $e) {
-                // Si falla la bitácora, solo loguear pero continuar
-                Log::warning('Error al registrar en bitácora: ' . $e->getMessage());
-            }
+            $cantidadArchivos = count($rutasArchivos);
+            $accion = "Creó la noticia ID {$noticiaId}" . ($cantidadArchivos > 0 ? " con {$cantidadArchivos} archivo(s)" : "");
+            $this->registrarBitacora('noticias', $accion);
 
             return redirect()
                 ->route('noticias.show', $noticiaId)
@@ -366,17 +359,7 @@ class NoticiaController extends Controller
             }
 
             // Registrar en bitácora
-            $user = auth()->user();
-            $usuarioId = $user->usuario_id ?? $user->id ?? null;
-            if ($usuarioId) {
-                try {
-                    $accion = "Actualizó la noticia ID {$id}";
-                    DB::statement('SET @res = 0, @msg = ""');
-                    DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [$usuarioId, $accion]);
-                } catch (\Exception $e) {
-                    Log::warning('Error al registrar en bitácora: ' . $e->getMessage());
-                }
-            }
+            $this->registrarBitacora('noticias', "Actualizó la noticia ID {$id}");
 
             return redirect()
                 ->route('noticias.show', $id)
@@ -411,17 +394,7 @@ class NoticiaController extends Controller
             }
 
             // Registrar en bitácora
-            $user = auth()->user();
-            $usuarioId = $user->usuario_id ?? $user->id ?? null;
-            if ($usuarioId) {
-                try {
-                    $accion = "Eliminó la noticia ID {$id}";
-                    DB::statement('SET @res = 0, @msg = ""');
-                    DB::statement('CALL sp_Bitacora_Insertar(?, ?, @res, @msg)', [$usuarioId, $accion]);
-                } catch (\Exception $e) {
-                    Log::warning('Error al registrar en bitácora: ' . $e->getMessage());
-                }
-            }
+            $this->registrarBitacora('noticias', "Eliminó la noticia ID {$id}");
 
             return redirect()->route('noticias.index')->with('success', 'Noticia eliminada correctamente.');
             
