@@ -25,6 +25,21 @@ class AsistenciaController extends Controller
         ];
     }
 
+    /**
+     * Devuelve el motivo por el que una fecha no es hábil (sábado/domingo o
+     * feriado registrado en Días No Hábiles), o null si sí se puede registrar.
+     */
+    private function motivoDiaNoHabil(string $fecha): ?string
+    {
+        if (\Carbon\Carbon::parse($fecha)->isWeekend()) {
+            return 'fin de semana';
+        }
+
+        $diaNoHabil = collect(DB::select('CALL sp_DiaNoHabil_ExistePorFecha(?)', [$fecha]))->first();
+
+        return ($diaNoHabil && $diaNoHabil->existe > 0) ? $diaNoHabil->motivo : null;
+    }
+
     public function index(Request $request)
     {
         $año       = $request->get('año', date('Y'));
@@ -77,11 +92,11 @@ class AsistenciaController extends Controller
         $fecha     = $request->fecha;
 
         // Día no hábil: no se permite registrar/editar asistencia
-        $diaNoHabil = collect(DB::select('CALL sp_DiaNoHabil_ExistePorFecha(?)', [$fecha]))->first();
-        if ($diaNoHabil && $diaNoHabil->existe > 0) {
+        $motivoNoHabil = $this->motivoDiaNoHabil($fecha);
+        if ($motivoNoHabil) {
             return redirect()->back()->withInput()->with(
                 'error',
-                "No se puede registrar asistencia: {$fecha} está marcado como día no hábil ({$diaNoHabil->motivo})."
+                "No se puede registrar asistencia: {$fecha} está marcado como día no hábil ({$motivoNoHabil})."
             );
         }
 
@@ -369,11 +384,11 @@ class AsistenciaController extends Controller
                 ], 422);
             }
 
-            $diaNoHabil = collect(DB::select('CALL sp_DiaNoHabil_ExistePorFecha(?)', [$ahora->format('Y-m-d')]))->first();
-            if ($diaNoHabil && $diaNoHabil->existe > 0) {
+            $motivoNoHabil = $this->motivoDiaNoHabil($ahora->format('Y-m-d'));
+            if ($motivoNoHabil) {
                 return response()->json([
                     'ok'    => false,
-                    'error' => 'Hoy no hay clases: ' . $diaNoHabil->motivo,
+                    'error' => 'Hoy no hay clases: ' . $motivoNoHabil,
                 ], 422);
             }
 

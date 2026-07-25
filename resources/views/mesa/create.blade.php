@@ -39,6 +39,12 @@
             <form action="{{ route('mesa.store') }}" method="post" enctype="multipart/form-data" novalidate id="mesaForm">
                 @csrf
 
+                {{-- Honeypot anti-bots: invisible para personas, los bots de envío automático lo suelen rellenar --}}
+                <div style="position:absolute; left:-9999px; top:-9999px;" aria-hidden="true">
+                    <label for="sitio_web">Sitio web</label>
+                    <input type="text" id="sitio_web" name="sitio_web" tabindex="-1" autocomplete="off">
+                </div>
+
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
                         <label for="remitente" class="form-label">

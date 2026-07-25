@@ -33,6 +33,12 @@ class MesaPartesController extends Controller
      */
     public function store(Request $request)
     {
+        // Honeypot anti-bots: campo invisible para personas; si viene relleno, es un bot.
+        // Se responde como si todo hubiera salido bien para no delatar el filtro.
+        if (filled($request->input('sitio_web'))) {
+            return redirect()->route('mesa.create')->with('success', 'Documento enviado correctamente. Las notificaciones serán enviadas por correo.');
+        }
+
         $request->validate([
             'remitente' => 'required|max:150',
             'asunto' => 'required|max:200',

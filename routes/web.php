@@ -37,7 +37,7 @@ Route::get('/historia-legado', [HistoriaLegadoController::class, 'index'])->name
 
 // === Mesa de Partes (Público) ===
 Route::get('/mesa-partes/create', [MesaPartesController::class, 'create'])->name('mesa.create');
-Route::post('/mesa-partes', [MesaPartesController::class, 'store'])->name('mesa.store');
+Route::post('/mesa-partes', [MesaPartesController::class, 'store'])->name('mesa.store')->middleware('throttle:3,1');
 
 // === Noticias (Público) ===
 Route::get('/noticias', [NoticiaController::class, 'index'])->name('noticias.index');
