@@ -70,7 +70,7 @@ class ComiteDirectivoController extends Controller
         $this->normalizarNombrePropio($request, ['nombre_completo', 'cargo']);
 
         $request->validate([
-            'nombre_completo' => 'required|string|max:200',
+            'nombre_completo' => ['required', 'string', 'max:200', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
             'cargo'           => 'required|string|max:100',
             'grado_cargo'     => 'nullable|string|max:100',
             'foto'            => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
@@ -79,6 +79,7 @@ class ComiteDirectivoController extends Controller
             'estado'          => 'required|in:A,I',
         ], [
             'nombre_completo.required' => 'El nombre completo es obligatorio.',
+            'nombre_completo.regex'    => 'El nombre completo solo debe contener letras.',
             'cargo.required'           => 'El cargo es obligatorio.',
             'orden.required'           => 'El orden es obligatorio.',
             'orden.integer'            => 'El orden debe ser un número.',
@@ -175,7 +176,7 @@ class ComiteDirectivoController extends Controller
         $this->normalizarNombrePropio($request, ['nombre_completo', 'cargo']);
 
         $request->validate([
-            'nombre_completo' => 'required|string|max:200',
+            'nombre_completo' => ['required', 'string', 'max:200', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
             'cargo'           => 'required|string|max:100',
             'grado_cargo'     => 'nullable|string|max:100',
             'foto'            => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
@@ -184,6 +185,7 @@ class ComiteDirectivoController extends Controller
             'estado'          => 'required|in:A,I',
         ], [
             'nombre_completo.required' => 'El nombre completo es obligatorio.',
+            'nombre_completo.regex'    => 'El nombre completo solo debe contener letras.',
             'cargo.required'           => 'El cargo es obligatorio.',
             'orden.required'           => 'El orden es obligatorio.',
             'foto.image'               => 'El archivo debe ser una imagen.',

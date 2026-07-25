@@ -40,13 +40,19 @@ class MesaPartesController extends Controller
         }
 
         $request->validate([
-            'remitente' => 'required|max:150',
+            'remitente' => ['required', 'max:150', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
+            'dni' => ['required', 'string', 'size:8', 'regex:/^[0-9]+$/'],
             'asunto' => 'required|max:200',
-            'detalle' => 'nullable',
+            'detalle' => 'nullable|string|max:2000',
             'tipo_documento_id' => 'required|exists:Tipos_Documento,tipo_id',
             'archivos' => 'nullable|array',
             'archivos.*' => 'file|mimes:pdf,docx,jpg,png|max:5120',
             'correo' => 'nullable|email'
+        ], [
+            'remitente.regex' => 'El remitente solo debe contener letras.',
+            'dni.required'    => 'El DNI es obligatorio.',
+            'dni.size'        => 'El DNI debe tener exactamente 8 dígitos.',
+            'dni.regex'       => 'El DNI solo debe contener números.',
         ]);
 
         // Usar servicio para guardar archivos

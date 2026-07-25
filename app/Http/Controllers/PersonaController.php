@@ -19,16 +19,20 @@ class PersonaController extends Controller
         $this->normalizarNombrePropio($request, ['nombres', 'apellidos']);
 
         $data = $request->validate([
-            'nombres'    => 'required|string|max:100',
-            'apellidos'  => 'required|string|max:100',
-            'dni'        => 'nullable|string|size:8',
-            'telefono'   => 'nullable|string|size:9',
+            'nombres'    => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
+            'apellidos'  => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
+            'dni'        => ['nullable', 'string', 'size:8', 'regex:/^[0-9]+$/'],
+            'telefono'   => ['nullable', 'string', 'size:9', 'regex:/^[0-9]+$/'],
             'correo'     => 'nullable|email|max:100',
         ], [
             'nombres.required'    => 'El campo nombres es obligatorio',
+            'nombres.regex'       => 'Los nombres solo deben contener letras',
             'apellidos.required'  => 'El campo apellidos es obligatorio',
+            'apellidos.regex'     => 'Los apellidos solo deben contener letras',
             'dni.size'            => 'El DNI debe tener 8 dígitos',
+            'dni.regex'           => 'El DNI solo debe contener números',
             'telefono.size'       => 'El teléfono debe tener 9 dígitos',
+            'telefono.regex'      => 'El teléfono solo debe contener números',
             'correo.email'        => 'El correo debe ser válido',
         ]);
 
@@ -59,17 +63,21 @@ class PersonaController extends Controller
         $this->normalizarNombrePropio($request, ['nombres', 'apellidos']);
 
         $data = $request->validate([
-            'nombres'    => 'required|string|max:100',
-            'apellidos'  => 'required|string|max:100',
-            'dni'        => 'nullable|string|size:8',
-            'telefono'   => 'nullable|string|size:9',
+            'nombres'    => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
+            'apellidos'  => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
+            'dni'        => ['nullable', 'string', 'size:8', 'regex:/^[0-9]+$/'],
+            'telefono'   => ['nullable', 'string', 'size:9', 'regex:/^[0-9]+$/'],
             'correo'     => 'nullable|email|max:100',
             'estado'     => 'required|in:A,I',
         ], [
             'nombres.required'    => 'El campo nombres es obligatorio',
+            'nombres.regex'       => 'Los nombres solo deben contener letras',
             'apellidos.required'  => 'El campo apellidos es obligatorio',
+            'apellidos.regex'     => 'Los apellidos solo deben contener letras',
             'dni.size'            => 'El DNI debe tener 8 dígitos',
+            'dni.regex'           => 'El DNI solo debe contener números',
             'telefono.size'       => 'El teléfono debe tener 9 dígitos',
+            'telefono.regex'      => 'El teléfono solo debe contener números',
             'correo.email'        => 'El correo debe ser válido',
         ]);
 

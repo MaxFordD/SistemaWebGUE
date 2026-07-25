@@ -38,11 +38,29 @@ class NosotrosController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'historia_titulo' => 'required|string|max:200',
-            'historia_p1'     => 'required|string',
-            'historia_p2'     => 'required|string',
-            'mision'          => 'required|string',
-            'vision'          => 'required|string',
+            'historia_titulo'              => 'required|string|max:200',
+            'historia_p1'                  => 'required|string',
+            'historia_p2'                  => 'required|string',
+            'mision'                       => 'required|string',
+            'vision'                       => 'required|string',
+            'historia_imagenes_actuales'   => 'nullable|array',
+            'historia_imagenes_actuales.*' => 'nullable|string',
+            'historia_imagenes_nuevas'     => 'nullable|array',
+            'historia_imagenes_nuevas.*'   => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+            'pilar_icon'                   => 'nullable|array',
+            'pilar_icon.*'                 => 'nullable|string|max:50',
+            'pilar_titulo'                 => 'nullable|array',
+            'pilar_titulo.*'               => 'nullable|string|max:100',
+            'pilar_desc'                   => 'nullable|array',
+            'pilar_desc.*'                 => 'nullable|string|max:255',
+            'pilar_color'                  => 'nullable|array',
+            'pilar_color.*'                => 'nullable|string|max:30',
+            'normas'                       => 'nullable|array',
+            'normas.*'                     => 'nullable|string|max:255',
+        ], [
+            'historia_imagenes_nuevas.*.image' => 'Los archivos de historia deben ser imágenes.',
+            'historia_imagenes_nuevas.*.mimes'  => 'Solo se aceptan JPG, PNG o WEBP.',
+            'historia_imagenes_nuevas.*.max'    => 'Cada imagen no debe superar 4 MB.',
         ]);
 
         try {

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -75,15 +76,17 @@ class AlumnoController extends Controller
 
         $request->validate([
             'seccion_id'       => 'required|integer',
-            'nombres'          => 'required|string|max:100',
-            'apellidos'        => 'required|string|max:100',
+            'nombres'          => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
+            'apellidos'        => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
             'dni'              => 'required|string|size:8|regex:/^[0-9]+$/',
             'fecha_nacimiento' => 'nullable|date|before:today',
             'sexo'             => 'required|in:M,F',
         ], [
             'seccion_id.required'  => 'Seleccione una sección.',
             'nombres.required'     => 'Los nombres son obligatorios.',
+            'nombres.regex'        => 'Los nombres solo deben contener letras.',
             'apellidos.required'   => 'Los apellidos son obligatorios.',
+            'apellidos.regex'      => 'Los apellidos solo deben contener letras.',
             'dni.required'         => 'El DNI es obligatorio.',
             'dni.size'             => 'El DNI debe tener exactamente 8 dígitos.',
             'dni.regex'            => 'El DNI solo debe contener números.',
@@ -125,15 +128,17 @@ class AlumnoController extends Controller
 
         $request->validate([
             'seccion_id'       => 'required|integer',
-            'nombres'          => 'required|string|max:100',
-            'apellidos'        => 'required|string|max:100',
+            'nombres'          => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
+            'apellidos'        => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\.\'\-]+$/u'],
             'dni'              => 'required|string|size:8|regex:/^[0-9]+$/',
             'fecha_nacimiento' => 'nullable|date|before:today',
             'sexo'             => 'required|in:M,F',
             'estado'           => 'required|in:0,1',
         ], [
-            'dni.size'  => 'El DNI debe tener exactamente 8 dígitos.',
-            'dni.regex' => 'El DNI solo debe contener números.',
+            'dni.size'      => 'El DNI debe tener exactamente 8 dígitos.',
+            'dni.regex'     => 'El DNI solo debe contener números.',
+            'nombres.regex' => 'Los nombres solo deben contener letras.',
+            'apellidos.regex' => 'Los apellidos solo deben contener letras.',
         ]);
 
         try {
@@ -406,12 +411,22 @@ class AlumnoController extends Controller
             }
 
             $sexo      = mb_strtoupper(trim($row['sexo'] ?? ''));
-            $nombres   = mb_strtoupper(trim($row['nombres'] ?? ''));
-            $apellidos = mb_strtoupper(trim($row['apellidos'] ?? ''));
+            $nombres   = Str::title(trim($row['nombres'] ?? ''));
+            $apellidos = Str::title(trim($row['apellidos'] ?? ''));
             $dni       = trim($row['dni'] ?? '');
 
             if (!in_array($sexo, ['M', 'F'])) {
                 $errors[] = "Fila " . ($i + 2) . " ({$apellidos}): sexo '{$sexo}' inválido (debe ser M o F).";
+                continue;
+            }
+
+            if (!preg_match('/^[0-9]{8}$/', $dni)) {
+                $errors[] = "Fila " . ($i + 2) . " ({$apellidos}): DNI '{$dni}' inválido (debe tener exactamente 8 dígitos numéricos).";
+                continue;
+            }
+
+            if ($nombres === '' || $apellidos === '' || !preg_match('/^[\p{L}\s\.\'\-]+$/u', $nombres) || !preg_match('/^[\p{L}\s\.\'\-]+$/u', $apellidos)) {
+                $errors[] = "Fila " . ($i + 2) . " ({$apellidos}): nombres/apellidos inválidos (solo se permiten letras).";
                 continue;
             }
 

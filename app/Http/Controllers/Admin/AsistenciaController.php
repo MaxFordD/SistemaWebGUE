@@ -78,9 +78,12 @@ class AsistenciaController extends Controller
     public function guardar(Request $request)
     {
         $request->validate([
-            'seccion_id'  => 'required|integer',
-            'fecha'       => 'required|date',
-            'asistencia'  => 'required|array',
+            'seccion_id'                        => 'required|integer',
+            'fecha'                             => 'required|date',
+            'asistencia'                        => 'required|array',
+            'asistencia.*.estado'               => 'nullable|string|in:Asistio,Falta,Tardanza,Justificada',
+            'asistencia.*.observacion'          => 'nullable|string|max:500',
+            'asistencia.*.motivo_justificacion' => 'nullable|string|max:500',
         ], [
             'seccion_id.required' => 'La sección es obligatoria.',
             'fecha.required'      => 'La fecha es obligatoria.',

@@ -41,6 +41,13 @@ class RolPermisoController extends Controller
             return back()->with('error', "Solo Director o Administrador pueden modificar los permisos del rol \"{$rol->nombre}\".");
         }
 
+        $request->validate([
+            'permisos'   => 'nullable|array',
+            'permisos.*' => 'integer|exists:Permiso,permiso_id',
+        ], [
+            'permisos.*.exists' => 'Uno de los permisos seleccionados no es válido.',
+        ]);
+
         $permisosSeleccionados = array_map('intval', (array)$request->input('permisos', []));
 
         try {
