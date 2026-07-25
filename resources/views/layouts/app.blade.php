@@ -34,7 +34,7 @@
 
   <a class="skip-link" href="#main-content">Saltar al contenido</a>
   <header class="header-sticky" role="banner">
-    <nav class="navbar navbar-expand-xxl navbar-dark bg-gue nav-elevable" aria-label="Navegación principal">
+    <nav class="navbar navbar-expand-xl navbar-dark bg-gue nav-elevable" aria-label="Navegación principal">
       <div class="container">
         <!-- Logo y marca -->
         <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}" aria-label="Inicio">
